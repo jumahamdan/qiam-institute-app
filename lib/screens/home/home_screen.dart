@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/events/events_service.dart';
@@ -20,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final EventsService _eventsService = EventsService();
   NextPrayerInfo? _nextPrayer;
   Timer? _timer;
+  late YoutubePlayerController _youtubeController;
   bool _isLoading = true;
   List<Event> _events = [];
   bool _eventsLoading = true;
@@ -36,6 +38,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _initServices();
     _loadEvents();
+
+    final videoId = YoutubePlayer.convertUrlToId(AppConstants.introVideoUrl) ?? '9qcNe2NSThE';
+    _youtubeController = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: const YoutubePlayerFlags(
+        autoPlay: false,
+        mute: false,
+        showLiveFullscreenButton: false,
+      ),
+    );
   }
 
   Future<void> _initServices() async {
@@ -74,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _youtubeController.dispose();
     super.dispose();
   }
 
@@ -96,28 +109,32 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Values Section - Hero section
+                  // Video Player
+                  _buildVideoCard(),
+                  const SizedBox(height: 16),
+
+                  // Values Section
                   _buildValuesSection(),
                   const SizedBox(height: 16),
 
-                  // Donate Button
+                  // Next Prayer Card - Condensed
+                  _buildPrayerCard(),
+                  const SizedBox(height: 12),
+
+                  // Support Qiam Button - under prayer card
                   SizedBox(
-                    height: 48,
+                    height: 44,
                     child: ElevatedButton.icon(
                       onPressed: () => _launchUrl(AppConstants.donateUrl),
-                      icon: const Icon(Icons.volunteer_activism, size: 20),
+                      icon: const Icon(Icons.volunteer_activism, size: 18),
                       label: const Text('Support Qiam Institute'),
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Next Prayer Card - Condensed
-                  _buildPrayerCard(),
                   const SizedBox(height: 20),
 
                   // Upcoming Events Section
@@ -131,70 +148,102 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildVideoCard() {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          YoutubePlayer(
+            controller: _youtubeController,
+            showVideoProgressIndicator: true,
+            progressIndicatorColor: Theme.of(context).colorScheme.primary,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'The seasons change; our values don\'t.',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Qiam Institute',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.play_circle_outline, color: Colors.grey[400]),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPrayerCard() {
     if (_isLoading || _nextPrayer == null) {
       return Card(
         child: Container(
-          height: 80,
-          padding: const EdgeInsets.all(16),
-          child: const Center(child: CircularProgressIndicator()),
+          height: 56,
+          padding: const EdgeInsets.all(12),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         ),
       );
     }
 
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
             ],
           ),
         ),
         child: Row(
           children: [
-            // Left side: Prayer info
+            // Left side: Prayer name and countdown
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    'NEXT PRAYER',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
                   Text(
                     _nextPrayer!.name,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       'in ${_nextPrayer!.formattedTimeUntil}',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -203,12 +252,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Right side: TIME - The hero element
+            // Right side: TIME
             Text(
               _nextPrayer!.formattedTime,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 36,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),

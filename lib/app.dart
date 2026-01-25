@@ -226,6 +226,8 @@ class _MainNavigationState extends State<MainNavigation> {
     return AppBar(
       centerTitle: true,
       automaticallyImplyLeading: false,
+      leadingWidth: 16, // Add left padding
+      leading: const SizedBox(width: 16),
       title: GestureDetector(
         onTap: () => setState(() => _selectedIndex = 0),
         child: Image.asset(
@@ -243,6 +245,7 @@ class _MainNavigationState extends State<MainNavigation> {
             await launchUrl(uri, mode: LaunchMode.externalApplication);
           },
         ),
+        const SizedBox(width: 8), // Add right padding
       ],
     );
   }
