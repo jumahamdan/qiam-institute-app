@@ -380,32 +380,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
             ),
           ),
 
-          // Iqamah time (if available)
-          if (iqamahTime != null)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    iqamahTime,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                  Text(
-                    'Iqamah',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Adhan time - prominent
+          // Adhan time - prominent (comes first)
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -426,6 +401,31 @@ class _PrayerScreenState extends State<PrayerScreen> {
               ),
             ],
           ),
+
+          // Iqamah time (if available, comes after Adhan)
+          if (iqamahTime != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    iqamahTime,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                  Text(
+                    'Iqamah',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

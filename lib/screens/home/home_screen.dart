@@ -138,8 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoading || _nextPrayer == null) {
       return Card(
         child: Container(
-          height: 120,
-          padding: const EdgeInsets.all(24),
+          height: 80,
+          padding: const EdgeInsets.all(16),
           child: const Center(child: CircularProgressIndicator()),
         ),
       );
@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           gradient: LinearGradient(
@@ -161,57 +161,58 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-        child: Column(
+        child: Row(
           children: [
-            // Secondary: Label
-            Text(
-              'NEXT PRAYER',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.5,
+            // Left side: Prayer info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'NEXT PRAYER',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _nextPrayer!.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'in ${_nextPrayer!.formattedTimeUntil}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
 
-            // Secondary: Prayer name
-            Text(
-              _nextPrayer!.name,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Primary: TIME - The hero element
+            // Right side: TIME - The hero element
             Text(
               _nextPrayer!.formattedTime,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 42,
+                fontSize: 36,
                 fontWeight: FontWeight.bold,
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Tertiary: Countdown
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'in ${_nextPrayer!.formattedTimeUntil}',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
               ),
             ),
           ],
