@@ -16,12 +16,13 @@ class PrayerScreen extends StatefulWidget {
 class _PrayerScreenState extends State<PrayerScreen> {
   final PrayerService _prayerService = PrayerService();
   final QiblaService _qiblaService = QiblaService();
-  late List<PrayerTimeInfo> _prayerTimes;
-  late NextPrayerInfo _nextPrayer;
+  List<PrayerTimeInfo>? _prayerTimes;
+  NextPrayerInfo? _nextPrayer;
   Timer? _timer;
   double _qiblaDirection = 0;
   double _compassHeading = 0;
-  bool _qiblaInitialized = false;
+  bool _isLoading = true;
+  bool _hasCompass = false;
 
   @override
   void initState() {
@@ -48,15 +49,18 @@ class _PrayerScreenState extends State<PrayerScreen> {
         setState(() {
           _qiblaDirection = data.qiblaDirection;
           _compassHeading = data.compassHeading;
-          _qiblaInitialized = true;
+          _hasCompass = data.hasCompass;
         });
       }
     });
 
-    setState(() {
-      _qiblaDirection = _qiblaService.qiblaDirection;
-      _qiblaInitialized = true;
-    });
+    if (mounted) {
+      setState(() {
+        _qiblaDirection = _qiblaService.qiblaDirection;
+        _hasCompass = _qiblaService.hasCompass;
+        _isLoading = false;
+      });
+    }
   }
 
   void _updatePrayerData() {
@@ -91,6 +95,20 @@ class _PrayerScreenState extends State<PrayerScreen> {
   Widget build(BuildContext context) {
     final today = DateTime.now();
     final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+
+    // Show loading state while initializing
+    if (_isLoading || _nextPrayer == null || _prayerTimes == null) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading prayer times...'),
+          ],
+        ),
+      );
+    }
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -168,8 +186,9 @@ class _PrayerScreenState extends State<PrayerScreen> {
   }
 
   Widget _buildNextPrayerCircle() {
-    final progress = _nextPrayer.progress;
-    final timeUntil = _nextPrayer.timeUntil;
+    final nextPrayer = _nextPrayer!;
+    final progress = nextPrayer.progress;
+    final timeUntil = nextPrayer.timeUntil;
     final hours = timeUntil.inHours;
     final minutes = timeUntil.inMinutes.remainder(60);
     final seconds = timeUntil.inSeconds.remainder(60);
@@ -190,7 +209,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
       child: Column(
         children: [
           Text(
-            'Next Prayer: ${_nextPrayer.name}',
+            'Next Prayer: ${nextPrayer.name}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -263,7 +282,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
           // Prayer time
           Text(
-            '${_nextPrayer.name} at ${_nextPrayer.formattedTime}',
+            '${nextPrayer.name} at ${nextPrayer.formattedTime}',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.8),
               fontSize: 14,
@@ -288,7 +307,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
         ],
       ),
       child: Column(
-        children: _prayerTimes.map((prayer) => _buildPrayerRow(prayer)).toList(),
+        children: _prayerTimes!.map((prayer) => _buildPrayerRow(prayer)).toList(),
       ),
     );
   }
@@ -543,7 +562,9 @@ class _PrayerScreenState extends State<PrayerScreen> {
                   ),
                 ),
                 Text(
-                  'Point arrow towards Makkah',
+                  _hasCompass
+                      ? 'Point arrow towards Makkah'
+                      : 'Compass not available on this device',
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 12,
