@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -23,7 +25,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.0'
+          flutter-version: '3.38.7'
           channel: 'stable'
           cache: true
 
@@ -47,6 +49,19 @@ jobs:
           name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
 
+      - name: Get version from pubspec
+        id: version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get commit details
+        id: commit
+        run: |
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "author=$(git log -1 --pretty=format:'%an')" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_OUTPUT
+
       - name: Upload to Firebase App Distribution
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -55,7 +70,16 @@ jobs:
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           groups: testers
           releaseNotes: |
-            Build from commit: ${{ github.sha }}
-            Branch: ${{ github.ref_name }}
-            Message: ${{ github.event.head_commit.message }}
+            🚀 Qiam Institute App
+
+            📦 Version: ${{ steps.version.outputs.version }}
+            🔖 Build: ${{ steps.commit.outputs.short_sha }}
+            📅 Date: ${{ steps.commit.outputs.date }}
+            👤 Author: ${{ steps.commit.outputs.author }}
+
+            📝 Changes:
+            ${{ github.event.head_commit.message }}
+
+            ---
+            🔗 Commit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           file: build/app/outputs/flutter-apk/app-release.apk
