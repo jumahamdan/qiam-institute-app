@@ -245,14 +245,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Watch Our Introduction',
+                        'The seasons change; our values don\'t.',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Learn about Qiam Institute',
+                        'Qiam Institute',
                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
                       ),
                     ],
