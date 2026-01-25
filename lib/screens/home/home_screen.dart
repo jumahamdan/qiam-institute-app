@@ -15,18 +15,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final PrayerService _prayerService = PrayerService();
-  late NextPrayerInfo _nextPrayer;
+  NextPrayerInfo? _nextPrayer;
   Timer? _timer;
   late YoutubePlayerController _youtubeController;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _prayerService.initialize();
-    _nextPrayer = _prayerService.getNextPrayer();
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      setState(() => _nextPrayer = _prayerService.getNextPrayer());
-    });
+    _initServices();
 
     final videoId = YoutubePlayer.convertUrlToId(AppConstants.introVideoUrl) ?? '9qcNe2NSThE';
     _youtubeController = YoutubePlayerController(
@@ -37,6 +34,22 @@ class _HomeScreenState extends State<HomeScreen> {
         showLiveFullscreenButton: false,
       ),
     );
+  }
+
+  Future<void> _initServices() async {
+    await _prayerService.initialize();
+    if (mounted) {
+      setState(() {
+        _nextPrayer = _prayerService.getNextPrayer();
+        _isLoading = false;
+      });
+    }
+
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) {
+        setState(() => _nextPrayer = _prayerService.getNextPrayer());
+      }
+    });
   }
 
   @override
@@ -93,26 +106,33 @@ class _HomeScreenState extends State<HomeScreen> {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Text('NEXT PRAYER',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.secondary,
-                              letterSpacing: 1.2,
-                            )),
-                    const SizedBox(height: 8),
-                    Text(_nextPrayer.name,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(_nextPrayer.formattedTime,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                            )),
-                    const SizedBox(height: 8),
-                    Text('in ${_nextPrayer.formattedTimeUntil}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
-                  ],
-                ),
+                child: _isLoading || _nextPrayer == null
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          Text('NEXT PRAYER',
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.secondary,
+                                    letterSpacing: 1.2,
+                                  )),
+                          const SizedBox(height: 8),
+                          Text(_nextPrayer!.name,
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(_nextPrayer!.formattedTime,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                  )),
+                          const SizedBox(height: 8),
+                          Text('in ${_nextPrayer!.formattedTimeUntil}',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
+                        ],
+                      ),
               ),
             ),
             const SizedBox(height: 20),
