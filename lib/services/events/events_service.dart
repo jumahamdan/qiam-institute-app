@@ -151,20 +151,12 @@ class EventsResponse {
       }
     }
 
-    // Filter to only include events that are today or in the future
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final upcomingEvents = eventsList.where((e) =>
-      e.startDate.isAfter(today) ||
-      (e.startDate.year == today.year && e.startDate.month == today.month && e.startDate.day == today.day)
-    ).toList();
-
-    // Sort by soonest first
-    upcomingEvents.sort((a, b) => a.startDate.compareTo(b.startDate));
+    // Sort by soonest first (ascending date order)
+    eventsList.sort((a, b) => a.startDate.compareTo(b.startDate));
 
     return EventsResponse(
-      events: upcomingEvents,
-      totalEvents: json['total'] ?? upcomingEvents.length,
+      events: eventsList,
+      totalEvents: json['total'] ?? eventsList.length,
       totalPages: json['total_pages'] ?? 1,
     );
   }
