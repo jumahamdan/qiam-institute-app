@@ -68,7 +68,7 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: testers
+          groups: qiam-testers
           releaseNotes: |
             🚀 Qiam Institute App
 
