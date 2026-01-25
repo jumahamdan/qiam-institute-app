@@ -125,6 +125,17 @@ class _MainNavigationState extends State<MainNavigation> {
               },
             ),
             _MoreMenuItem(
+              icon: Icons.chat,
+              label: 'Connect With Us',
+              subtitle: 'Join our WhatsApp community',
+              onTap: () async {
+                Navigator.pop(context);
+                // TODO: Replace with actual WhatsApp link
+                final uri = Uri.parse('https://qiaminstitute.org');
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              },
+            ),
+            _MoreMenuItem(
               icon: Icons.settings,
               label: 'Settings',
               subtitle: 'Prayer times and app settings',
@@ -155,28 +166,25 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,
+        centerTitle: true,
         leading: IconButton(
-          onPressed: _goHome,
-          tooltip: 'Home',
-          icon: Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Image.asset(
-              'assets/images/logo_white.png',
-              errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white),
-            ),
+          icon: const Icon(Icons.directions),
+          tooltip: 'Get Directions',
+          onPressed: () async {
+            final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517');
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          },
+        ),
+        title: GestureDetector(
+          onTap: _goHome,
+          child: Image.asset(
+            'assets/images/logo_white.png',
+            height: 40,
+            errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 32),
           ),
         ),
-        title: null,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.directions),
-            tooltip: 'Get Directions',
-            onPressed: () async {
-              final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517');
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
-          ),
+        actions: const [
+          SizedBox(width: 48), // Balance the leading icon
         ],
       ),
       body: _buildBody(),
