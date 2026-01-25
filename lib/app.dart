@@ -87,51 +87,54 @@ class _MainNavigationState extends State<MainNavigation> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+      builder: (context) {
+        // Add padding for system navigation bar (Galaxy phones, etc.)
+        final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+        return Container(
+          padding: EdgeInsets.only(top: 20, bottom: 10 + bottomPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            _MoreMenuItem(
-              icon: Icons.info_outline,
-              label: 'About Us',
-              subtitle: 'Learn about Qiam Institute',
-              onTap: () {
-                Navigator.pop(context);
-                _navigateTo(20, 'About Us');
-              },
-            ),
-            _MoreMenuItem(
-              icon: Icons.contact_mail,
-              label: 'Contact Us',
-              subtitle: 'Get in touch with us',
-              onTap: () {
-                Navigator.pop(context);
-                _navigateTo(21, 'Contact Us');
-              },
-            ),
-            _MoreMenuItem(
-              icon: Icons.settings,
-              label: 'Settings',
-              subtitle: 'Prayer times and app settings',
-              onTap: () {
-                Navigator.pop(context);
-                _navigateTo(22, 'Settings');
-              },
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
+              const SizedBox(height: 20),
+              _MoreMenuItem(
+                icon: Icons.info_outline,
+                label: 'About Us',
+                subtitle: 'Learn about Qiam Institute',
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateTo(20, 'About Us');
+                },
+              ),
+              _MoreMenuItem(
+                icon: Icons.contact_mail,
+                label: 'Contact Us',
+                subtitle: 'Get in touch with us',
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateTo(21, 'Contact Us');
+                },
+              ),
+              _MoreMenuItem(
+                icon: Icons.settings,
+                label: 'Settings',
+                subtitle: 'Prayer times and app settings',
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateTo(22, 'Settings');
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
