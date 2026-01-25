@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadEvents() async {
     try {
-      final response = await _eventsService.getUpcomingEvents(perPage: 5);
+      final response = await _eventsService.getUpcomingEvents(perPage: 3);
       if (mounted) {
         setState(() {
           _events = response.events;
@@ -402,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEventsList() {
     return Column(
-      children: _events.take(5).map((event) {
+      children: _events.take(3).map((event) {
         return _EventMiniCard(
           event: event,
           onTap: () => _launchUrl(event.url ?? AppConstants.eventsUrl),
