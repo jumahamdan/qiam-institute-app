@@ -90,17 +90,31 @@ class Event {
       return null;
     }
 
-    // Strip HTML tags from description
+    // Strip HTML tags and decode HTML entities
     String stripHtml(String? html) {
       if (html == null || html.isEmpty) return '';
-      return html
+      var result = html
           .replaceAll(RegExp(r'<[^>]*>'), '')
           .replaceAll('&nbsp;', ' ')
           .replaceAll('&amp;', '&')
           .replaceAll('&lt;', '<')
           .replaceAll('&gt;', '>')
           .replaceAll('&quot;', '"')
-          .trim();
+          .replaceAll('&apos;', "'")
+          .replaceAll('&#038;', '&')
+          .replaceAll('&#39;', "'")
+          .replaceAll('&#8217;', "'")
+          .replaceAll('&#8216;', "'")
+          .replaceAll('&#8220;', '"')
+          .replaceAll('&#8221;', '"')
+          .replaceAll('&#8211;', '–')
+          .replaceAll('&#8212;', '—');
+      // Handle remaining numeric entities
+      result = result.replaceAllMapped(
+        RegExp(r'&#(\d+);'),
+        (match) => String.fromCharCode(int.parse(match.group(1)!)),
+      );
+      return result.trim();
     }
 
     return Event(

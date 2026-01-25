@@ -504,14 +504,17 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 // N indicator
                 Transform.rotate(
                   angle: -_compassHeading * (math.pi / 180),
-                  child: const Positioned(
-                    top: 4,
-                    child: Text(
-                      'N',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                  child: const Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: Text(
+                        'N',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ),
