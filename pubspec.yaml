@@ -1,0 +1,40 @@
+name: qiam_institute_app
+description: "Mobile app for Qiam Institute - Events, Prayer Times, Qibla, and Notifications"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Prayer times calculation
+  adhan: ^2.0.0
+
+  # Qibla/Compass
+  flutter_compass: ^0.8.0
+  geolocator: ^13.0.0
+
+  # Permissions
+  permission_handler: ^11.0.0
+
+  # UI & Utils
+  url_launcher: ^6.2.0
+  provider: ^6.1.0
+  shared_preferences: ^2.2.0
+  intl: ^0.20.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
