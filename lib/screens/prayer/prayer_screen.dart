@@ -30,6 +30,48 @@ class _PrayerScreenState extends State<PrayerScreen> {
     }
   }
 
+  IconData _getPrayerIcon(String prayer) {
+    switch (prayer) {
+      case 'Fajr':
+        return Icons.wb_twilight;
+      case 'Sunrise':
+        return Icons.wb_sunny_outlined;
+      case 'Dhuhr':
+        return Icons.wb_sunny;
+      case 'Asr':
+        return Icons.cloud;
+      case 'Maghrib':
+        return Icons.nights_stay_outlined;
+      case 'Isha':
+        return Icons.nightlight_round;
+      case 'Sunset':
+        return Icons.wb_twilight;
+      default:
+        return Icons.access_time;
+    }
+  }
+
+  Color _getPrayerIconColor(String prayer) {
+    switch (prayer) {
+      case 'Fajr':
+        return Colors.orange[300]!;
+      case 'Sunrise':
+        return Colors.orange;
+      case 'Dhuhr':
+        return Colors.amber;
+      case 'Asr':
+        return Colors.orange[400]!;
+      case 'Maghrib':
+        return Colors.deepOrange;
+      case 'Isha':
+        return Colors.indigo;
+      case 'Sunset':
+        return Colors.deepOrange[300]!;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
@@ -37,113 +79,52 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Prayer Times'),
+        title: const Text('Timings'),
         actions: [
           TextButton.icon(
-            onPressed: () {
-              setState(() {
-                _showWeekView = !_showWeekView;
-              });
-            },
-            icon: Icon(
-              _showWeekView ? Icons.today : Icons.calendar_view_week,
-              color: Colors.white,
-            ),
-            label: Text(
-              _showWeekView ? 'Today' : '7-Day',
-              style: const TextStyle(color: Colors.white),
-            ),
+            onPressed: () => setState(() => _showWeekView = !_showWeekView),
+            icon: Icon(_showWeekView ? Icons.today : Icons.calendar_view_week, color: Colors.white),
+            label: Text(_showWeekView ? 'Today' : '7-Day', style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Date and Location Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             child: Column(
               children: [
-                Text(
-                  _showWeekView ? 'Next 7 Days' : dateFormat.format(today),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
+                Text(_showWeekView ? 'Next 7 Days' : dateFormat.format(today),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.location_on,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
+                    Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 4),
-                    Text(
-                      AppConstants.defaultLocationName,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
-                          ),
-                    ),
+                    Text(AppConstants.defaultLocationName,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
                   ],
                 ),
               ],
             ),
           ),
-
-          // Column Headers for Today View
           if (!_showWeekView)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey[300]!),
-                ),
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey[300]!))),
               child: Row(
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      'Prayer',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
-                          ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Adhan',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
-                          ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Iqamah',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[600],
-                          ),
-                    ),
-                  ),
+                  const SizedBox(width: 44),
+                  Expanded(flex: 2, child: Text('Prayer', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[600], fontSize: 12))),
+                  Expanded(child: Text('Adhan', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[600], fontSize: 12))),
+                  Expanded(child: Text('Iqamah', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[600], fontSize: 12))),
                 ],
               ),
             ),
-
-          // Prayer Times List
-          Expanded(
-            child: _showWeekView ? _buildWeekView() : _buildTodayView(),
-          ),
-
-          // Calculation Method Footer
+          Expanded(child: _showWeekView ? _buildWeekView() : _buildTodayView()),
           Container(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -151,17 +132,11 @@ class _PrayerScreenState extends State<PrayerScreen> {
               children: [
                 Icon(Icons.info_outline, size: 16, color: Colors.grey[600]),
                 const SizedBox(width: 8),
-                Text(
-                  'Calculation: ${AppConstants.calculationMethod} (${AppConstants.asrCalculation})',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                ),
+                Text('${AppConstants.calculationMethod} (${AppConstants.asrCalculation})',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
               ],
             ),
           ),
-
-          // Donate Button
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: SizedBox(
@@ -170,9 +145,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 onPressed: _launchDonate,
                 icon: const Icon(Icons.volunteer_activism),
                 label: const Text('Support Qiam Institute'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
               ),
             ),
           ),
@@ -182,31 +155,103 @@ class _PrayerScreenState extends State<PrayerScreen> {
   }
 
   Widget _buildTodayView() {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _prayerTimes.length,
-      separatorBuilder: (context, index) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final prayer = _prayerTimes[index];
-        final iqamahOffset = AppConstants.iqamahOffsets[prayer.name];
-        String? iqamahTime;
-        if (iqamahOffset != null) {
-          final iqamah = prayer.time.add(Duration(minutes: iqamahOffset));
-          iqamahTime = DateFormat('h:mm a').format(iqamah);
-        }
-        return _PrayerTimeRow(
-          name: prayer.name,
-          time: prayer.formattedTime,
-          iqamahTime: iqamahTime,
-          isNext: prayer.isNext,
-        );
-      },
+    final prayers = _prayerService.todayPrayerTimes;
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      children: [
+        ..._prayerTimes.map((p) => _buildPrayerRow(p)),
+        const Divider(height: 1),
+        _buildSunRow('Sunset', prayers.maghrib, Icons.wb_twilight, Colors.deepOrange[300]!),
+      ],
+    );
+  }
+
+  Widget _buildPrayerRow(PrayerTimeInfo prayer) {
+    final iqamahOffset = AppConstants.iqamahOffsets[prayer.name];
+    String? iqamahTime;
+    if (iqamahOffset != null) {
+      iqamahTime = DateFormat('h:mm a').format(prayer.time.add(Duration(minutes: iqamahOffset)));
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: prayer.isNext ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08) : null,
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: _getPrayerIconColor(prayer.name).withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(_getPrayerIcon(prayer.name), color: _getPrayerIconColor(prayer.name), size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                Text(prayer.name, style: TextStyle(
+                  fontWeight: prayer.isNext ? FontWeight.bold : FontWeight.w500,
+                  color: prayer.isNext ? Theme.of(context).colorScheme.primary : null,
+                  fontSize: 16,
+                )),
+                if (prayer.isNext) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text('NEXT', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Expanded(
+            child: Text(prayer.formattedTime, textAlign: TextAlign.center, style: TextStyle(
+              fontWeight: prayer.isNext ? FontWeight.bold : FontWeight.w500,
+              color: prayer.isNext ? Theme.of(context).colorScheme.primary : null,
+            )),
+          ),
+          Expanded(
+            child: Text(iqamahTime ?? '-', textAlign: TextAlign.center, style: TextStyle(
+              fontWeight: prayer.isNext ? FontWeight.bold : FontWeight.w500,
+              color: prayer.isNext ? Theme.of(context).colorScheme.primary : Colors.grey[700],
+            )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSunRow(String name, DateTime time, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(flex: 2, child: Text(name, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16))),
+          Expanded(child: Text(DateFormat('h:mm a').format(time), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w500))),
+          const Expanded(child: SizedBox()),
+        ],
+      ),
     );
   }
 
   Widget _buildWeekView() {
     final weekTimes = _prayerService.getWeekPrayerTimes();
-
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -214,13 +259,11 @@ class _PrayerScreenState extends State<PrayerScreen> {
         columns: [
           const DataColumn(label: Text('Prayer')),
           ...weekTimes.map((day) => DataColumn(
-                label: Column(
-                  children: [
-                    Text(day.dayName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(day.shortDate, style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
-              )),
+            label: Column(children: [
+              Text(day.dayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(day.shortDate, style: const TextStyle(fontSize: 12)),
+            ]),
+          )),
         ],
         rows: [
           _buildWeekRow('Fajr', weekTimes.map((d) => PrayerService.formatTime(d.prayers.fajr)).toList()),
@@ -236,95 +279,12 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
   DataRow _buildWeekRow(String prayer, List<String> times) {
     return DataRow(cells: [
-      DataCell(Text(prayer, style: const TextStyle(fontWeight: FontWeight.w500))),
+      DataCell(Row(children: [
+        Icon(_getPrayerIcon(prayer), size: 16, color: _getPrayerIconColor(prayer)),
+        const SizedBox(width: 8),
+        Text(prayer, style: const TextStyle(fontWeight: FontWeight.w500)),
+      ])),
       ...times.map((t) => DataCell(Text(t))),
     ]);
-  }
-}
-
-class _PrayerTimeRow extends StatelessWidget {
-  final String name;
-  final String time;
-  final String? iqamahTime;
-  final bool isNext;
-
-  const _PrayerTimeRow({
-    required this.name,
-    required this.time,
-    this.iqamahTime,
-    required this.isNext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: isNext
-          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
-          : null,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Row(
-              children: [
-                Text(
-                  name,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
-                        color: isNext
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                      ),
-                ),
-                if (isNext) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'NEXT',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Expanded(
-            child: Text(
-              time,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
-                    color: isNext ? Theme.of(context).colorScheme.primary : null,
-                  ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              iqamahTime ?? '-',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
-                    color: isNext
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey[700],
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

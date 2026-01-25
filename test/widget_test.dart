@@ -10,11 +10,10 @@ void main() {
     // Verify bottom navigation bar exists
     expect(find.byType(NavigationBar), findsOneWidget);
 
-    // Verify navigation destinations exist
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    // Verify navigation destinations exist (Home, Timings)
+    expect(find.byType(NavigationDestination), findsNWidgets(2));
 
     // Verify home screen content
     expect(find.text('NEXT PRAYER'), findsOneWidget);
-    expect(find.text('Quick Links'), findsOneWidget);
   });
 }
