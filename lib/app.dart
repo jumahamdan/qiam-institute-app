@@ -275,16 +275,17 @@ class _MainNavigationState extends State<MainNavigation> {
         onDestinationSelected: _onItemTapped,
         destinations: [
           NavigationDestination(
-            icon: Image.asset(
-              'assets/images/logo_white.png',
-              height: 24,
-              color: Colors.grey[600],
-              errorBuilder: (_, __, ___) => Icon(Icons.home_outlined, color: Colors.grey[600]),
+            icon: Opacity(
+              opacity: 0.6,
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 24,
+                errorBuilder: (_, __, ___) => Icon(Icons.home_outlined, color: Colors.grey[600]),
+              ),
             ),
             selectedIcon: Image.asset(
-              'assets/images/logo_white.png',
+              'assets/images/logo.png',
               height: 24,
-              color: Theme.of(context).colorScheme.primary,
               errorBuilder: (_, __, ___) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
             ),
             label: 'Home',
