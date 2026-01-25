@@ -68,13 +68,24 @@ class Event {
     // Get image URL
     String? getImageUrl(Map<String, dynamic> json) {
       // Try different image fields
-      if (json['image'] != null) {
-        if (json['image'] is Map && json['image']['url'] != null) {
-          return json['image']['url'];
+      final image = json['image'];
+      if (image != null) {
+        // Image is an object with url field
+        if (image is Map<String, dynamic> && image['url'] != null) {
+          return image['url'].toString();
         }
-        if (json['image'] is String) {
-          return json['image'];
+        // Image might be a plain Map
+        if (image is Map && image['url'] != null) {
+          return image['url'].toString();
         }
+        // Image is a direct URL string
+        if (image is String && image.isNotEmpty) {
+          return image;
+        }
+      }
+      // Try featured_image field as fallback
+      if (json['featured_image'] != null && json['featured_image'] is String) {
+        return json['featured_image'];
       }
       return null;
     }

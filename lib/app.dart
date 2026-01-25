@@ -13,6 +13,7 @@ import 'screens/duaa/duaa_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/contact/contact_screen.dart';
+import 'screens/events/events_screen.dart';
 
 class QiamApp extends StatelessWidget {
   const QiamApp({super.key});
@@ -25,6 +26,7 @@ class QiamApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: const MainNavigation(),
       routes: {
+        '/events': (context) => const EventsScreen(),
         '/volunteer': (context) => const VolunteerScreen(),
         '/values': (context) => const ValuesScreen(),
         '/media': (context) => const MediaScreen(),

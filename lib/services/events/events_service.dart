@@ -11,10 +11,11 @@ class EventsService {
   /// [page] - Page number for pagination (default 1)
   Future<EventsResponse> getUpcomingEvents({int perPage = 10, int page = 1}) async {
     try {
-      // Calculate date range - from today to 1 year in the future
+      // Use wide date range to capture all events (past year to next year)
+      // This ensures we don't miss events due to timezone or date mismatches
       final now = DateTime.now();
-      final startDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      final endDate = '${now.year + 1}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final startDate = '${now.year - 1}-01-01';
+      final endDate = '${now.year + 1}-12-31';
 
       final uri = Uri.parse('$_baseUrl/events').replace(
         queryParameters: {
@@ -22,6 +23,7 @@ class EventsService {
           'page': page.toString(),
           'start_date': startDate,
           'end_date': endDate,
+          'order': 'desc',
         },
       );
 
@@ -79,10 +81,10 @@ class EventsService {
   /// Fetch events by category
   Future<EventsResponse> getEventsByCategory(String category, {int perPage = 10}) async {
     try {
-      // Calculate date range - from today to 1 year in the future
+      // Use wide date range to capture all events
       final now = DateTime.now();
-      final startDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      final endDate = '${now.year + 1}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final startDate = '${now.year - 1}-01-01';
+      final endDate = '${now.year + 1}-12-31';
 
       final uri = Uri.parse('$_baseUrl/events').replace(
         queryParameters: {

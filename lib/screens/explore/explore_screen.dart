@@ -44,7 +44,7 @@ class ExploreScreen extends StatelessWidget {
                     title: 'Events',
                     subtitle: 'Upcoming programs',
                     color: const Color(0xFF4CAF50),
-                    onTap: () => _launchUrl(AppConstants.eventsUrl),
+                    onTap: () => Navigator.pushNamed(context, '/events'),
                   ),
                   _ExploreCard(
                     icon: Icons.favorite,
