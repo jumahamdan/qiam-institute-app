@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Qiam Institute brand colors (placeholder - update when brand assets received)
-  static const Color primaryColor = Color(0xFF1B5E20); // Deep green (Islamic)
-  static const Color secondaryColor = Color(0xFFD4AF37); // Gold accent
+  // Qiam Institute brand colors (from official logo)
+  static const Color primaryColor = Color(0xFF9C27B0); // Purple/Magenta
+  static const Color secondaryColor = Color(0xFF1A237E); // Navy blue
+  static const Color accentColor = Color(0xFFAB47BC); // Lighter purple
   static const Color backgroundColor = Color(0xFFFAFAFA);
   static const Color surfaceColor = Colors.white;
   static const Color textPrimary = Color(0xFF212121);
