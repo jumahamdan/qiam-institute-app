@@ -61,7 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadEvents() async {
     try {
-      final response = await _eventsService.getUpcomingEvents(perPage: 3);
+      // Load more events, then take top 3 after sorting (same as events screen)
+      final response = await _eventsService.getUpcomingEvents(perPage: 20);
       if (mounted) {
         setState(() {
           _events = response.events;
