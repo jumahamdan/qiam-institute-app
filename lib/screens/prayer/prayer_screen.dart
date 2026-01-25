@@ -75,22 +75,6 @@ class _PrayerScreenState extends State<PrayerScreen> {
     super.dispose();
   }
 
-  void _showSettingsModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => _PrayerSettingsSheet(
-        prayerService: _prayerService,
-        onSettingsChanged: () {
-          setState(() => _updatePrayerData());
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
@@ -116,9 +100,9 @@ class _PrayerScreenState extends State<PrayerScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Header with location and settings
-              _buildHeader(dateFormat.format(today)),
-              const SizedBox(height: 20),
+              // Date and location info (compact, no title since it's in app bar)
+              _buildDateLocationRow(dateFormat.format(today)),
+              const SizedBox(height: 16),
 
               // Circular progress indicator for next prayer
               _buildNextPrayerCircle(),
@@ -141,45 +125,21 @@ class _PrayerScreenState extends State<PrayerScreen> {
     );
   }
 
-  Widget _buildHeader(String dateString) {
+  Widget _buildDateLocationRow(String dateString) {
     return Row(
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Prayer Times',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                dateString,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Text(
-                    _prayerService.locationName,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
+        const SizedBox(width: 6),
+        Text(
+          dateString,
+          style: TextStyle(color: Colors.grey[600], fontSize: 13),
         ),
-        IconButton(
-          onPressed: _showSettingsModal,
-          icon: const Icon(Icons.settings_outlined),
-          tooltip: 'Prayer Settings',
-          style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-          ),
+        const Spacer(),
+        Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
+        const SizedBox(width: 4),
+        Text(
+          _prayerService.locationName,
+          style: TextStyle(color: Colors.grey[500], fontSize: 13),
         ),
       ],
     );
@@ -194,7 +154,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final seconds = timeUntil.inSeconds.remainder(60);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -204,34 +164,59 @@ class _PrayerScreenState extends State<PrayerScreen> {
             const Color(0xFF16213e),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Text(
-            'Next Prayer: ${nextPrayer.name}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
+          // Left side: Prayer info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'NEXT PRAYER',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  nextPrayer.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'at ${nextPrayer.formattedTime}',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
 
-          // Circular progress
+          // Right side: Circular countdown
           SizedBox(
-            width: 180,
-            height: 180,
+            width: 100,
+            height: 100,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 // Background circle
                 SizedBox(
-                  width: 180,
-                  height: 180,
+                  width: 100,
+                  height: 100,
                   child: CircularProgressIndicator(
                     value: 1.0,
-                    strokeWidth: 8,
+                    strokeWidth: 6,
                     backgroundColor: Colors.transparent,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       Colors.white.withValues(alpha: 0.2),
@@ -240,11 +225,11 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 ),
                 // Progress circle
                 SizedBox(
-                  width: 180,
-                  height: 180,
+                  width: 100,
+                  height: 100,
                   child: CircularProgressIndicator(
                     value: progress,
-                    strokeWidth: 8,
+                    strokeWidth: 6,
                     backgroundColor: Colors.transparent,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       Theme.of(context).colorScheme.primary,
@@ -256,36 +241,26 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'Time',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
                     Text(
-                      '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                      '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 32,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'monospace',
                       ),
                     ),
-                    const Text(
-                      'Left',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    Text(
+                      ':${seconds.toString().padLeft(2, '0')}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 14,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ],
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Prayer time
-          Text(
-            '${nextPrayer.name} at ${nextPrayer.formattedTime}',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 14,
             ),
           ),
         ],

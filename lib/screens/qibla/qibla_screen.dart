@@ -53,10 +53,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Qibla Direction')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     final qiblaDirection = _qiblaData?.qiblaDirection ?? 0;
@@ -66,11 +63,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
     final distance = _qiblaService.getDistanceToMakkah();
     final cardinalDirection = _qiblaService.qiblaCardinalDirection;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Qibla Direction'),
-      ),
-      body: Center(
+    return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -225,7 +218,6 @@ class _QiblaScreenState extends State<QiblaScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 }

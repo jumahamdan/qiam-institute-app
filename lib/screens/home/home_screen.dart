@@ -8,7 +8,9 @@ import '../../services/events/events_service.dart';
 import '../../models/event.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final void Function(int screenIndex, String title)? onNavigate;
+
+  const HomeScreen({super.key, this.onNavigate});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -279,7 +281,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
             ),
             TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/events'),
+              onPressed: () {
+                if (widget.onNavigate != null) {
+                  widget.onNavigate!(10, 'Events');
+                } else {
+                  Navigator.pushNamed(context, '/events');
+                }
+              },
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 minimumSize: const Size(0, 36),

@@ -28,9 +28,8 @@ class ValuesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Our Values')),
-      body: CustomScrollView(
+    // Return just the body - MainNavigation provides the Scaffold and AppBar
+    return CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Container(
@@ -77,7 +76,6 @@ class ValuesScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
     );
   }
 }

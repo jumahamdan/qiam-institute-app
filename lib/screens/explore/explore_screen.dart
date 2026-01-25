@@ -3,12 +3,22 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/constants.dart';
 
 class ExploreScreen extends StatelessWidget {
-  const ExploreScreen({super.key});
+  final void Function(int screenIndex, String title)? onNavigate;
+
+  const ExploreScreen({super.key, this.onNavigate});
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _navigate(BuildContext context, int screenIndex, String title, String route) {
+    if (onNavigate != null) {
+      onNavigate!(screenIndex, title);
+    } else {
+      Navigator.pushNamed(context, route);
     }
   }
 
@@ -44,28 +54,28 @@ class ExploreScreen extends StatelessWidget {
                     title: 'Events',
                     subtitle: 'Upcoming programs',
                     color: const Color(0xFF4CAF50),
-                    onTap: () => Navigator.pushNamed(context, '/events'),
+                    onTap: () => _navigate(context, 10, 'Events', '/events'),
                   ),
                   _ExploreCard(
                     icon: Icons.favorite,
                     title: 'Our Values',
                     subtitle: 'What we stand for',
                     color: const Color(0xFFE91E63),
-                    onTap: () => Navigator.pushNamed(context, '/values'),
+                    onTap: () => _navigate(context, 11, 'Our Values', '/values'),
                   ),
                   _ExploreCard(
                     icon: Icons.people,
                     title: 'Volunteer',
                     subtitle: 'Join our team',
                     color: const Color(0xFF2196F3),
-                    onTap: () => Navigator.pushNamed(context, '/volunteer'),
+                    onTap: () => _navigate(context, 13, 'Volunteer', '/volunteer'),
                   ),
                   _ExploreCard(
                     icon: Icons.play_circle_filled,
                     title: 'Media',
                     subtitle: 'Videos & content',
                     color: const Color(0xFFFF5722),
-                    onTap: () => Navigator.pushNamed(context, '/media'),
+                    onTap: () => _navigate(context, 12, 'Media', '/media'),
                   ),
                 ],
               ),

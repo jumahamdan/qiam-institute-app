@@ -14,11 +14,7 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('About Us'),
-      ),
-      body: SingleChildScrollView(
+    return SingleChildScrollView(
         child: Column(
           children: [
             // Header with gradient background
@@ -274,7 +270,6 @@ class AboutScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

@@ -20,11 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
-      body: ListView(
+    return ListView(
         children: [
           // Prayer Calculation Section
           _buildSectionHeader('Prayer Calculation'),
@@ -102,7 +98,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 24),
         ],
-      ),
     );
   }
 

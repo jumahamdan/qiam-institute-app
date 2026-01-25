@@ -151,7 +151,39 @@ class EventsResponse {
       }
     }
 
-    // Sort events by start date (newest first)
+    // Filter to only include events that are today or in the future
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final upcomingEvents = eventsList.where((e) =>
+      e.startDate.isAfter(today) ||
+      (e.startDate.year == today.year && e.startDate.month == today.month && e.startDate.day == today.day)
+    ).toList();
+
+    // Sort by soonest first
+    upcomingEvents.sort((a, b) => a.startDate.compareTo(b.startDate));
+
+    return EventsResponse(
+      events: upcomingEvents,
+      totalEvents: json['total'] ?? upcomingEvents.length,
+      totalPages: json['total_pages'] ?? 1,
+    );
+  }
+
+  /// Fetch all events (including past) for a full calendar view
+  factory EventsResponse.allFromJson(Map<String, dynamic> json) {
+    final eventsList = <Event>[];
+
+    if (json['events'] != null && json['events'] is List) {
+      for (final eventJson in json['events']) {
+        try {
+          eventsList.add(Event.fromJson(eventJson));
+        } catch (e) {
+          // Skip invalid events
+        }
+      }
+    }
+
+    // Sort by date (newest first for all events view)
     eventsList.sort((a, b) => b.startDate.compareTo(a.startDate));
 
     return EventsResponse(

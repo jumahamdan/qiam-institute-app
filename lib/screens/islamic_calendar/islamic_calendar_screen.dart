@@ -64,11 +64,7 @@ class IslamicCalendarScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Islamic Calendar'),
-      ),
-      body: ListView(
+    return ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Header
@@ -118,7 +114,6 @@ class IslamicCalendarScreen extends StatelessWidget {
                 icon: day['icon'],
               )),
         ],
-      ),
     );
   }
 }

@@ -78,64 +78,59 @@ class DuaaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Duaa'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.nights_stay, size: 40, color: Colors.white),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Daily Supplications',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Essential duas for daily life',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Header
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
               ],
             ),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 16),
+          child: const Row(
+            children: [
+              Icon(Icons.nights_stay, size: 40, color: Colors.white),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Daily Supplications',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Essential duas for daily life',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
 
-          // Duaas List
-          ..._duaas.map((duaa) => _DuaaCard(
-                title: duaa['title']!,
-                arabic: duaa['arabic']!,
-                transliteration: duaa['transliteration']!,
-                translation: duaa['translation']!,
-                benefit: duaa['benefit']!,
-              )),
-        ],
-      ),
+        // Duaas List
+        ..._duaas.map((duaa) => _DuaaCard(
+              title: duaa['title']!,
+              arabic: duaa['arabic']!,
+              transliteration: duaa['transliteration']!,
+              translation: duaa['translation']!,
+              benefit: duaa['benefit']!,
+            )),
+      ],
     );
   }
 }

@@ -49,22 +49,35 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  // -1 = Home (logo tapped), 0 = Explore, 1 = Timings, 2 = More (bottom sheet)
-  int _selectedIndex = -1; // Start on Home
+  // Main tabs: 0 = Home, 1 = Explore, 2 = Prayers, 3 = More (bottom sheet)
+  // Secondary screens (keep bottom nav visible):
+  // 10 = Events, 11 = Values, 12 = Media, 13 = Volunteer, 14 = Qibla
+  // 20 = Islamic Calendar, 21 = Duaa, 22 = About, 23 = Contact, 24 = Settings
+  int _selectedIndex = 0;
+  String? _currentScreenTitle;
+
+  // Get the bottom nav index (0-3) for highlighting
+  int get _bottomNavIndex {
+    if (_selectedIndex >= 20) return 3; // More menu items
+    if (_selectedIndex >= 10) return 1; // Explore sub-screens
+    return _selectedIndex;
+  }
 
   void _onItemTapped(int index) {
-    if (index == 2) {
+    if (index == 3) {
       _showMoreMenu();
     } else {
       setState(() {
         _selectedIndex = index;
+        _currentScreenTitle = null;
       });
     }
   }
 
-  void _goHome() {
+  void _navigateTo(int screenIndex, String title) {
     setState(() {
-      _selectedIndex = -1;
+      _selectedIndex = screenIndex;
+      _currentScreenTitle = title;
     });
   }
 
@@ -94,7 +107,7 @@ class _MainNavigationState extends State<MainNavigation> {
               subtitle: 'Important Islamic dates',
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/islamic-calendar');
+                _navigateTo(20, 'Islamic Calendar');
               },
             ),
             _MoreMenuItem(
@@ -103,7 +116,7 @@ class _MainNavigationState extends State<MainNavigation> {
               subtitle: 'Supplications for daily life',
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/duaa');
+                _navigateTo(21, 'Daily Duaa');
               },
             ),
             _MoreMenuItem(
@@ -112,7 +125,7 @@ class _MainNavigationState extends State<MainNavigation> {
               subtitle: 'Learn about Qiam Institute',
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/about');
+                _navigateTo(22, 'About Us');
               },
             ),
             _MoreMenuItem(
@@ -121,7 +134,7 @@ class _MainNavigationState extends State<MainNavigation> {
               subtitle: 'Get in touch with us',
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/contact');
+                _navigateTo(23, 'Contact Us');
               },
             ),
             _MoreMenuItem(
@@ -130,7 +143,7 @@ class _MainNavigationState extends State<MainNavigation> {
               subtitle: 'Prayer times and app settings',
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, '/settings');
+                _navigateTo(24, 'Settings');
               },
             ),
             const SizedBox(height: 10),
@@ -142,55 +155,139 @@ class _MainNavigationState extends State<MainNavigation> {
 
   Widget _buildBody() {
     switch (_selectedIndex) {
+      // Main tabs
       case 0:
-        return const ExploreScreen();
+        return HomeScreen(onNavigate: _navigateTo);
       case 1:
+        return ExploreScreen(onNavigate: _navigateTo);
+      case 2:
         return const PrayerScreen();
+      // Explore sub-screens
+      case 10:
+        return const EventsScreen();
+      case 11:
+        return const ValuesScreen();
+      case 12:
+        return const MediaScreen();
+      case 13:
+        return const VolunteerScreen();
+      case 14:
+        return const QiblaScreen();
+      // More menu screens
+      case 20:
+        return const IslamicCalendarScreen();
+      case 21:
+        return const DuaaScreen();
+      case 22:
+        return const AboutScreen();
+      case 23:
+        return const ContactScreen();
+      case 24:
+        return const SettingsScreen();
       default:
         return const HomeScreen();
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    // Secondary screen - show back button and title
+    if (_selectedIndex >= 10) {
+      return AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            setState(() {
+              // Go back to parent tab
+              _selectedIndex = _selectedIndex >= 20 ? 0 : 1; // More items go to Home, Explore items go to Explore
+              _currentScreenTitle = null;
+            });
+          },
+        ),
         centerTitle: true,
-        automaticallyImplyLeading: false,
-        title: GestureDetector(
-          onTap: _goHome,
-          child: Image.asset(
-            'assets/images/logo_white.png',
-            height: 40,
-            errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 32),
+        title: Text(
+          _currentScreenTitle ?? '',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      );
+    }
+
+    // Prayer screen gets custom app bar
+    if (_selectedIndex == 2) {
+      return AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => setState(() => _selectedIndex = 0),
+            child: Image.asset(
+              'assets/images/logo_white.png',
+              height: 32,
+              errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 24),
+            ),
           ),
+        ),
+        centerTitle: true,
+        title: const Text(
+          'Prayer Times',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.directions),
-            tooltip: 'Get Directions',
-            onPressed: () async {
-              final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517');
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            },
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Prayer Settings',
+            onPressed: () => _navigateTo(24, 'Settings'),
           ),
         ],
+      );
+    }
+
+    // Default app bar for Home and Explore
+    return AppBar(
+      centerTitle: true,
+      automaticallyImplyLeading: false,
+      title: GestureDetector(
+        onTap: () => setState(() => _selectedIndex = 0),
+        child: Image.asset(
+          'assets/images/logo_white.png',
+          height: 40,
+          errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 32),
+        ),
       ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.directions),
+          tooltip: 'Get Directions',
+          onPressed: () async {
+            final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517');
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _buildAppBar(context),
       body: _buildBody(),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex >= 0 ? _selectedIndex : 0,
-        indicatorColor: _selectedIndex < 0 ? Colors.transparent : null,
+        selectedIndex: _bottomNavIndex,
         onDestinationSelected: _onItemTapped,
         destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
           NavigationDestination(
             icon: Icon(Icons.explore_outlined),
             selectedIcon: Icon(Icons.explore),
             label: 'Explore',
           ),
           NavigationDestination(
-            icon: Icon(Icons.access_time_outlined),
-            selectedIcon: Icon(Icons.access_time_filled),
-            label: 'Timings',
+            icon: Icon(Icons.mosque_outlined),
+            selectedIcon: Icon(Icons.mosque),
+            label: 'Prayers',
           ),
           NavigationDestination(
             icon: Icon(Icons.more_horiz),

@@ -14,11 +14,8 @@ class MediaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Media'),
-      ),
-      body: SingleChildScrollView(
+    // Return just the body - MainNavigation provides the Scaffold and AppBar
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -153,7 +150,6 @@ class MediaScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

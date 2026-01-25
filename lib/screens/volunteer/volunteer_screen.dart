@@ -192,11 +192,8 @@ Sent from Qiam Institute App
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Volunteer'),
-      ),
-      body: SingleChildScrollView(
+    // Return just the body - MainNavigation provides the Scaffold and AppBar
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
@@ -550,7 +547,6 @@ Sent from Qiam Institute App
             ],
           ),
         ),
-      ),
     );
   }
 

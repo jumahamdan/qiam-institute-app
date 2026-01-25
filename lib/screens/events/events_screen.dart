@@ -64,19 +64,8 @@ class _EventsScreenState extends State<EventsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Events'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.open_in_new),
-            tooltip: 'View on Website',
-            onPressed: _launchEventsPage,
-          ),
-        ],
-      ),
-      body: _buildBody(),
-    );
+    // Return just the body - MainNavigation provides the Scaffold and AppBar
+    return _buildBody();
   }
 
   Widget _buildBody() {
