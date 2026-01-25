@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import '../../services/qibla/qibla_service.dart';
 
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({super.key});
@@ -9,13 +10,62 @@ class QiblaScreen extends StatefulWidget {
 }
 
 class _QiblaScreenState extends State<QiblaScreen> {
-  // Placeholder values - will be replaced with actual compass and qibla calculations
-  final double _qiblaDirection = 48.5; // degrees from North
-  final double _compassHeading = 0.0;
-  final bool _hasCompass = true;
+  final QiblaService _qiblaService = QiblaService();
+  QiblaData? _qiblaData;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initQibla();
+  }
+
+  Future<void> _initQibla() async {
+    await _qiblaService.initialize();
+    _qiblaService.startListening();
+    _qiblaService.compassStream.listen((data) {
+      if (mounted) {
+        setState(() {
+          _qiblaData = data;
+          _isInitialized = true;
+        });
+      }
+    });
+
+    // Set initial data even if no compass stream
+    setState(() {
+      _qiblaData = QiblaData(
+        qiblaDirection: _qiblaService.qiblaDirection,
+        compassHeading: 0,
+        accuracy: null,
+        hasCompass: _qiblaService.hasCompass,
+      );
+      _isInitialized = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _qiblaService.stopListening();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Qibla Direction')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final qiblaDirection = _qiblaData?.qiblaDirection ?? 0;
+    final compassHeading = _qiblaData?.compassHeading ?? 0;
+    final hasCompass = _qiblaData?.hasCompass ?? false;
+    final needsCalibration = _qiblaData?.needsCalibration ?? false;
+    final distance = _qiblaService.getDistanceToMakkah();
+    final cardinalDirection = _qiblaService.qiblaCardinalDirection;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Qibla Direction'),
@@ -40,15 +90,23 @@ class _QiblaScreenState extends State<QiblaScreen> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Compass directions
-                    const Positioned(top: 16, child: Text('N', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                    const Positioned(bottom: 16, child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                    const Positioned(left: 16, child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-                    const Positioned(right: 16, child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
-
-                    // Qibla indicator (rotates based on heading)
+                    // Compass rose (rotates with device)
                     Transform.rotate(
-                      angle: (_qiblaDirection - _compassHeading) * (math.pi / 180),
+                      angle: -compassHeading * (math.pi / 180),
+                      child: const Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned(top: 16, child: Text('N', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                          Positioned(bottom: 16, child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                          Positioned(left: 16, child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                          Positioned(right: 16, child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))),
+                        ],
+                      ),
+                    ),
+
+                    // Qibla indicator (points to Qibla)
+                    Transform.rotate(
+                      angle: (qiblaDirection - compassHeading) * (math.pi / 180),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -76,22 +134,41 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
               // Direction Info
               Text(
-                'Direction: ${_qiblaDirection.toStringAsFixed(1)}° NE',
+                'Direction: ${qiblaDirection.toStringAsFixed(1)}° $cardinalDirection',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Distance to Makkah: ~10,245 km',
+                'Distance to Makkah: ${distance.toStringAsFixed(0)} km',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: Colors.grey[600],
                     ),
               ),
               const SizedBox(height: 24),
 
-              // Calibration Warning
-              if (_hasCompass)
+              // Status Cards
+              if (!hasCompass)
+                Card(
+                  color: Colors.red[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning, color: Colors.red[700]),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Compass sensor not available. Showing direction from North.',
+                            style: TextStyle(color: Colors.red[700]),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (needsCalibration)
                 Card(
                   color: Colors.amber[50],
                   child: Padding(
@@ -128,17 +205,17 @@ class _QiblaScreenState extends State<QiblaScreen> {
                 )
               else
                 Card(
-                  color: Colors.red[50],
+                  color: Colors.green[50],
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Icon(Icons.warning, color: Colors.red[700]),
+                        Icon(Icons.check_circle, color: Colors.green[700]),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Compass sensor not available on this device',
-                            style: TextStyle(color: Colors.red[700]),
+                            'Compass calibrated. Point your phone towards the mosque icon.',
+                            style: TextStyle(color: Colors.green[700]),
                           ),
                         ),
                       ],

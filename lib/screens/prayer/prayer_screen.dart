@@ -1,24 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../config/constants.dart';
+import '../../services/prayer/prayer_service.dart';
 
-class PrayerScreen extends StatelessWidget {
+class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
+
+  @override
+  State<PrayerScreen> createState() => _PrayerScreenState();
+}
+
+class _PrayerScreenState extends State<PrayerScreen> {
+  final PrayerService _prayerService = PrayerService();
+  late List<PrayerTimeInfo> _prayerTimes;
+  bool _showWeekView = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _prayerService.initialize();
+    _prayerTimes = _prayerService.getTodayPrayerList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
     final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
-
-    // Placeholder prayer times - will be replaced with adhan calculations
-    final prayerTimes = [
-      ('Fajr', '5:47 AM', false),
-      ('Sunrise', '7:08 AM', false),
-      ('Dhuhr', '12:45 PM', true), // Next prayer
-      ('Asr', '3:32 PM', false),
-      ('Maghrib', '5:23 PM', false),
-      ('Isha', '6:45 PM', false),
-    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -26,12 +33,17 @@ class PrayerScreen extends StatelessWidget {
         actions: [
           TextButton.icon(
             onPressed: () {
-              // TODO: Navigate to 7-day view
+              setState(() {
+                _showWeekView = !_showWeekView;
+              });
             },
-            icon: const Icon(Icons.calendar_view_week, color: Colors.white),
-            label: const Text(
-              '7-Day',
-              style: TextStyle(color: Colors.white),
+            icon: Icon(
+              _showWeekView ? Icons.today : Icons.calendar_view_week,
+              color: Colors.white,
+            ),
+            label: Text(
+              _showWeekView ? 'Today' : '7-Day',
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ],
@@ -46,7 +58,7 @@ class PrayerScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  dateFormat.format(today),
+                  _showWeekView ? 'Next 7 Days' : dateFormat.format(today),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -75,19 +87,7 @@ class PrayerScreen extends StatelessWidget {
 
           // Prayer Times List
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: prayerTimes.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final (name, time, isNext) = prayerTimes[index];
-                return _PrayerTimeRow(
-                  name: name,
-                  time: time,
-                  isNext: isNext,
-                );
-              },
-            ),
+            child: _showWeekView ? _buildWeekView() : _buildTodayView(),
           ),
 
           // Calculation Method Footer
@@ -110,6 +110,59 @@ class PrayerScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildTodayView() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: _prayerTimes.length,
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final prayer = _prayerTimes[index];
+        return _PrayerTimeRow(
+          name: prayer.name,
+          time: prayer.formattedTime,
+          isNext: prayer.isNext,
+        );
+      },
+    );
+  }
+
+  Widget _buildWeekView() {
+    final weekTimes = _prayerService.getWeekPrayerTimes();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columnSpacing: 16,
+        columns: [
+          const DataColumn(label: Text('Prayer')),
+          ...weekTimes.map((day) => DataColumn(
+                label: Column(
+                  children: [
+                    Text(day.dayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(day.shortDate, style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
+              )),
+        ],
+        rows: [
+          _buildWeekRow('Fajr', weekTimes.map((d) => PrayerService.formatTime(d.prayers.fajr)).toList()),
+          _buildWeekRow('Sunrise', weekTimes.map((d) => PrayerService.formatTime(d.prayers.sunrise)).toList()),
+          _buildWeekRow('Dhuhr', weekTimes.map((d) => PrayerService.formatTime(d.prayers.dhuhr)).toList()),
+          _buildWeekRow('Asr', weekTimes.map((d) => PrayerService.formatTime(d.prayers.asr)).toList()),
+          _buildWeekRow('Maghrib', weekTimes.map((d) => PrayerService.formatTime(d.prayers.maghrib)).toList()),
+          _buildWeekRow('Isha', weekTimes.map((d) => PrayerService.formatTime(d.prayers.isha)).toList()),
+        ],
+      ),
+    );
+  }
+
+  DataRow _buildWeekRow(String prayer, List<String> times) {
+    return DataRow(cells: [
+      DataCell(Text(prayer, style: const TextStyle(fontWeight: FontWeight.w500))),
+      ...times.map((t) => DataCell(Text(t))),
+    ]);
   }
 }
 
