@@ -112,13 +112,13 @@ jobs:
             echo "📦 Build-only update (no version change) - testers will NOT be notified"
           fi
 
-      - name: Upload to Firebase (notify testers)
+      - name: Upload to Firebase (version release - notify all)
         if: steps.info.outputs.version_changed == 'true'
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: qiam-testers
+          groups: qiam-developers,qiam-testers
           file: app-release.apk
           releaseNotes: |
             🕌 Qiam Institute App
@@ -135,15 +135,16 @@ jobs:
             ━━━━━━━━━━━━━━━━━━━━━━
             📱 Qiam Institute - Values Light The Way
 
-      - name: Upload to Firebase (silent)
+      - name: Upload to Firebase (dev build - notify developers only)
         if: steps.info.outputs.version_changed != 'true'
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: qiam-developers
           file: app-release.apk
           releaseNotes: |
-            🕌 Qiam Institute App (Internal Build)
+            🕌 Qiam Institute App (Dev Build)
             ━━━━━━━━━━━━━━━━━━━━━━
             Version: ${{ steps.info.outputs.version }}
             Build: ${{ github.run_number }}
