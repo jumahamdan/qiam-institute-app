@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/events/events_service.dart';
@@ -21,26 +20,22 @@ class _HomeScreenState extends State<HomeScreen> {
   final EventsService _eventsService = EventsService();
   NextPrayerInfo? _nextPrayer;
   Timer? _timer;
-  late YoutubePlayerController _youtubeController;
   bool _isLoading = true;
   List<Event> _events = [];
   bool _eventsLoading = true;
+
+  // Core values data (top 3 to display)
+  static const List<Map<String, String>> _coreValues = [
+    {'name': 'Humility', 'arabic': 'تواضع', 'description': 'Recognizing one\'s smallness before Allah, avoiding pride always.', 'image': 'Tawado3.png'},
+    {'name': 'Justice', 'arabic': 'عدل', 'description': 'Upholding fairness, equity, and truth in all dealings—personal and societal.', 'image': '3adl.png'},
+    {'name': 'Compassion', 'arabic': 'رحمة', 'description': 'Emulating the mercy of Allah in our interactions with all of creation.', 'image': 'Rahma.png'},
+  ];
 
   @override
   void initState() {
     super.initState();
     _initServices();
     _loadEvents();
-
-    final videoId = YoutubePlayer.convertUrlToId(AppConstants.introVideoUrl) ?? '9qcNe2NSThE';
-    _youtubeController = YoutubePlayerController(
-      initialVideoId: videoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: false,
-        mute: false,
-        showLiveFullscreenButton: false,
-      ),
-    );
   }
 
   Future<void> _initServices() async {
@@ -79,7 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _youtubeController.dispose();
     super.dispose();
   }
 
@@ -102,11 +96,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Next Prayer Card - Hero section
-                  _buildPrayerCard(),
+                  // Values Section - Hero section
+                  _buildValuesSection(),
                   const SizedBox(height: 16),
 
-                  // Donate Button - Separate from prayer
+                  // Donate Button
                   SizedBox(
                     height: 48,
                     child: ElevatedButton.icon(
@@ -120,11 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Video Player
-                  _buildVideoCard(),
-                  const SizedBox(height: 24),
+                  // Next Prayer Card - Condensed
+                  _buildPrayerCard(),
+                  const SizedBox(height: 20),
 
                   // Upcoming Events Section
                   _buildEventsSection(),
@@ -224,46 +218,63 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildVideoCard() {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          YoutubePlayer(
-            controller: _youtubeController,
-            showVideoProgressIndicator: true,
-            progressIndicatorColor: Theme.of(context).colorScheme.primary,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'The seasons change; our values don\'t.',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Qiam Institute',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
+  Widget _buildValuesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Our Values',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
-                ),
-                Icon(Icons.play_circle_outline, color: Colors.grey[400]),
-              ],
             ),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () {
+                if (widget.onNavigate != null) {
+                  widget.onNavigate!(11, 'Our Values');
+                }
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 36),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('See All'),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward, size: 16),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: _coreValues.map((value) {
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: value != _coreValues.last ? 8 : 0,
+                ),
+                child: _ValueMiniCard(
+                  name: value['name']!,
+                  arabic: value['arabic']!,
+                  imagePath: 'assets/images/values/${value['image']}',
+                  onTap: () {
+                    if (widget.onNavigate != null) {
+                      widget.onNavigate!(11, 'Our Values');
+                    }
+                  },
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -545,5 +556,64 @@ class _EventMiniCard extends StatelessWidget {
   String _getMonthAbbr(int month) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[month - 1];
+  }
+}
+
+class _ValueMiniCard extends StatelessWidget {
+  final String name;
+  final String arabic;
+  final String imagePath;
+  final VoidCallback onTap;
+
+  const _ValueMiniCard({
+    required this.name,
+    required this.arabic,
+    required this.imagePath,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                imagePath,
+                height: 40,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.star,
+                  size: 32,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                arabic,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -1,11 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../config/constants.dart';
 
-class ExploreScreen extends StatelessWidget {
+class ExploreScreen extends StatefulWidget {
   final void Function(int screenIndex, String title)? onNavigate;
 
   const ExploreScreen({super.key, this.onNavigate});
+
+  @override
+  State<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends State<ExploreScreen> {
+  late YoutubePlayerController _youtubeController;
+
+  @override
+  void initState() {
+    super.initState();
+    final videoId = YoutubePlayer.convertUrlToId(AppConstants.introVideoUrl) ?? '9qcNe2NSThE';
+    _youtubeController = YoutubePlayerController(
+      initialVideoId: videoId,
+      flags: const YoutubePlayerFlags(
+        autoPlay: true,
+        mute: false,
+        showLiveFullscreenButton: false,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _youtubeController.dispose();
+    super.dispose();
+  }
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -15,8 +43,8 @@ class ExploreScreen extends StatelessWidget {
   }
 
   void _navigate(BuildContext context, int screenIndex, String title, String route) {
-    if (onNavigate != null) {
-      onNavigate!(screenIndex, title);
+    if (widget.onNavigate != null) {
+      widget.onNavigate!(screenIndex, title);
     } else {
       Navigator.pushNamed(context, route);
     }
@@ -25,7 +53,7 @@ class ExploreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,46 +69,13 @@ class ExploreScreen extends StatelessWidget {
               'Discover programs, events, and ways to get involved',
               style: TextStyle(color: Colors.grey[600]),
             ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.1,
-                children: [
-                  _ExploreCard(
-                    icon: Icons.event,
-                    title: 'Events',
-                    subtitle: 'Upcoming programs',
-                    color: const Color(0xFF4CAF50),
-                    onTap: () => _navigate(context, 10, 'Events', '/events'),
-                  ),
-                  _ExploreCard(
-                    icon: Icons.favorite,
-                    title: 'Our Values',
-                    subtitle: 'What we stand for',
-                    color: const Color(0xFFE91E63),
-                    onTap: () => _navigate(context, 11, 'Our Values', '/values'),
-                  ),
-                  _ExploreCard(
-                    icon: Icons.people,
-                    title: 'Volunteer',
-                    subtitle: 'Join our team',
-                    color: const Color(0xFF2196F3),
-                    onTap: () => _navigate(context, 13, 'Volunteer', '/volunteer'),
-                  ),
-                  _ExploreCard(
-                    icon: Icons.play_circle_filled,
-                    title: 'Media',
-                    subtitle: 'Videos & content',
-                    color: const Color(0xFFFF5722),
-                    onTap: () => _navigate(context, 12, 'Media', '/media'),
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 16),
+
+            // Video Player at top
+            _buildVideoCard(context),
+            const SizedBox(height: 12),
+
+            // Support Qiam button under video
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -92,8 +87,106 @@ class ExploreScreen extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 20),
+
+            // Grid of explore cards
+            GridView.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _ExploreCard(
+                  icon: Icons.event,
+                  title: 'Events',
+                  subtitle: 'Upcoming programs',
+                  color: const Color(0xFF4CAF50),
+                  onTap: () => _navigate(context, 10, 'Events', '/events'),
+                ),
+                _ExploreCard(
+                  icon: Icons.favorite,
+                  title: 'Our Values',
+                  subtitle: 'What we stand for',
+                  color: const Color(0xFFE91E63),
+                  onTap: () => _navigate(context, 11, 'Our Values', '/values'),
+                ),
+                _ExploreCard(
+                  icon: Icons.people,
+                  title: 'Volunteer',
+                  subtitle: 'Join our team',
+                  color: const Color(0xFF2196F3),
+                  onTap: () => _navigate(context, 13, 'Volunteer', '/volunteer'),
+                ),
+                _ExploreCard(
+                  icon: Icons.play_circle_filled,
+                  title: 'Media',
+                  subtitle: 'Videos & content',
+                  color: const Color(0xFFFF5722),
+                  onTap: () => _navigate(context, 12, 'Media', '/media'),
+                ),
+                _ExploreCard(
+                  icon: Icons.nights_stay,
+                  title: 'Daily Duaa',
+                  subtitle: 'Supplications',
+                  color: const Color(0xFF9C27B0),
+                  onTap: () => _navigate(context, 15, 'Daily Duaa', '/duaa'),
+                ),
+                _ExploreCard(
+                  icon: Icons.calendar_month,
+                  title: 'Islamic Calendar',
+                  subtitle: 'Important dates',
+                  color: const Color(0xFF795548),
+                  onTap: () => _navigate(context, 16, 'Islamic Calendar', '/islamic-calendar'),
+                ),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildVideoCard(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          YoutubePlayer(
+            controller: _youtubeController,
+            showVideoProgressIndicator: true,
+            progressIndicatorColor: Theme.of(context).colorScheme.primary,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'The seasons change; our values don\'t.',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Qiam Institute',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.play_circle_outline, color: Colors.grey[400]),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
