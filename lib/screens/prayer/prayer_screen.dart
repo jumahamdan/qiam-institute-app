@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 
@@ -20,6 +21,13 @@ class _PrayerScreenState extends State<PrayerScreen> {
     super.initState();
     _prayerService.initialize();
     _prayerTimes = _prayerService.getTodayPrayerList();
+  }
+
+  Future<void> _launchDonate() async {
+    final uri = Uri.parse(AppConstants.donateUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -85,6 +93,51 @@ class _PrayerScreenState extends State<PrayerScreen> {
             ),
           ),
 
+          // Column Headers for Today View
+          if (!_showWeekView)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey[300]!),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Prayer',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Adhan',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      'Iqamah',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Prayer Times List
           Expanded(
             child: _showWeekView ? _buildWeekView() : _buildTodayView(),
@@ -92,7 +145,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
           // Calculation Method Footer
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -107,6 +160,22 @@ class _PrayerScreenState extends State<PrayerScreen> {
               ],
             ),
           ),
+
+          // Donate Button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _launchDonate,
+                icon: const Icon(Icons.volunteer_activism),
+                label: const Text('Support Qiam Institute'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -119,9 +188,16 @@ class _PrayerScreenState extends State<PrayerScreen> {
       separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final prayer = _prayerTimes[index];
+        final iqamahOffset = AppConstants.iqamahOffsets[prayer.name];
+        String? iqamahTime;
+        if (iqamahOffset != null) {
+          final iqamah = prayer.time.add(Duration(minutes: iqamahOffset));
+          iqamahTime = DateFormat('h:mm a').format(iqamah);
+        }
         return _PrayerTimeRow(
           name: prayer.name,
           time: prayer.formattedTime,
+          iqamahTime: iqamahTime,
           isNext: prayer.isNext,
         );
       },
@@ -169,11 +245,13 @@ class _PrayerScreenState extends State<PrayerScreen> {
 class _PrayerTimeRow extends StatelessWidget {
   final String name;
   final String time;
+  final String? iqamahTime;
   final bool isNext;
 
   const _PrayerTimeRow({
     required this.name,
     required this.time,
+    this.iqamahTime,
     required this.isNext,
   });
 
@@ -183,51 +261,67 @@ class _PrayerTimeRow extends StatelessWidget {
       color: isNext
           ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
           : null,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Text(
-                name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
-                      color: isNext
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
-              ),
-              if (isNext) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'NEXT',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                Text(
+                  name,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
+                        color: isNext
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
                 ),
+                if (isNext) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'NEXT',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-          Text(
-            time,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
-                  color:
-                      isNext ? Theme.of(context).colorScheme.primary : null,
-                ),
+          Expanded(
+            child: Text(
+              time,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
+                    color: isNext ? Theme.of(context).colorScheme.primary : null,
+                  ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              iqamahTime ?? '-',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: isNext ? FontWeight.bold : FontWeight.normal,
+                    color: isNext
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey[700],
+                  ),
+            ),
           ),
         ],
       ),

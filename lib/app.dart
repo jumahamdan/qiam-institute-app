@@ -4,6 +4,9 @@ import 'screens/home/home_screen.dart';
 import 'screens/events/events_screen.dart';
 import 'screens/prayer/prayer_screen.dart';
 import 'screens/qibla/qibla_screen.dart';
+import 'screens/volunteer/volunteer_screen.dart';
+import 'screens/values/values_screen.dart';
+import 'screens/media/media_screen.dart';
 
 class QiamApp extends StatelessWidget {
   const QiamApp({super.key});
@@ -15,6 +18,11 @@ class QiamApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
       home: const MainNavigation(),
+      routes: {
+        '/volunteer': (context) => const VolunteerScreen(),
+        '/values': (context) => const ValuesScreen(),
+        '/media': (context) => const MediaScreen(),
+      },
     );
   }
 }
