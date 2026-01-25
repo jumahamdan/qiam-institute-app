@@ -201,7 +201,7 @@ class _MainNavigationState extends State<MainNavigation> {
           child: GestureDetector(
             onTap: () => setState(() => _selectedIndex = 0),
             child: Image.asset(
-              'assets/images/logo_white.png',
+              'assets/images/logo.png',
               height: 32,
               errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 24),
             ),
@@ -216,7 +216,7 @@ class _MainNavigationState extends State<MainNavigation> {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Prayer Settings',
-            onPressed: () => _navigateTo(24, 'Settings'),
+            onPressed: () => _navigateTo(22, 'Settings'),
           ),
         ],
       );
@@ -231,7 +231,7 @@ class _MainNavigationState extends State<MainNavigation> {
       title: GestureDetector(
         onTap: () => setState(() => _selectedIndex = 0),
         child: Image.asset(
-          'assets/images/logo_white.png',
+          'assets/images/logo.png',
           height: 40,
           errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 32),
         ),

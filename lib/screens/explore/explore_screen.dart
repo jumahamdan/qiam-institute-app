@@ -1,39 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../config/constants.dart';
 
-class ExploreScreen extends StatefulWidget {
+class ExploreScreen extends StatelessWidget {
   final void Function(int screenIndex, String title)? onNavigate;
 
   const ExploreScreen({super.key, this.onNavigate});
-
-  @override
-  State<ExploreScreen> createState() => _ExploreScreenState();
-}
-
-class _ExploreScreenState extends State<ExploreScreen> {
-  late YoutubePlayerController _youtubeController;
-
-  @override
-  void initState() {
-    super.initState();
-    final videoId = YoutubePlayer.convertUrlToId(AppConstants.introVideoUrl) ?? '9qcNe2NSThE';
-    _youtubeController = YoutubePlayerController(
-      initialVideoId: videoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: true,
-        mute: false,
-        showLiveFullscreenButton: false,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _youtubeController.dispose();
-    super.dispose();
-  }
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -43,8 +16,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void _navigate(BuildContext context, int screenIndex, String title, String route) {
-    if (widget.onNavigate != null) {
-      widget.onNavigate!(screenIndex, title);
+    if (onNavigate != null) {
+      onNavigate!(screenIndex, title);
     } else {
       Navigator.pushNamed(context, route);
     }
@@ -53,145 +26,188 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Text(
               'Explore',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 2),
             Text(
               'Discover programs, events, and ways to get involved',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
             ),
-            const SizedBox(height: 16),
-
-            // Video Player at top
-            _buildVideoCard(context),
             const SizedBox(height: 12),
 
-            // Support Qiam button under video
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _launchUrl(AppConstants.donateUrl),
-                icon: const Icon(Icons.volunteer_activism),
-                label: const Text('Support Qiam Institute'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+            // 3x2 Grid of feature cards using Expanded
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1.1,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _ExploreCard(
+                    icon: Icons.event,
+                    title: 'Events',
+                    subtitle: 'Upcoming programs',
+                    color: const Color(0xFF4CAF50),
+                    onTap: () => _navigate(context, 10, 'Events', '/events'),
+                  ),
+                  _ValuesCard(
+                    onTap: () => _navigate(context, 11, 'Our Values', '/values'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.people,
+                    title: 'Volunteer',
+                    subtitle: 'Join our team',
+                    color: const Color(0xFF2196F3),
+                    onTap: () => _navigate(context, 13, 'Volunteer', '/volunteer'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.play_circle_filled,
+                    title: 'Media',
+                    subtitle: 'Videos & content',
+                    color: const Color(0xFFFF5722),
+                    onTap: () => _navigate(context, 12, 'Media', '/media'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.nights_stay,
+                    title: 'Daily Duaa',
+                    subtitle: 'Supplications',
+                    color: const Color(0xFF9C27B0),
+                    onTap: () => _navigate(context, 15, 'Daily Duaa', '/duaa'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.calendar_month,
+                    title: 'Islamic Calendar',
+                    subtitle: 'Important dates',
+                    color: const Color(0xFF795548),
+                    onTap: () => _navigate(context, 16, 'Islamic Calendar', '/islamic-calendar'),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
-            // Grid of explore cards
-            GridView.count(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+            // Social Media Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _ExploreCard(
-                  icon: Icons.event,
-                  title: 'Events',
-                  subtitle: 'Upcoming programs',
-                  color: const Color(0xFF4CAF50),
-                  onTap: () => _navigate(context, 10, 'Events', '/events'),
+                _SocialButton(
+                  icon: FontAwesomeIcons.facebook,
+                  color: const Color(0xFF1877F2),
+                  onTap: () => _launchUrl(AppConstants.facebookUrl),
                 ),
-                _ExploreCard(
-                  icon: Icons.favorite,
-                  title: 'Our Values',
-                  subtitle: 'What we stand for',
-                  color: const Color(0xFFE91E63),
-                  onTap: () => _navigate(context, 11, 'Our Values', '/values'),
+                _SocialButton(
+                  icon: FontAwesomeIcons.instagram,
+                  color: const Color(0xFFE4405F),
+                  onTap: () => _launchUrl(AppConstants.instagramUrl),
                 ),
-                _ExploreCard(
-                  icon: Icons.people,
-                  title: 'Volunteer',
-                  subtitle: 'Join our team',
-                  color: const Color(0xFF2196F3),
-                  onTap: () => _navigate(context, 13, 'Volunteer', '/volunteer'),
+                _SocialButton(
+                  icon: FontAwesomeIcons.youtube,
+                  color: const Color(0xFFFF0000),
+                  onTap: () => _launchUrl(AppConstants.youtubeUrl),
                 ),
-                _ExploreCard(
-                  icon: Icons.play_circle_filled,
-                  title: 'Media',
-                  subtitle: 'Videos & content',
-                  color: const Color(0xFFFF5722),
-                  onTap: () => _navigate(context, 12, 'Media', '/media'),
+                _SocialButton(
+                  icon: FontAwesomeIcons.xTwitter,
+                  color: const Color(0xFF000000),
+                  onTap: () => _launchUrl(AppConstants.twitterUrl),
                 ),
-                _ExploreCard(
-                  icon: Icons.nights_stay,
-                  title: 'Daily Duaa',
-                  subtitle: 'Supplications',
-                  color: const Color(0xFF9C27B0),
-                  onTap: () => _navigate(context, 15, 'Daily Duaa', '/duaa'),
+                _SocialButton(
+                  icon: FontAwesomeIcons.tiktok,
+                  color: const Color(0xFF000000),
+                  onTap: () => _launchUrl(AppConstants.tiktokUrl),
                 ),
-                _ExploreCard(
-                  icon: Icons.calendar_month,
-                  title: 'Islamic Calendar',
-                  subtitle: 'Important dates',
-                  color: const Color(0xFF795548),
-                  onTap: () => _navigate(context, 16, 'Islamic Calendar', '/islamic-calendar'),
+                _SocialButton(
+                  icon: FontAwesomeIcons.whatsapp,
+                  color: const Color(0xFF25D366),
+                  onTap: () => _launchUrl(AppConstants.whatsappUrl),
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+
+            // Support Qiam button - at bottom with gradient
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _launchUrl(AppConstants.donateUrl),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.volunteer_activism,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Support Qiam Institute',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildVideoCard(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          YoutubePlayer(
-            controller: _youtubeController,
-            showVideoProgressIndicator: true,
-            progressIndicatorColor: Theme.of(context).colorScheme.primary,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'The seasons change; our values don\'t.',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Qiam Institute',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.play_circle_outline, color: Colors.grey[400]),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
+// Main explore card with enhanced styling
 class _ExploreCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -211,42 +227,171 @@ class _ExploreCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
+      shadowColor: color.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withValues(alpha: 0.15),
+                      color.withValues(alpha: 0.08),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
                 ),
-                child: Icon(icon, color: color, size: 28),
+                child: Icon(icon, color: color, size: 24),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
+                  color: Colors.grey[500],
+                  fontSize: 11,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// Special Values card showing mini value images
+class _ValuesCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ValuesCard({required this.onTap});
+
+  static const List<String> _valueImages = [
+    'assets/images/values/Tawado3.png',
+    'assets/images/values/3adl.png',
+    'assets/images/values/Rahma.png',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final color = const Color(0xFFE91E63);
+
+    return Card(
+      elevation: 2,
+      shadowColor: color.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Row of 3 value images - compact layout
+              SizedBox(
+                height: 48,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: _valueImages.map((imagePath) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: Image.asset(
+                          imagePath,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.favorite,
+                            color: color,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Our Values',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'What we stand for',
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 11,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Social media button
+class _SocialButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _SocialButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: FaIcon(icon, color: color, size: 20),
         ),
       ),
     );

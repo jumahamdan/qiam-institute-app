@@ -1,7 +1,7 @@
 import 'package:adhan/adhan.dart';
 import 'package:intl/intl.dart';
-import 'package:geolocator/geolocator.dart';
 import '../../config/constants.dart';
+import '../location/location_service.dart';
 import 'prayer_settings.dart';
 
 class PrayerService {
@@ -10,6 +10,7 @@ class PrayerService {
   PrayerService._internal();
 
   final PrayerSettings _settings = PrayerSettings();
+  final LocationService _locationService = LocationService();
   Coordinates? _coordinates;
   CalculationParameters? _params;
   String _locationName = AppConstants.defaultLocationName;
@@ -30,29 +31,18 @@ class PrayerService {
 
   Future<void> _updateLocation() async {
     if (_settings.locationMode == PrayerSettings.locationModeAuto) {
-      try {
-        final permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          await Geolocator.requestPermission();
-        }
+      // Use shared LocationService (prevents duplicate GPS calls)
+      await _locationService.initialize();
+      await _locationService.ensureLocationAvailable();
 
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.low,
-          ),
-        );
+      final lat = _locationService.latitude;
+      final lng = _locationService.longitude;
 
-        _coordinates = Coordinates(position.latitude, position.longitude);
-        _settings.latitude = position.latitude;
-        _settings.longitude = position.longitude;
-
-        // Try to get location name
-        _locationName = await _getLocationName(position.latitude, position.longitude);
-        _settings.locationName = _locationName;
-      } catch (e) {
-        // Fall back to default or saved location
-        _useStoredOrDefaultLocation();
-      }
+      _coordinates = Coordinates(lat, lng);
+      _settings.latitude = lat;
+      _settings.longitude = lng;
+      _locationName = _locationService.locationName;
+      _settings.locationName = _locationName;
     } else {
       _useStoredOrDefaultLocation();
     }
@@ -66,12 +56,6 @@ class PrayerService {
     final lng = _settings.longitude ?? AppConstants.defaultLongitude;
     _coordinates = Coordinates(lat, lng);
     _locationName = _settings.locationName ?? AppConstants.defaultLocationName;
-  }
-
-  Future<String> _getLocationName(double lat, double lng) async {
-    // Simple reverse geocoding would go here
-    // For now, return a formatted string
-    return _settings.locationName ?? 'Current Location';
   }
 
   void _updateCalculationParams() {

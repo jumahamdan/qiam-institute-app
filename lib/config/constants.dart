@@ -22,6 +22,7 @@ class AppConstants {
   static const String twitterUrl = 'https://twitter.com/qiaminstitute';
   static const String tiktokUrl = 'https://www.tiktok.com/@qiaminstitute';
   static const String flickrUrl = 'https://www.flickr.com/photos/qiaminstitute';
+  static const String whatsappUrl = 'https://chat.whatsapp.com/EbYUte2kXpW1LFTbUH1rBi';
 
   // Contact
   static const String contactEmail = 'info@qiaminstitute.org';

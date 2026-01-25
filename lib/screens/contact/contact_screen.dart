@@ -15,68 +15,70 @@ class ContactScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
-            Icon(
-              Icons.mosque,
-              size: 60,
-              color: Theme.of(context).colorScheme.primary,
+            // Header with logo
+            Image.asset(
+              'assets/images/logo.png',
+              height: 56,
+              errorBuilder: (_, __, ___) => Icon(
+                Icons.mosque,
+                size: 56,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'Get in Touch',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
-              'We\'d love to hear from you. Reach out to us through any of the following methods.',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              'Reach out to us through any of the following methods',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
-            // Contact Cards
+            // Contact Cards - Compact
             _ContactCard(
               icon: Icons.phone,
               title: 'Phone',
               subtitle: AppConstants.contactPhone,
               onTap: () => _launchUrl('tel:${AppConstants.contactPhone}'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _ContactCard(
               icon: Icons.email,
               title: 'Email',
               subtitle: AppConstants.contactEmail,
               onTap: () => _launchUrl('mailto:${AppConstants.contactEmail}'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _ContactCard(
               icon: Icons.location_on,
               title: 'Address',
               subtitle: AppConstants.address,
               onTap: () => _launchUrl(AppConstants.directionsUrl),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
 
             // Social Media Section
             Text(
               'Connect With Us',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -108,35 +110,35 @@ class ContactScreen extends StatelessWidget {
                 _SocialButton(
                   icon: FontAwesomeIcons.whatsapp,
                   color: const Color(0xFF25D366),
-                  // TODO: Replace with actual WhatsApp community link
-                  onTap: () => _launchUrl(AppConstants.websiteUrl),
+                  onTap: () => _launchUrl(AppConstants.whatsappUrl),
                 ),
               ],
             ),
-            const SizedBox(height: 32),
 
-            // Get Directions Button
+            const Spacer(),
+
+            // Bottom buttons
             ElevatedButton.icon(
               onPressed: () => _launchUrl(AppConstants.directionsUrl),
-              icon: const Icon(Icons.directions),
+              icon: const Icon(Icons.directions, size: 20),
               label: const Text('Get Directions'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Donate Button
+            const SizedBox(height: 10),
             OutlinedButton.icon(
               onPressed: () => _launchUrl(AppConstants.donateUrl),
-              icon: const Icon(Icons.volunteer_activism),
+              icon: const Icon(Icons.volunteer_activism, size: 20),
               label: const Text('Support Qiam Institute'),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
+            const SizedBox(height: 8),
           ],
         ),
+      ),
     );
   }
 }
@@ -157,26 +159,28 @@ class _ContactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   icon,
                   color: Theme.of(context).colorScheme.primary,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,16 +189,18 @@ class _ContactCard extends StatelessWidget {
                       title,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontSize: 13,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: TextStyle(
                         color: Colors.grey[600],
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -202,6 +208,7 @@ class _ContactCard extends StatelessWidget {
               Icon(
                 Icons.chevron_right,
                 color: Colors.grey[400],
+                size: 20,
               ),
             ],
           ),
@@ -226,16 +233,16 @@ class _SocialButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Center(
-          child: FaIcon(icon, color: color, size: 20),
+          child: FaIcon(icon, color: color, size: 18),
         ),
       ),
     );
