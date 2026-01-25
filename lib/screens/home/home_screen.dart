@@ -45,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: false,
+        loop: true,
         showLiveFullscreenButton: false,
       ),
     );
