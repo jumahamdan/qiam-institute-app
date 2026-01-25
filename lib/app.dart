@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'config/theme.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/explore/explore_screen.dart';
 import 'screens/prayer/prayer_screen.dart';
 import 'screens/qibla/qibla_screen.dart';
 import 'screens/volunteer/volunteer_screen.dart';
@@ -9,6 +11,8 @@ import 'screens/media/media_screen.dart';
 import 'screens/islamic_calendar/islamic_calendar_screen.dart';
 import 'screens/duaa/duaa_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/about/about_screen.dart';
+import 'screens/contact/contact_screen.dart';
 
 class QiamApp extends StatelessWidget {
   const QiamApp({super.key});
@@ -28,6 +32,8 @@ class QiamApp extends StatelessWidget {
         '/islamic-calendar': (context) => const IslamicCalendarScreen(),
         '/duaa': (context) => const DuaaScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/about': (context) => const AboutScreen(),
+        '/contact': (context) => const ContactScreen(),
       },
     );
   }
@@ -41,16 +47,22 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0;
-
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    PrayerScreen(),
-  ];
+  // -1 = Home (logo tapped), 0 = Explore, 1 = Timings, 2 = More (bottom sheet)
+  int _selectedIndex = -1; // Start on Home
 
   void _onItemTapped(int index) {
+    if (index == 2) {
+      _showMoreMenu();
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
+
+  void _goHome() {
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = -1;
     });
   }
 
@@ -102,6 +114,24 @@ class _MainNavigationState extends State<MainNavigation> {
               },
             ),
             _MoreMenuItem(
+              icon: Icons.info_outline,
+              label: 'About Us',
+              subtitle: 'Learn about Qiam Institute',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/about');
+              },
+            ),
+            _MoreMenuItem(
+              icon: Icons.contact_mail,
+              label: 'Contact Us',
+              subtitle: 'Get in touch with us',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/contact');
+              },
+            ),
+            _MoreMenuItem(
               icon: Icons.settings,
               label: 'Settings',
               subtitle: 'Prayer times and app settings',
@@ -117,43 +147,68 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 0:
+        return const ExploreScreen();
+      case 1:
+        return const PrayerScreen();
+      default:
+        return const HomeScreen();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+      appBar: AppBar(
+        titleSpacing: 0,
+        leading: IconButton(
+          onPressed: _goHome,
+          tooltip: 'Home',
+          icon: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Image.asset(
+              'assets/images/logo_white.png',
+              errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white),
             ),
-          ],
+          ),
         ),
-        child: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: _onItemTapped,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.mosque_outlined),
-              selectedIcon: Icon(Icons.mosque),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.access_time_outlined),
-              selectedIcon: Icon(Icons.access_time_filled),
-              label: 'Timings',
-            ),
-          ],
-        ),
+        title: null,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.directions),
+            tooltip: 'Get Directions',
+            onPressed: () async {
+              final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517');
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showMoreMenu,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        child: const Icon(Icons.more_horiz, color: Colors.white),
+      body: _buildBody(),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex >= 0 ? _selectedIndex : 0,
+        indicatorColor: _selectedIndex < 0 ? Colors.transparent : null,
+        onDestinationSelected: _onItemTapped,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore),
+            label: 'Explore',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.access_time_outlined),
+            selectedIcon: Icon(Icons.access_time_filled),
+            label: 'Timings',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.more_horiz),
+            selectedIcon: Icon(Icons.more_horiz),
+            label: 'More',
+          ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

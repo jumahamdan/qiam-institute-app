@@ -77,27 +77,33 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final today = DateTime.now();
     final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Timings'),
-        actions: [
-          TextButton.icon(
-            onPressed: () => setState(() => _showWeekView = !_showWeekView),
-            icon: Icon(_showWeekView ? Icons.today : Icons.calendar_view_week, color: Colors.white),
-            label: Text(_showWeekView ? 'Today' : '7-Day', style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-      body: Column(
+    return SafeArea(
+      child: Column(
         children: [
+          // Header with title and toggle
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             child: Column(
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Timings',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => setState(() => _showWeekView = !_showWeekView),
+                      icon: Icon(_showWeekView ? Icons.today : Icons.calendar_view_week, size: 18),
+                      label: Text(_showWeekView ? 'Today' : '7-Day'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Text(_showWeekView ? 'Next 7 Days' : dateFormat.format(today),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700])),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

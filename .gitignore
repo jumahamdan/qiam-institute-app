@@ -65,7 +65,6 @@ build/
 
 # Web
 **/web/favicon.png
-lib/generated_plugin_registrant.dart
 
 # Firebase
 google-services.json

@@ -19,6 +19,9 @@ class AppConstants {
   static const String facebookUrl = 'https://www.facebook.com/profile.php?id=61573449077244';
   static const String instagramUrl = 'https://www.instagram.com/qiaminstitute/';
   static const String youtubeUrl = 'https://www.youtube.com/@qiaminstitute';
+  static const String twitterUrl = 'https://twitter.com/qiaminstitute';
+  static const String tiktokUrl = 'https://www.tiktok.com/@qiaminstitute';
+  static const String flickrUrl = 'https://www.flickr.com/photos/qiaminstitute';
 
   // Contact
   static const String contactEmail = 'info@qiaminstitute.org';
