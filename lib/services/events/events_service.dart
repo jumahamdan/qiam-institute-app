@@ -151,8 +151,8 @@ class EventsResponse {
       }
     }
 
-    // Sort by soonest first (ascending date order)
-    eventsList.sort((a, b) => a.startDate.compareTo(b.startDate));
+    // Sort by latest first (descending date order)
+    eventsList.sort((a, b) => b.startDate.compareTo(a.startDate));
 
     return EventsResponse(
       events: eventsList,
