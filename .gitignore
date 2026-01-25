@@ -84,6 +84,7 @@ firebase_options.dart
 *.pyc
 .DS_Store
 Thumbs.db
+nul
 
 # Claude CLI local settings (optional - remove if you want to share these)
 .claude/
