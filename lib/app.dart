@@ -87,15 +87,6 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
             const SizedBox(height: 20),
             _MoreMenuItem(
-              icon: Icons.location_on,
-              label: 'Qibla Direction',
-              subtitle: 'Find the direction to Makkah',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/qibla');
-              },
-            ),
-            _MoreMenuItem(
               icon: Icons.calendar_month,
               label: 'Islamic Calendar',
               subtitle: 'Important Islamic dates',
