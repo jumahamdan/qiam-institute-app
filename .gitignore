@@ -85,5 +85,8 @@ firebase_options.dart
 Thumbs.db
 nul
 
+# Downloaded artifacts
+build-output/
+
 # Claude CLI local settings (optional - remove if you want to share these)
 .claude/
