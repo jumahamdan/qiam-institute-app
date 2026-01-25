@@ -102,7 +102,18 @@ jobs:
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Upload to Firebase
+          # Check if version changed from previous commit
+          PREV_VERSION=$(git show HEAD~1:pubspec.yaml 2>/dev/null | grep 'version:' | sed 's/version: //' | cut -d'+' -f1 || echo "")
+          if [ "$VERSION" != "$PREV_VERSION" ] && [ -n "$PREV_VERSION" ]; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+            echo "📧 Version changed from $PREV_VERSION to $VERSION - testers will be notified"
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+            echo "📦 Build-only update (no version change) - testers will NOT be notified"
+          fi
+
+      - name: Upload to Firebase (notify testers)
+        if: steps.info.outputs.version_changed == 'true'
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
@@ -118,6 +129,28 @@ jobs:
             Date: ${{ steps.info.outputs.date }}
 
             📋 What's New
+            ━━━━━━━━━━━━━━━━━━━━━━
+            ${{ steps.info.outputs.changelog }}
+
+            ━━━━━━━━━━━━━━━━━━━━━━
+            📱 Qiam Institute - Values Light The Way
+
+      - name: Upload to Firebase (silent)
+        if: steps.info.outputs.version_changed != 'true'
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          file: app-release.apk
+          releaseNotes: |
+            🕌 Qiam Institute App (Internal Build)
+            ━━━━━━━━━━━━━━━━━━━━━━
+            Version: ${{ steps.info.outputs.version }}
+            Build: ${{ github.run_number }}
+            Commit: ${{ steps.info.outputs.sha }}
+            Date: ${{ steps.info.outputs.date }}
+
+            📋 Changes
             ━━━━━━━━━━━━━━━━━━━━━━
             ${{ steps.info.outputs.changelog }}
 
