@@ -85,6 +85,11 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "date=$(date +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_OUTPUT
+          # Get commit message without Co-Authored-By line
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | grep -v "Co-Authored-By:")
+          echo "commit_msg<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Upload to Firebase
         uses: wzieba/Firebase-Distribution-Github-Action@v1
@@ -99,4 +104,4 @@ jobs:
             Date: ${{ steps.info.outputs.date }}
 
             Changes:
-            ${{ github.event.head_commit.message }}
+            ${{ steps.info.outputs.commit_msg }}
