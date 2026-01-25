@@ -26,6 +26,7 @@ class AppTheme {
         elevation: 0,
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
+        toolbarHeight: 48, // Compact app bar
       ),
       navigationBarTheme: NavigationBarThemeData(
         indicatorColor: primaryColor.withValues(alpha: 0.2),

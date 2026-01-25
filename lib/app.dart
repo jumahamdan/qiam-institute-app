@@ -273,23 +273,33 @@ class _MainNavigationState extends State<MainNavigation> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _bottomNavIndex,
         onDestinationSelected: _onItemTapped,
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+            icon: Image.asset(
+              'assets/images/logo_white.png',
+              height: 24,
+              color: Colors.grey[600],
+              errorBuilder: (_, __, ___) => Icon(Icons.home_outlined, color: Colors.grey[600]),
+            ),
+            selectedIcon: Image.asset(
+              'assets/images/logo_white.png',
+              height: 24,
+              color: Theme.of(context).colorScheme.primary,
+              errorBuilder: (_, __, ___) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
+            ),
             label: 'Home',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.explore_outlined),
             selectedIcon: Icon(Icons.explore),
             label: 'Explore',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.mosque_outlined),
             selectedIcon: Icon(Icons.mosque),
             label: 'Prayers',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.more_horiz),
             selectedIcon: Icon(Icons.more_horiz),
             label: 'More',
