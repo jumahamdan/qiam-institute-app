@@ -110,9 +110,10 @@ class ContactScreen extends StatelessWidget {
                   onTap: () => _launchUrl(AppConstants.tiktokUrl),
                 ),
                 _SocialButton(
-                  icon: FontAwesomeIcons.flickr,
-                  color: const Color(0xFF0063DC),
-                  onTap: () => _launchUrl(AppConstants.flickrUrl),
+                  icon: FontAwesomeIcons.whatsapp,
+                  color: const Color(0xFF25D366),
+                  // TODO: Replace with actual WhatsApp community link
+                  onTap: () => _launchUrl(AppConstants.websiteUrl),
                 ),
               ],
             ),

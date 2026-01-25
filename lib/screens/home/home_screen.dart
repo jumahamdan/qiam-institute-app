@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
 
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) {
         setState(() => _nextPrayer = _prayerService.getNextPrayer());
       }
@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadEvents() async {
     try {
-      final response = await _eventsService.getUpcomingEvents(perPage: 10);
+      final response = await _eventsService.getUpcomingEvents(perPage: 5);
       if (mounted) {
         setState(() {
           _events = response.events;
@@ -90,117 +90,315 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
-        children: [
-          // Fixed top section
-          Padding(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Video Player
-                Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      YoutubePlayer(
-                        controller: _youtubeController,
-                        showVideoProgressIndicator: true,
-                        progressIndicatorColor: Theme.of(context).colorScheme.primary,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Next Prayer Card - Hero section
+                  _buildPrayerCard(),
+                  const SizedBox(height: 16),
+
+                  // Donate Button - Separate from prayer
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _launchUrl(AppConstants.donateUrl),
+                      icon: const Icon(Icons.volunteer_activism, size: 20),
+                      label: const Text('Support Qiam Institute'),
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Watch Our Introduction',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 4),
-                            Text('Learn about Qiam Institute', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                          ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Video Player
+                  _buildVideoCard(),
+                  const SizedBox(height: 24),
+
+                  // Upcoming Events Section
+                  _buildEventsSection(),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPrayerCard() {
+    if (_isLoading || _nextPrayer == null) {
+      return Card(
+        child: Container(
+          height: 120,
+          padding: const EdgeInsets.all(24),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            // Secondary: Label
+            Text(
+              'NEXT PRAYER',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Secondary: Prayer name
+            Text(
+              _nextPrayer!.name,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Primary: TIME - The hero element
+            Text(
+              _nextPrayer!.formattedTime,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 42,
+                fontWeight: FontWeight.bold,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Tertiary: Countdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'in ${_nextPrayer!.formattedTimeUntil}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoCard() {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          YoutubePlayer(
+            controller: _youtubeController,
+            showVideoProgressIndicator: true,
+            progressIndicatorColor: Theme.of(context).colorScheme.primary,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Watch Our Introduction',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Learn about Qiam Institute',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.play_circle_outline, color: Colors.grey[400]),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Upcoming Events',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pushNamed(context, '/events'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 36),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('See All'),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward, size: 16),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Events list
+        if (_eventsLoading)
+          _buildEventsLoading()
+        else if (_events.isEmpty)
+          _buildEventsEmpty()
+        else
+          _buildEventsList(),
+      ],
+    );
+  }
+
+  Widget _buildEventsLoading() {
+    return Column(
+      children: List.generate(
+        3,
+        (index) => Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            height: 72,
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 14,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 12,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-
-                // Next Prayer Card - compact
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: _isLoading || _nextPrayer == null
-                        ? const Center(child: CircularProgressIndicator())
-                        : Row(
-                            children: [
-                              Icon(Icons.access_time, color: Theme.of(context).colorScheme.primary),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Next: ${_nextPrayer!.name}',
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                                  Text('${_nextPrayer!.formattedTime} • in ${_nextPrayer!.formattedTimeUntil}',
-                                      style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-                                ],
-                              ),
-                              const Spacer(),
-                              TextButton(
-                                onPressed: () => _launchUrl(AppConstants.donateUrl),
-                                child: const Text('Donate'),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Events header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Upcoming Events',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                    TextButton(
-                      onPressed: () => Navigator.pushNamed(context, '/events'),
-                      child: const Text('See All'),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
-
-          // Scrollable events section
-          Expanded(
-            child: _eventsLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _events.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.event_available, size: 48, color: Colors.grey[400]),
-                            const SizedBox(height: 8),
-                            Text('No upcoming events', style: TextStyle(color: Colors.grey[600])),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _events.length,
-                        itemBuilder: (context, index) {
-                          final event = _events[index];
-                          return _EventMiniCard(
-                            event: event,
-                            onTap: () => _launchUrl(event.url ?? AppConstants.eventsUrl),
-                          );
-                        },
-                      ),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildEventsEmpty() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Icon(Icons.event_available, size: 40, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            Text(
+              'No upcoming events',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Check back soon for new events',
+              style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _loadEvents,
+              child: const Text('Refresh'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEventsList() {
+    return Column(
+      children: _events.take(5).map((event) {
+        return _EventMiniCard(
+          event: event,
+          onTap: () => _launchUrl(event.url ?? AppConstants.eventsUrl),
+        );
+      }).toList(),
     );
   }
 }
@@ -213,21 +411,27 @@ class _EventMiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isToday = event.isToday;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 72),
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               // Date box
               Container(
-                width: 50,
-                height: 50,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: isToday
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -235,50 +439,92 @@ class _EventMiniCard extends StatelessWidget {
                   children: [
                     Text(
                       event.startDate.day.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: isToday ? Colors.white : Theme.of(context).colorScheme.primary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        height: 1.1,
                       ),
                     ),
                     Text(
                       _getMonthAbbr(event.startDate.month),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: isToday
+                            ? Colors.white.withValues(alpha: 0.9)
+                            : Theme.of(context).colorScheme.primary,
                         fontSize: 11,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
+
               // Event info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Title - Primary
                     Text(
                       event.title,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      event.formattedTime,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+
+                    // Meta line - Secondary
+                    Row(
+                      children: [
+                        if (isToday) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'TODAY',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            event.formattedTime,
+                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ),
+
+                    // Location - Tertiary
                     if (event.venue != null)
-                      Text(
-                        event.venue!.name,
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          event.venue!.name,
+                          style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey[400]),
+
+              Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
             ],
           ),
         ),

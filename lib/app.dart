@@ -125,17 +125,6 @@ class _MainNavigationState extends State<MainNavigation> {
               },
             ),
             _MoreMenuItem(
-              icon: Icons.chat,
-              label: 'Connect With Us',
-              subtitle: 'Join our WhatsApp community',
-              onTap: () async {
-                Navigator.pop(context);
-                // TODO: Replace with actual WhatsApp link
-                final uri = Uri.parse('https://qiaminstitute.org');
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              },
-            ),
-            _MoreMenuItem(
               icon: Icons.settings,
               label: 'Settings',
               subtitle: 'Prayer times and app settings',
@@ -167,14 +156,7 @@ class _MainNavigationState extends State<MainNavigation> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.directions),
-          tooltip: 'Get Directions',
-          onPressed: () async {
-            final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517');
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          },
-        ),
+        automaticallyImplyLeading: false,
         title: GestureDetector(
           onTap: _goHome,
           child: Image.asset(
@@ -183,8 +165,15 @@ class _MainNavigationState extends State<MainNavigation> {
             errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 32),
           ),
         ),
-        actions: const [
-          SizedBox(width: 48), // Balance the leading icon
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.directions),
+            tooltip: 'Get Directions',
+            onPressed: () async {
+              final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517');
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+          ),
         ],
       ),
       body: _buildBody(),

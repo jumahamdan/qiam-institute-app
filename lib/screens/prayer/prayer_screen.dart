@@ -327,80 +327,104 @@ class _PrayerScreenState extends State<PrayerScreen> {
           bottom: BorderSide(color: Colors.grey[200]!, width: 0.5),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          // Prayer icon
+          // Prayer icon - compact
           Container(
-            width: 44,
-            height: 44,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: _getPrayerColor(prayer.name).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               _getPrayerIcon(prayer.name),
               color: _getPrayerColor(prayer.name),
-              size: 24,
+              size: 18,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
 
-          // Prayer name and status
+          // Prayer name
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(
-                      prayer.name,
+                Text(
+                  prayer.name,
+                  style: TextStyle(
+                    fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 15,
+                    color: isNext ? Theme.of(context).colorScheme.primary : null,
+                  ),
+                ),
+                if (isNext) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'NEXT',
                       style: TextStyle(
-                        fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
-                        fontSize: 16,
-                        color: isNext ? Theme.of(context).colorScheme.primary : null,
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (isNext) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'NEXT',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                if (iqamahTime != null)
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Iqamah time (if available)
+          if (iqamahTime != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
                   Text(
-                    'Iqamah: $iqamahTime',
+                    iqamahTime,
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[500],
                     ),
                   ),
-              ],
+                  Text(
+                    'Iqamah',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Adhan time
-          Text(
-            prayer.formattedTime,
-            style: TextStyle(
-              fontWeight: isNext ? FontWeight.bold : FontWeight.w500,
-              fontSize: 16,
-              color: isNext ? Theme.of(context).colorScheme.primary : Colors.grey[700],
-            ),
+          // Adhan time - prominent
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                prayer.formattedTime,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: isNext ? Theme.of(context).colorScheme.primary : Colors.grey[800],
+                ),
+              ),
+              Text(
+                'Adhan',
+                style: TextStyle(
+                  fontSize: 9,
+                  color: Colors.grey[400],
+                ),
+              ),
+            ],
           ),
         ],
       ),
