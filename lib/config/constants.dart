@@ -8,6 +8,12 @@ class AppConstants {
   static const String eventsUrl = 'https://qiaminstitute.org/events/';
   static const String donateUrl = 'https://qiaminstitute.org/donate-now/';
   static const String valuesUrl = 'https://qiaminstitute.org/our-values/';
+  static const String introVideoUrl = 'https://www.youtube.com/watch?v=9qcNe2NSThE';
+  static const String introVideoThumbnail = 'https://img.youtube.com/vi/9qcNe2NSThE/hqdefault.jpg';
+
+  // Directions
+  static const String directionsUrl = 'https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517';
+  static const String mapsUrl = 'https://www.google.com/maps/place/900+S+Frontage+Rd+Suite+110,+Woodridge,+IL+60517';
 
   // Social Media
   static const String facebookUrl = 'https://www.facebook.com/profile.php?id=61573449077244';

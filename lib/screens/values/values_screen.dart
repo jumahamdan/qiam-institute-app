@@ -3,155 +3,130 @@ import 'package:flutter/material.dart';
 class ValuesScreen extends StatelessWidget {
   const ValuesScreen({super.key});
 
+  static const String _baseImageUrl = 'https://qiaminstitute.org/wp-content/uploads/2025/07/';
+
   static const List<Map<String, String>> _coreValues = [
     {
       'name': 'Humility',
+      'arabic': 'تواضع',
       'description': 'Recognizing one\'s smallness before Allah, avoiding pride always.',
-      'icon': 'self_improvement',
+      'image': 'Tawado3.png',
     },
     {
       'name': 'Justice',
+      'arabic': 'عدل',
       'description': 'Upholding fairness, equity, and truth in all dealings—personal and societal.',
-      'icon': 'balance',
+      'image': '3adl.png',
     },
     {
       'name': 'Forbearance',
+      'arabic': 'حلم',
       'description': 'Restraining anger with calm wisdom.',
-      'icon': 'spa',
+      'image': '7elm.png',
     },
     {
       'name': 'Faithfulness',
+      'arabic': 'وفاء',
       'description': 'Keeping promises and commitments to Allah and others.',
-      'icon': 'handshake',
+      'image': 'Wafaa.png',
     },
     {
       'name': 'Forgiveness',
+      'arabic': 'تسامح',
       'description': 'Pardoning others\' wrongs, seeking Allah\'s mercy and reward.',
-      'icon': 'healing',
+      'image': 'Tasamo7.png',
     },
     {
       'name': 'Gratitude',
+      'arabic': 'شكر',
       'description': 'Recognizing and appreciating the blessings of Allah, big and small.',
-      'icon': 'favorite',
+      'image': 'Shokr.png',
     },
     {
       'name': 'Cooperation',
+      'arabic': 'تعاون',
       'description': 'Working together in goodness, supporting others for collective benefit.',
-      'icon': 'groups',
+      'image': 'Ta3awn.png',
     },
     {
       'name': 'Honesty',
+      'arabic': 'صدق',
       'description': 'Speaking truth, avoiding deception in all matters always.',
-      'icon': 'verified',
+      'image': 'Sedq.png',
     },
     {
       'name': 'Patience',
+      'arabic': 'صبر',
       'description': 'Enduring hardships with faith, trusting Allah\'s perfect timing.',
-      'icon': 'hourglass_empty',
+      'image': 'Sabr.png',
     },
     {
       'name': 'Compassion',
+      'arabic': 'رحمة',
       'description': 'Emulating the mercy of Allah in our interactions with all of creation.',
-      'icon': 'volunteer_activism',
+      'image': 'Rahma.png',
     },
     {
       'name': 'Integrity',
+      'arabic': 'نزاهة',
       'description': 'Adhering to truth and righteousness in every situation.',
-      'icon': 'shield',
+      'image': 'Nazaha.png',
     },
     {
       'name': 'Warmth',
+      'arabic': 'مودة',
       'description': 'Showing genuine care, kindness, and compassion toward all people.',
-      'icon': 'wb_sunny',
+      'image': 'Mawada.png',
     },
     {
       'name': 'Love',
+      'arabic': 'محبة',
       'description': 'Deep care and affection for others.',
-      'icon': 'favorite_border',
+      'image': 'Ma7aba.png',
     },
     {
       'name': 'Trustworthiness',
+      'arabic': 'أمانة',
       'description': 'Honoring responsibilities and being worthy of trust in relationships, roles, and duties.',
-      'icon': 'security',
+      'image': 'Amana.png',
     },
     {
       'name': 'Generosity',
+      'arabic': 'كرم',
       'description': 'Willingness to give and share freely.',
-      'icon': 'card_giftcard',
+      'image': 'Karam.png',
     },
     {
       'name': 'Sympathy',
+      'arabic': 'عطف',
       'description': 'Feeling and showing care for others\' pain.',
-      'icon': 'sentiment_satisfied',
+      'image': '3atf.png',
     },
     {
       'name': 'Sincerity',
+      'arabic': 'إخلاص',
       'description': 'Being honest and genuine in actions.',
-      'icon': 'loyalty',
+      'image': 'Ikhlas.png',
     },
     {
       'name': 'Modesty',
+      'arabic': 'حياء',
       'description': 'Humility and decency in behavior and appearance.',
-      'icon': 'person',
+      'image': '7ayaa.png',
     },
     {
       'name': 'Benevolence',
+      'arabic': 'إحسان',
       'description': 'Kindness and willingness to help others.',
-      'icon': 'emoji_people',
+      'image': 'E7san.png',
     },
     {
       'name': 'Dignity',
+      'arabic': 'عفة',
       'description': 'Respecting yourself and others with good manners.',
-      'icon': 'stars',
+      'image': '3efah.png',
     },
   ];
-
-  IconData _getIcon(String iconName) {
-    switch (iconName) {
-      case 'self_improvement':
-        return Icons.self_improvement;
-      case 'balance':
-        return Icons.balance;
-      case 'spa':
-        return Icons.spa;
-      case 'handshake':
-        return Icons.handshake;
-      case 'healing':
-        return Icons.healing;
-      case 'favorite':
-        return Icons.favorite;
-      case 'groups':
-        return Icons.groups;
-      case 'verified':
-        return Icons.verified;
-      case 'hourglass_empty':
-        return Icons.hourglass_empty;
-      case 'volunteer_activism':
-        return Icons.volunteer_activism;
-      case 'shield':
-        return Icons.shield;
-      case 'wb_sunny':
-        return Icons.wb_sunny;
-      case 'favorite_border':
-        return Icons.favorite_border;
-      case 'security':
-        return Icons.security;
-      case 'card_giftcard':
-        return Icons.card_giftcard;
-      case 'sentiment_satisfied':
-        return Icons.sentiment_satisfied;
-      case 'loyalty':
-        return Icons.loyalty;
-      case 'person':
-        return Icons.person;
-      case 'emoji_people':
-        return Icons.emoji_people;
-      case 'stars':
-        return Icons.stars;
-      default:
-        return Icons.star;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -200,15 +175,16 @@ class ValuesScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
-                childAspectRatio: 0.85,
+                childAspectRatio: 0.75,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final value = _coreValues[index];
                   return _ValueCard(
                     name: value['name']!,
+                    arabic: value['arabic']!,
                     description: value['description']!,
-                    icon: _getIcon(value['icon']!),
+                    imageUrl: '$_baseImageUrl${value['image']}',
                   );
                 },
                 childCount: _coreValues.length,
@@ -223,13 +199,15 @@ class ValuesScreen extends StatelessWidget {
 
 class _ValueCard extends StatelessWidget {
   final String name;
+  final String arabic;
   final String description;
-  final IconData icon;
+  final String imageUrl;
 
   const _ValueCard({
     required this.name,
+    required this.arabic,
     required this.description,
-    required this.icon,
+    required this.imageUrl,
   });
 
   @override
@@ -240,11 +218,26 @@ class _ValueCard extends StatelessWidget {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Row(
+              title: Column(
                 children: [
-                  Icon(icon, color: Theme.of(context).colorScheme.primary),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(name)),
+                  Image.network(
+                    imageUrl,
+                    height: 80,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.star,
+                      size: 60,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(name),
+                  Text(
+                    arabic,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ],
               ),
               content: Text(
@@ -266,25 +259,36 @@ class _ValueCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 28,
-                  color: Theme.of(context).colorScheme.primary,
+              Image.network(
+                imageUrl,
+                height: 60,
+                errorBuilder: (_, __, ___) => Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.star,
+                    size: 28,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                 textAlign: TextAlign.center,
+              ),
+              Text(
+                arabic,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -293,7 +297,7 @@ class _ValueCard extends StatelessWidget {
                       color: Colors.grey[600],
                     ),
                 textAlign: TextAlign.center,
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
