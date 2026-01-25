@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:qiam_institute_app/screens/explore/explore_screen.dart';
 import 'package:qiam_institute_app/screens/prayer/prayer_screen.dart';
+import 'package:qiam_institute_app/screens/islamic_calendar/islamic_calendar_screen.dart';
 
 void main() {
-  testWidgets('Explore screen renders title', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
-    await tester.pumpAndSettle();
+  testWidgets('Islamic Calendar screen renders correctly', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: IslamicCalendarScreen())));
+    await tester.pump();
 
-    // Verify explore screen title exists
-    expect(find.text('Explore'), findsOneWidget);
+    // Verify Islamic Calendar header exists
+    expect(find.text('HIJRI 1447'), findsOneWidget);
   });
 
   testWidgets('Prayer screen renders loading state', (WidgetTester tester) async {

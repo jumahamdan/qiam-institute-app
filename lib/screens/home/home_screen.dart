@@ -26,6 +26,13 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Event> _events = [];
   bool _eventsLoading = true;
 
+  // Core values data (top 3 to display)
+  static const List<Map<String, String>> _coreValues = [
+    {'name': 'Humility', 'arabic': 'تواضع', 'description': 'Recognizing one\'s smallness before Allah, avoiding pride always.', 'image': 'Tawado3.png'},
+    {'name': 'Justice', 'arabic': 'عدل', 'description': 'Upholding fairness, equity, and truth in all dealings—personal and societal.', 'image': '3adl.png'},
+    {'name': 'Compassion', 'arabic': 'رحمة', 'description': 'Emulating the mercy of Allah in our interactions with all of creation.', 'image': 'Rahma.png'},
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -36,8 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _youtubeController = YoutubePlayerController(
       initialVideoId: videoId,
       flags: const YoutubePlayerFlags(
-        autoPlay: false,
+        autoPlay: true,
         mute: false,
+        loop: true,
         showLiveFullscreenButton: false,
       ),
     );
@@ -102,29 +110,33 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Next Prayer Card - Hero section
-                  _buildPrayerCard(),
+                  // Video Player
+                  _buildVideoCard(),
                   const SizedBox(height: 16),
 
-                  // Donate Button - Separate from prayer
+                  // Values Section
+                  _buildValuesSection(),
+                  const SizedBox(height: 16),
+
+                  // Next Prayer Card - Condensed
+                  _buildPrayerCard(),
+                  const SizedBox(height: 12),
+
+                  // Support Qiam Button - under prayer card
                   SizedBox(
-                    height: 48,
+                    height: 44,
                     child: ElevatedButton.icon(
                       onPressed: () => _launchUrl(AppConstants.donateUrl),
-                      icon: const Icon(Icons.volunteer_activism, size: 20),
+                      icon: const Icon(Icons.volunteer_activism, size: 18),
                       label: const Text('Support Qiam Institute'),
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Video Player
-                  _buildVideoCard(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // Upcoming Events Section
                   _buildEventsSection(),
@@ -133,93 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildPrayerCard() {
-    if (_isLoading || _nextPrayer == null) {
-      return Card(
-        child: Container(
-          height: 80,
-          padding: const EdgeInsets.all(16),
-          child: const Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
-            ],
-          ),
-        ),
-        child: Row(
-          children: [
-            // Left side: Prayer info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'NEXT PRAYER',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _nextPrayer!.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'in ${_nextPrayer!.formattedTimeUntil}',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Right side: TIME - The hero element
-            Text(
-              _nextPrayer!.formattedTime,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -264,6 +189,158 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPrayerCard() {
+    if (_isLoading || _nextPrayer == null) {
+      return Card(
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.all(12),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
+            ],
+          ),
+        ),
+        child: Row(
+          children: [
+            // Left side: Next Prayer label, name and countdown
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'NEXT PRAYER',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        _nextPrayer!.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'in ${_nextPrayer!.formattedTimeUntil}',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Right side: TIME
+            Text(
+              _nextPrayer!.formattedTime,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildValuesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Our Values',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            TextButton(
+              onPressed: () {
+                if (widget.onNavigate != null) {
+                  widget.onNavigate!(11, 'Our Values');
+                }
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 36),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('See All'),
+                  SizedBox(width: 4),
+                  Icon(Icons.arrow_forward, size: 16),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: _coreValues.map((value) {
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: value != _coreValues.last ? 8 : 0,
+                ),
+                child: _ValueMiniCard(
+                  name: value['name']!,
+                  arabic: value['arabic']!,
+                  imagePath: 'assets/images/values/${value['image']}',
+                  onTap: () {
+                    if (widget.onNavigate != null) {
+                      widget.onNavigate!(11, 'Our Values');
+                    }
+                  },
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -545,5 +622,64 @@ class _EventMiniCard extends StatelessWidget {
   String _getMonthAbbr(int month) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[month - 1];
+  }
+}
+
+class _ValueMiniCard extends StatelessWidget {
+  final String name;
+  final String arabic;
+  final String imagePath;
+  final VoidCallback onTap;
+
+  const _ValueMiniCard({
+    required this.name,
+    required this.arabic,
+    required this.imagePath,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                imagePath,
+                height: 40,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.star,
+                  size: 32,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                arabic,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

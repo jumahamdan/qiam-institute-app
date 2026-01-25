@@ -51,8 +51,8 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   // Main tabs: 0 = Home, 1 = Explore, 2 = Prayers, 3 = More (bottom sheet)
   // Secondary screens (keep bottom nav visible):
-  // 10 = Events, 11 = Values, 12 = Media, 13 = Volunteer, 14 = Qibla
-  // 20 = Islamic Calendar, 21 = Duaa, 22 = About, 23 = Contact, 24 = Settings
+  // 10 = Events, 11 = Values, 12 = Media, 13 = Volunteer, 14 = Qibla, 15 = Duaa, 16 = Islamic Calendar
+  // 20 = About, 21 = Contact, 22 = Settings
   int _selectedIndex = 0;
   String? _currentScreenTitle;
 
@@ -102,30 +102,12 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
             const SizedBox(height: 20),
             _MoreMenuItem(
-              icon: Icons.calendar_month,
-              label: 'Islamic Calendar',
-              subtitle: 'Important Islamic dates',
-              onTap: () {
-                Navigator.pop(context);
-                _navigateTo(20, 'Islamic Calendar');
-              },
-            ),
-            _MoreMenuItem(
-              icon: Icons.nights_stay,
-              label: 'Daily Duaa',
-              subtitle: 'Supplications for daily life',
-              onTap: () {
-                Navigator.pop(context);
-                _navigateTo(21, 'Daily Duaa');
-              },
-            ),
-            _MoreMenuItem(
               icon: Icons.info_outline,
               label: 'About Us',
               subtitle: 'Learn about Qiam Institute',
               onTap: () {
                 Navigator.pop(context);
-                _navigateTo(22, 'About Us');
+                _navigateTo(20, 'About Us');
               },
             ),
             _MoreMenuItem(
@@ -134,7 +116,7 @@ class _MainNavigationState extends State<MainNavigation> {
               subtitle: 'Get in touch with us',
               onTap: () {
                 Navigator.pop(context);
-                _navigateTo(23, 'Contact Us');
+                _navigateTo(21, 'Contact Us');
               },
             ),
             _MoreMenuItem(
@@ -143,7 +125,7 @@ class _MainNavigationState extends State<MainNavigation> {
               subtitle: 'Prayer times and app settings',
               onTap: () {
                 Navigator.pop(context);
-                _navigateTo(24, 'Settings');
+                _navigateTo(22, 'Settings');
               },
             ),
             const SizedBox(height: 10),
@@ -173,16 +155,16 @@ class _MainNavigationState extends State<MainNavigation> {
         return const VolunteerScreen();
       case 14:
         return const QiblaScreen();
+      case 15:
+        return const DuaaScreen();
+      case 16:
+        return const IslamicCalendarScreen();
       // More menu screens
       case 20:
-        return const IslamicCalendarScreen();
-      case 21:
-        return const DuaaScreen();
-      case 22:
         return const AboutScreen();
-      case 23:
+      case 21:
         return const ContactScreen();
-      case 24:
+      case 22:
         return const SettingsScreen();
       default:
         return const HomeScreen();
@@ -244,6 +226,8 @@ class _MainNavigationState extends State<MainNavigation> {
     return AppBar(
       centerTitle: true,
       automaticallyImplyLeading: false,
+      leadingWidth: 16, // Add left padding
+      leading: const SizedBox(width: 16),
       title: GestureDetector(
         onTap: () => setState(() => _selectedIndex = 0),
         child: Image.asset(
@@ -261,16 +245,28 @@ class _MainNavigationState extends State<MainNavigation> {
             await launchUrl(uri, mode: LaunchMode.externalApplication);
           },
         ),
+        const SizedBox(width: 8), // Add right padding
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      body: _buildBody(),
-      bottomNavigationBar: NavigationBar(
+    return PopScope(
+      canPop: _selectedIndex == 0, // Only allow pop (exit) when on home
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          // If we didn't pop (exit), navigate to home instead
+          setState(() {
+            _selectedIndex = 0;
+            _currentScreenTitle = null;
+          });
+        }
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(context),
+        body: _buildBody(),
+        bottomNavigationBar: NavigationBar(
         selectedIndex: _bottomNavIndex,
         onDestinationSelected: _onItemTapped,
         destinations: [
@@ -306,6 +302,7 @@ class _MainNavigationState extends State<MainNavigation> {
             label: 'More',
           ),
         ],
+      ),
       ),
     );
   }
