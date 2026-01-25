@@ -7,13 +7,23 @@ void main() {
   testWidgets('App renders with navigation', (WidgetTester tester) async {
     await tester.pumpWidget(const QiamApp());
 
+    // Allow initial frame to settle (ignore YouTube player errors in test)
+    await tester.pump();
+
     // Verify bottom navigation bar exists
     expect(find.byType(NavigationBar), findsOneWidget);
 
-    // Verify navigation destinations exist (Home, Timings)
-    expect(find.byType(NavigationDestination), findsNWidgets(2));
+    // Verify navigation destinations exist (Explore, Timings, More)
+    expect(find.byType(NavigationDestination), findsNWidgets(3));
+  });
 
-    // Verify home screen content
-    expect(find.text('NEXT PRAYER'), findsOneWidget);
+  testWidgets('Navigation tabs show correct labels', (WidgetTester tester) async {
+    await tester.pumpWidget(const QiamApp());
+    await tester.pump();
+
+    // Check for navigation tab labels
+    expect(find.text('Explore'), findsOneWidget);
+    expect(find.text('Timings'), findsOneWidget);
+    expect(find.text('More'), findsOneWidget);
   });
 }
