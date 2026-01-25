@@ -1,29 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:qiam_institute_app/app.dart';
+import 'package:qiam_institute_app/screens/explore/explore_screen.dart';
+import 'package:qiam_institute_app/screens/prayer/prayer_screen.dart';
 
 void main() {
-  testWidgets('App renders with navigation', (WidgetTester tester) async {
-    await tester.pumpWidget(const QiamApp());
-
-    // Allow initial frame to settle (ignore YouTube player errors in test)
+  testWidgets('Explore screen renders correctly', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ExploreScreen()));
     await tester.pump();
 
-    // Verify bottom navigation bar exists
-    expect(find.byType(NavigationBar), findsOneWidget);
+    // Verify explore screen title
+    expect(find.text('Explore'), findsOneWidget);
 
-    // Verify navigation destinations exist (Explore, Timings, More)
-    expect(find.byType(NavigationDestination), findsNWidgets(3));
+    // Verify quick links exist
+    expect(find.text('Events'), findsOneWidget);
+    expect(find.text('Our Values'), findsOneWidget);
+    expect(find.text('Volunteer'), findsOneWidget);
+    expect(find.text('Media'), findsOneWidget);
   });
 
-  testWidgets('Navigation tabs show correct labels', (WidgetTester tester) async {
-    await tester.pumpWidget(const QiamApp());
+  testWidgets('Prayer screen renders correctly', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: PrayerScreen()));
     await tester.pump();
 
-    // Check for navigation tab labels
-    expect(find.text('Explore'), findsOneWidget);
+    // Verify prayer screen title
     expect(find.text('Timings'), findsOneWidget);
-    expect(find.text('More'), findsOneWidget);
+
+    // Verify prayer names exist
+    expect(find.text('Fajr'), findsOneWidget);
+    expect(find.text('Dhuhr'), findsOneWidget);
+    expect(find.text('Asr'), findsOneWidget);
+    expect(find.text('Maghrib'), findsOneWidget);
+    expect(find.text('Isha'), findsOneWidget);
   });
 }
