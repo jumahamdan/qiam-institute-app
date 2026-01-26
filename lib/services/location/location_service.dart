@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/constants.dart';
 
@@ -52,6 +54,9 @@ class LocationService {
 
       _cachedPosition = position;
       await _cacheLocation(position);
+
+      // Reverse geocode to get location name
+      await _reverseGeocodePosition(position);
 
       return LocationResult.success(position);
     } catch (e) {
@@ -134,10 +139,113 @@ class LocationService {
     await prefs.setDouble(_lngKey, position.longitude);
   }
 
+  Future<void> _reverseGeocodePosition(Position position) async {
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=${position.latitude}&lon=${position.longitude}&format=json&addressdetails=1',
+      );
+
+      final response = await http.get(
+        uri,
+        headers: {'User-Agent': 'QiamInstituteApp/1.0'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final address = data['address'] as Map<String, dynamic>?;
+
+        if (address != null) {
+          final city = address['city'] ??
+              address['town'] ??
+              address['village'] ??
+              address['municipality'] ??
+              '';
+          final state = address['state'] ?? '';
+
+          String name;
+          if (city.isNotEmpty && state.isNotEmpty) {
+            name = '$city, $state';
+          } else if (city.isNotEmpty) {
+            name = city;
+          } else if (state.isNotEmpty) {
+            name = state;
+          } else {
+            name = 'Current Location';
+          }
+
+          await setLocationName(name);
+        }
+      }
+    } catch (e) {
+      // Silently fail - keep existing location name
+    }
+  }
+
   Future<void> setLocationName(String name) async {
     _locationName = name;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_nameKey, name);
+  }
+
+  /// Get full address via reverse geocoding
+  Future<String?> getFullAddress() async {
+    try {
+      final lat = latitude;
+      final lng = longitude;
+
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lng&format=json&addressdetails=1',
+      );
+
+      final response = await http.get(
+        uri,
+        headers: {'User-Agent': 'QiamInstituteApp/1.0'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final address = data['address'] as Map<String, dynamic>?;
+
+        if (address != null) {
+          final parts = <String>[];
+
+          // Road/street
+          final road = address['road'] ?? address['street'];
+          if (road != null) parts.add(road);
+
+          // House number
+          final houseNumber = address['house_number'];
+          if (houseNumber != null && parts.isNotEmpty) {
+            parts[0] = '$houseNumber ${parts[0]}';
+          }
+
+          // City/town
+          final city = address['city'] ??
+              address['town'] ??
+              address['village'] ??
+              address['municipality'];
+          if (city != null) parts.add(city);
+
+          // State
+          final state = address['state'];
+          if (state != null) parts.add(state);
+
+          // Country
+          final country = address['country'];
+          if (country != null) parts.add(country);
+
+          if (parts.isNotEmpty) {
+            return parts.join(', ');
+          }
+        }
+
+        // Fallback to display_name
+        return data['display_name'] as String?;
+      }
+    } catch (e) {
+      // Silently fail and return null
+    }
+    return null;
   }
 }
 

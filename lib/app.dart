@@ -56,6 +56,9 @@ class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
   String? _currentScreenTitle;
 
+  // Dua screen search state
+  bool _duaSearchActive = false;
+
   // Get the bottom nav index (0-3) for highlighting
   int get _bottomNavIndex {
     if (_selectedIndex >= 20) return 3; // More menu items
@@ -159,7 +162,10 @@ class _MainNavigationState extends State<MainNavigation> {
       case 14:
         return const QiblaScreen();
       case 15:
-        return const DuaaScreen();
+        return DuaaScreen(
+          isSearchActive: _duaSearchActive,
+          onSearchClose: () => setState(() => _duaSearchActive = false),
+        );
       case 16:
         return const IslamicCalendarScreen();
       // More menu screens
@@ -185,6 +191,7 @@ class _MainNavigationState extends State<MainNavigation> {
               // Go back to parent tab
               _selectedIndex = _selectedIndex >= 20 ? 0 : 1; // More items go to Home, Explore items go to Explore
               _currentScreenTitle = null;
+              _duaSearchActive = false; // Reset search when leaving
             });
           },
         ),
@@ -193,6 +200,19 @@ class _MainNavigationState extends State<MainNavigation> {
           _currentScreenTitle ?? '',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: _selectedIndex == 15
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    setState(() {
+                      _duaSearchActive = !_duaSearchActive;
+                    });
+                  },
+                  tooltip: 'Search Duas',
+                ),
+              ]
+            : null,
       );
     }
 

@@ -29,6 +29,14 @@ class AppConstants {
   static const String contactPhone = '630-541-7432';
   static const String address = '900 S Frontage Rd Suite 110, Woodridge, IL 60517';
 
+  // Form submission endpoint (Formspree)
+  // Create a free form at https://formspree.io and paste your form ID here
+  static const String formspreeEndpoint = 'https://formspree.io/f/YOUR_FORM_ID';
+
+  // Google Places API Key (optional - app uses free OpenStreetMap by default)
+  // Only needed if you want to use Google Places instead of OpenStreetMap
+  static const String googlePlacesApiKey = 'YOUR_GOOGLE_PLACES_API_KEY';
+
   // Location (Woodridge, IL - default)
   static const double defaultLatitude = 41.7508;
   static const double defaultLongitude = -88.0484;

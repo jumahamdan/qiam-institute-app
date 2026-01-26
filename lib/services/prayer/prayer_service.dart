@@ -90,6 +90,12 @@ class PrayerService {
       case 'singapore':
         _params = CalculationMethod.singapore.getParameters();
         break;
+      case 'tehran':
+        _params = CalculationMethod.tehran.getParameters();
+        break;
+      case 'turkey':
+        _params = CalculationMethod.turkey.getParameters();
+        break;
       case 'isna':
       default:
         _params = CalculationMethod.north_america.getParameters();
@@ -97,25 +103,56 @@ class PrayerService {
 
     // Set Asr madhab
     _params!.madhab = _settings.asrMethod == 'hanafi' ? Madhab.hanafi : Madhab.shafi;
+
+    // Set high latitude rule
+    switch (_settings.highLatitudeRule) {
+      case 'middle_of_night':
+        _params!.highLatitudeRule = HighLatitudeRule.middle_of_the_night;
+        break;
+      case 'one_seventh':
+        _params!.highLatitudeRule = HighLatitudeRule.seventh_of_the_night;
+        break;
+      case 'angle_based':
+        _params!.highLatitudeRule = HighLatitudeRule.twilight_angle;
+        break;
+      case 'none':
+      default:
+        // Default behavior
+        break;
+    }
   }
 
   Future<void> updateSettings({
     String? locationMode,
+    bool? autoDetectLocation,
     double? latitude,
     double? longitude,
     String? locationName,
     String? calculationMethod,
+    bool? useFixedCalculation,
     String? asrMethod,
+    String? highLatitudeRule,
+    String? daylightSaving,
+    int? imsakMinutes,
   }) async {
     if (locationMode != null) _settings.locationMode = locationMode;
+    if (autoDetectLocation != null) _settings.autoDetectLocation = autoDetectLocation;
     if (latitude != null) _settings.latitude = latitude;
     if (longitude != null) _settings.longitude = longitude;
     if (locationName != null) _settings.locationName = locationName;
     if (calculationMethod != null) _settings.calculationMethod = calculationMethod;
+    if (useFixedCalculation != null) _settings.useFixedCalculation = useFixedCalculation;
     if (asrMethod != null) _settings.asrMethod = asrMethod;
+    if (highLatitudeRule != null) _settings.highLatitudeRule = highLatitudeRule;
+    if (daylightSaving != null) _settings.daylightSaving = daylightSaving;
+    if (imsakMinutes != null) _settings.imsakMinutes = imsakMinutes;
 
     await _updateLocation();
     _updateCalculationParams();
+  }
+
+  Future<void> updateCorrection(String prayer, int minutes) async {
+    _settings.setCorrection(prayer, minutes);
   }
 
   Coordinates get coordinates {
@@ -142,17 +179,23 @@ class PrayerService {
 
   PrayerTimes get todayPrayerTimes => getPrayerTimesForDate(DateTime.now());
 
+  /// Apply manual correction to a prayer time
+  DateTime _applyCorrection(DateTime time, String prayer) {
+    final correction = _settings.allCorrections[prayer] ?? 0;
+    return time.add(Duration(minutes: correction));
+  }
+
   /// Returns the next prayer and time until it
   NextPrayerInfo getNextPrayer() {
     final now = DateTime.now();
     final prayers = todayPrayerTimes;
 
     final prayerList = [
-      ('Fajr', prayers.fajr),
-      ('Dhuhr', prayers.dhuhr),
-      ('Asr', prayers.asr),
-      ('Maghrib', prayers.maghrib),
-      ('Isha', prayers.isha),
+      ('Fajr', _applyCorrection(prayers.fajr, 'Fajr')),
+      ('Dhuhr', _applyCorrection(prayers.dhuhr, 'Dhuhr')),
+      ('Asr', _applyCorrection(prayers.asr, 'Asr')),
+      ('Maghrib', _applyCorrection(prayers.maghrib, 'Maghrib')),
+      ('Isha', _applyCorrection(prayers.isha, 'Isha')),
     ];
 
     // Find previous prayer for progress calculation
@@ -170,7 +213,7 @@ class PrayerService {
           final yesterday = DateTime.now().subtract(const Duration(days: 1));
           final yesterdayPrayers = getPrayerTimesForDate(yesterday);
           previousPrayer = 'Isha';
-          previousTime = yesterdayPrayers.isha;
+          previousTime = _applyCorrection(yesterdayPrayers.isha, 'Isha');
         }
 
         return NextPrayerInfo(
@@ -188,10 +231,10 @@ class PrayerService {
     final tomorrowPrayers = getPrayerTimesForDate(tomorrow);
     return NextPrayerInfo(
       name: 'Fajr',
-      time: tomorrowPrayers.fajr,
-      timeUntil: tomorrowPrayers.fajr.difference(now),
+      time: _applyCorrection(tomorrowPrayers.fajr, 'Fajr'),
+      timeUntil: _applyCorrection(tomorrowPrayers.fajr, 'Fajr').difference(now),
       previousPrayer: 'Isha',
-      previousTime: prayers.isha,
+      previousTime: _applyCorrection(prayers.isha, 'Isha'),
     );
   }
 
@@ -201,19 +244,25 @@ class PrayerService {
     final nextPrayer = getNextPrayer();
 
     return [
-      PrayerTimeInfo('Fajr', prayers.fajr, nextPrayer.name == 'Fajr'),
-      PrayerTimeInfo('Dhuhr', prayers.dhuhr, nextPrayer.name == 'Dhuhr'),
-      PrayerTimeInfo('Asr', prayers.asr, nextPrayer.name == 'Asr'),
-      PrayerTimeInfo('Maghrib', prayers.maghrib, nextPrayer.name == 'Maghrib'),
-      PrayerTimeInfo('Isha', prayers.isha, nextPrayer.name == 'Isha'),
+      PrayerTimeInfo('Fajr', _applyCorrection(prayers.fajr, 'Fajr'), nextPrayer.name == 'Fajr'),
+      PrayerTimeInfo('Dhuhr', _applyCorrection(prayers.dhuhr, 'Dhuhr'), nextPrayer.name == 'Dhuhr'),
+      PrayerTimeInfo('Asr', _applyCorrection(prayers.asr, 'Asr'), nextPrayer.name == 'Asr'),
+      PrayerTimeInfo('Maghrib', _applyCorrection(prayers.maghrib, 'Maghrib'), nextPrayer.name == 'Maghrib'),
+      PrayerTimeInfo('Isha', _applyCorrection(prayers.isha, 'Isha'), nextPrayer.name == 'Isha'),
     ];
   }
 
   /// Get sunrise time
-  DateTime get sunrise => todayPrayerTimes.sunrise;
+  DateTime get sunrise => _applyCorrection(todayPrayerTimes.sunrise, 'Sunrise');
 
   /// Get sunset time (same as maghrib)
-  DateTime get sunset => todayPrayerTimes.maghrib;
+  DateTime get sunset => _applyCorrection(todayPrayerTimes.maghrib, 'Maghrib');
+
+  /// Get Imsak time (minutes before Fajr)
+  DateTime get imsak {
+    final fajr = _applyCorrection(todayPrayerTimes.fajr, 'Fajr');
+    return fajr.subtract(Duration(minutes: _settings.imsakMinutes));
+  }
 
   /// Get prayer times for the next 7 days
   List<DayPrayerTimes> getWeekPrayerTimes() {
@@ -227,6 +276,61 @@ class PrayerService {
     }
 
     return week;
+  }
+
+  /// Get prayer times for a specific date as a list
+  List<PrayerTimeInfo> getPrayerListForDate(DateTime date) {
+    final prayers = getPrayerTimesForDate(date);
+    final now = DateTime.now();
+    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+
+    String? nextPrayerName;
+    if (isToday) {
+      nextPrayerName = getNextPrayer().name;
+    }
+
+    return [
+      PrayerTimeInfo('Fajr', _applyCorrection(prayers.fajr, 'Fajr'), nextPrayerName == 'Fajr'),
+      PrayerTimeInfo('Dhuhr', _applyCorrection(prayers.dhuhr, 'Dhuhr'), nextPrayerName == 'Dhuhr'),
+      PrayerTimeInfo('Asr', _applyCorrection(prayers.asr, 'Asr'), nextPrayerName == 'Asr'),
+      PrayerTimeInfo('Maghrib', _applyCorrection(prayers.maghrib, 'Maghrib'), nextPrayerName == 'Maghrib'),
+      PrayerTimeInfo('Isha', _applyCorrection(prayers.isha, 'Isha'), nextPrayerName == 'Isha'),
+    ];
+  }
+
+  /// Get sunrise for a specific date
+  DateTime getSunriseForDate(DateTime date) {
+    final prayers = getPrayerTimesForDate(date);
+    return _applyCorrection(prayers.sunrise, 'Sunrise');
+  }
+
+  /// Get sunset for a specific date
+  DateTime getSunsetForDate(DateTime date) {
+    final prayers = getPrayerTimesForDate(date);
+    return _applyCorrection(prayers.maghrib, 'Maghrib');
+  }
+
+  /// Get all prayer times for a month
+  Future<List<DailyPrayerTimes>> getMonthPrayerTimes(int year, int month) async {
+    final List<DailyPrayerTimes> monthTimes = [];
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(year, month, day);
+      final prayers = getPrayerTimesForDate(date);
+
+      monthTimes.add(DailyPrayerTimes(
+        date: date,
+        fajr: _applyCorrection(prayers.fajr, 'Fajr'),
+        sunrise: _applyCorrection(prayers.sunrise, 'Sunrise'),
+        dhuhr: _applyCorrection(prayers.dhuhr, 'Dhuhr'),
+        asr: _applyCorrection(prayers.asr, 'Asr'),
+        maghrib: _applyCorrection(prayers.maghrib, 'Maghrib'),
+        isha: _applyCorrection(prayers.isha, 'Isha'),
+      ));
+    }
+
+    return monthTimes;
   }
 
   /// Format time for display
@@ -292,4 +396,25 @@ class DayPrayerTimes {
 
   String get dayName => DateFormat('EEE').format(date);
   String get shortDate => DateFormat('M/d').format(date);
+}
+
+/// Data class for daily prayer times (used in monthly/yearly tables)
+class DailyPrayerTimes {
+  final DateTime date;
+  final DateTime fajr;
+  final DateTime sunrise;
+  final DateTime dhuhr;
+  final DateTime asr;
+  final DateTime maghrib;
+  final DateTime isha;
+
+  DailyPrayerTimes({
+    required this.date,
+    required this.fajr,
+    required this.sunrise,
+    required this.dhuhr,
+    required this.asr,
+    required this.maghrib,
+    required this.isha,
+  });
 }

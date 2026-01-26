@@ -183,7 +183,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                Icon(Icons.play_circle_outline, color: Colors.grey[400]),
+                GestureDetector(
+                  onTap: () {
+                    _youtubeController.seekTo(Duration.zero);
+                    _youtubeController.play();
+                  },
+                  child: Icon(
+                    Icons.replay_circle_filled,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 32,
+                  ),
+                ),
               ],
             ),
           ),

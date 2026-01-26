@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -79,7 +80,7 @@ class ExploreScreen extends StatelessWidget {
                     onTap: () => _navigate(context, 12, 'Media', '/media'),
                   ),
                   _ExploreCard(
-                    icon: Icons.nights_stay,
+                    customIcon: _DuaExploreIcon(color: const Color(0xFF9C27B0)),
                     title: 'Daily Duaa',
                     subtitle: 'Supplications',
                     color: const Color(0xFF9C27B0),
@@ -209,19 +210,21 @@ class ExploreScreen extends StatelessWidget {
 
 // Main explore card with enhanced styling
 class _ExploreCard extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? customIcon;
   final String title;
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
 
   const _ExploreCard({
-    required this.icon,
+    this.icon,
+    this.customIcon,
     required this.title,
     required this.subtitle,
     required this.color,
     required this.onTap,
-  });
+  }) : assert(icon != null || customIcon != null);
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +258,7 @@ class _ExploreCard extends StatelessWidget {
                     width: 1.5,
                   ),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: customIcon ?? Icon(icon, color: color, size: 24),
               ),
               const SizedBox(height: 8),
               Text(
@@ -280,6 +283,112 @@ class _ExploreCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// Dua icon - 8-pointed star with crescent and hands for Explore card
+class _DuaExploreIcon extends StatelessWidget {
+  final Color color;
+
+  const _DuaExploreIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: CustomPaint(
+        size: const Size(28, 28),
+        painter: _DuaExploreIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+/// Custom painter for Dua explore icon
+class _DuaExploreIconPainter extends CustomPainter {
+  final Color color;
+
+  _DuaExploreIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+
+    // Draw 8-pointed star outline
+    final starPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.05;
+
+    final outerRadius = size.width * 0.45;
+    final innerRadius = outerRadius * 0.55;
+
+    final starPath = Path();
+    const int points = 8;
+    const double startAngle = -math.pi / 2;
+
+    for (int i = 0; i < points * 2; i++) {
+      final radius = i.isEven ? outerRadius : innerRadius;
+      final angle = startAngle + (i * math.pi / points);
+      final x = center.dx + radius * math.cos(angle);
+      final y = center.dy + radius * math.sin(angle);
+
+      if (i == 0) {
+        starPath.moveTo(x, y);
+      } else {
+        starPath.lineTo(x, y);
+      }
+    }
+    starPath.close();
+    canvas.drawPath(starPath, starPaint);
+
+    // Draw crescent moon
+    final moonPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final moonRadius = size.width * 0.08;
+    final moonCenter = Offset(center.dx, center.dy - size.height * 0.12);
+
+    canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
+    canvas.drawCircle(moonCenter, moonRadius, moonPaint);
+    final erasePaint = Paint()
+      ..blendMode = BlendMode.clear;
+    canvas.drawCircle(
+      Offset(moonCenter.dx + moonRadius * 0.4, moonCenter.dy),
+      moonRadius * 0.75,
+      erasePaint,
+    );
+    canvas.restore();
+
+    // Draw simplified hands
+    final handPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Left hand (simple oval)
+    canvas.save();
+    canvas.translate(center.dx - size.width * 0.12, center.dy + size.height * 0.08);
+    canvas.rotate(-0.3);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: size.width * 0.15, height: size.width * 0.22),
+      handPaint,
+    );
+    canvas.restore();
+
+    // Right hand (simple oval)
+    canvas.save();
+    canvas.translate(center.dx + size.width * 0.12, center.dy + size.height * 0.08);
+    canvas.rotate(0.3);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: size.width * 0.15, height: size.width * 0.22),
+      handPaint,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // Special Values card showing mini value images

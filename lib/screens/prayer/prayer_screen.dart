@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/prayer/prayer_settings.dart';
 import '../../services/qibla/qibla_service.dart';
+import '../qibla/qibla_screen.dart';
+import 'yearly_prayer_times_screen.dart';
 
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
@@ -23,6 +25,11 @@ class _PrayerScreenState extends State<PrayerScreen> {
   double _compassHeading = 0;
   bool _isLoading = true;
   bool _hasCompass = false;
+
+  // Day navigation
+  DateTime _selectedDate = DateTime.now();
+  DateTime? _selectedSunrise;
+  DateTime? _selectedSunset;
 
   @override
   void initState() {
@@ -64,8 +71,43 @@ class _PrayerScreenState extends State<PrayerScreen> {
   }
 
   void _updatePrayerData() {
-    _prayerTimes = _prayerService.getTodayPrayerList();
-    _nextPrayer = _prayerService.getNextPrayer();
+    final now = DateTime.now();
+    final isToday = _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+
+    if (isToday) {
+      _prayerTimes = _prayerService.getTodayPrayerList();
+      _nextPrayer = _prayerService.getNextPrayer();
+      _selectedSunrise = _prayerService.sunrise;
+      _selectedSunset = _prayerService.sunset;
+    } else {
+      _prayerTimes = _prayerService.getPrayerListForDate(_selectedDate);
+      _nextPrayer = _prayerService.getNextPrayer(); // Still show countdown for today's next prayer
+      _selectedSunrise = _prayerService.getSunriseForDate(_selectedDate);
+      _selectedSunset = _prayerService.getSunsetForDate(_selectedDate);
+    }
+  }
+
+  void _changeDate(int days) {
+    setState(() {
+      _selectedDate = _selectedDate.add(Duration(days: days));
+      _updatePrayerData();
+    });
+  }
+
+  void _goToToday() {
+    setState(() {
+      _selectedDate = DateTime.now();
+      _updatePrayerData();
+    });
+  }
+
+  bool get _isToday {
+    final now = DateTime.now();
+    return _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
   }
 
   @override
@@ -77,8 +119,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+    final dateFormat = DateFormat('EEE, MMM d, yyyy');
 
     // Show loading state while initializing
     if (_isLoading || _nextPrayer == null || _prayerTimes == null) {
@@ -101,7 +142,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
           child: Column(
             children: [
               // Date and location info (compact, no title since it's in app bar)
-              _buildDateLocationRow(dateFormat.format(today)),
+              _buildDateLocationRow(dateFormat.format(_selectedDate)),
               const SizedBox(height: 16),
 
               // Circular progress indicator for next prayer
@@ -116,8 +157,20 @@ class _PrayerScreenState extends State<PrayerScreen> {
               _buildSunriseSunsetRow(),
               const SizedBox(height: 16),
 
-              // Mini Qibla compass
-              _buildMiniQiblaCompass(),
+              // Prayer Calendar Card
+              _buildPrayerCalendarCard(),
+              const SizedBox(height: 16),
+
+              // Mini Qibla compass (tap to open full screen)
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const QiblaScreen()),
+                  );
+                },
+                child: _buildMiniQiblaCompass(),
+              ),
             ],
           ),
         ),
@@ -126,20 +179,123 @@ class _PrayerScreenState extends State<PrayerScreen> {
   }
 
   Widget _buildDateLocationRow(String dateString) {
-    return Row(
+    return Column(
       children: [
-        Icon(Icons.calendar_today, size: 14, color: Colors.grey[500]),
-        const SizedBox(width: 6),
-        Text(
-          dateString,
-          style: TextStyle(color: Colors.grey[600], fontSize: 13),
+        // Day navigation row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Previous day button
+            IconButton(
+              onPressed: () => _changeDate(-1),
+              icon: const Icon(Icons.chevron_left),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.grey[100],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              iconSize: 20,
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
+            ),
+            const SizedBox(width: 8),
+
+            // Date display with today button
+            Flexible(
+              child: GestureDetector(
+                onTap: _isToday ? null : _goToToday,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _isToday
+                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                      : Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _isToday
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
+                        : Colors.orange.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 14,
+                      color: _isToday
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.orange,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        dateString,
+                        style: TextStyle(
+                          color: _isToday
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.orange,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (!_isToday) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'TODAY',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            ),
+            const SizedBox(width: 8),
+
+            // Next day button
+            IconButton(
+              onPressed: () => _changeDate(1),
+              icon: const Icon(Icons.chevron_right),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.grey[100],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              iconSize: 20,
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
+            ),
+          ],
         ),
-        const Spacer(),
-        Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
-        const SizedBox(width: 4),
-        Text(
-          _prayerService.locationName,
-          style: TextStyle(color: Colors.grey[500], fontSize: 13),
+        const SizedBox(height: 8),
+
+        // Location row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
+            const SizedBox(width: 4),
+            Text(
+              _prayerService.locationName,
+              style: TextStyle(color: Colors.grey[500], fontSize: 13),
+            ),
+          ],
         ),
       ],
     );
@@ -412,7 +568,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
         Expanded(
           child: _buildSunTimeBox(
             'Sunrise',
-            _prayerService.sunrise,
+            _selectedSunrise ?? _prayerService.sunrise,
             Icons.wb_sunny_rounded,
             const Color(0xFFFF9800),
           ),
@@ -421,12 +577,85 @@ class _PrayerScreenState extends State<PrayerScreen> {
         Expanded(
           child: _buildSunTimeBox(
             'Sunset',
-            _prayerService.sunset,
+            _selectedSunset ?? _prayerService.sunset,
             Icons.nights_stay_rounded,
             const Color(0xFFE91E63),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPrayerCalendarCard() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const YearlyPrayerTimesScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.calendar_month,
+                color: Theme.of(context).colorScheme.primary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Prayer Times Calendar',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'View monthly prayer times table',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: Theme.of(context).colorScheme.primary,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -470,6 +699,11 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
   Widget _buildMiniQiblaCompass() {
     final qiblaAngle = (_qiblaDirection - _compassHeading) * (math.pi / 180);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    // Check if pointing towards Qibla (within 10 degrees for mini compass)
+    final angleDiff = ((_qiblaDirection - _compassHeading) % 360).abs();
+    final isPointingToQibla = angleDiff < 10 || angleDiff > 350;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -486,45 +720,72 @@ class _PrayerScreenState extends State<PrayerScreen> {
       ),
       child: Row(
         children: [
-          // Mini compass
+          // Mini compass - styled like the full Qibla screen
           Container(
             width: 70,
             height: 70,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
+              color: primaryColor.withValues(alpha: 0.05),
               border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                color: primaryColor.withValues(alpha: 0.3),
                 width: 2,
               ),
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
+                // Tick marks around the edge
+                CustomPaint(
+                  size: const Size(70, 70),
+                  painter: _MiniCompassPainter(
+                    compassHeading: _compassHeading,
+                    primaryColor: primaryColor,
+                  ),
+                ),
                 // N indicator
                 Transform.rotate(
                   angle: -_compassHeading * (math.pi / 180),
-                  child: const Align(
+                  child: Align(
                     alignment: Alignment.topCenter,
                     child: Padding(
-                      padding: EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         'N',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: Colors.red,
+                          color: primaryColor,
                         ),
                       ),
                     ),
                   ),
                 ),
-                // Qibla arrow
+                // Qibla arrow with mosque icon
                 Transform.rotate(
                   angle: qiblaAngle,
-                  child: Icon(
-                    Icons.navigation,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 32,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: isPointingToQibla
+                              ? Colors.green.withValues(alpha: 0.2)
+                              : primaryColor.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isPointingToQibla ? Colors.green : primaryColor,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.mosque,
+                          color: isPointingToQibla ? Colors.green : primaryColor,
+                          size: 16,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -541,7 +802,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
                   children: [
                     Icon(
                       Icons.mosque,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: primaryColor,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -565,27 +826,38 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 ),
                 Text(
                   _hasCompass
-                      ? 'Point arrow towards Makkah'
+                      ? 'Tap to open full compass'
                       : 'Compass not available on this device',
                   style: TextStyle(
-                    color: Colors.grey[500],
+                    color: _hasCompass ? primaryColor : Colors.grey[500],
                     fontSize: 12,
+                    fontWeight: _hasCompass ? FontWeight.w500 : FontWeight.normal,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Kaaba icon
+          // Kaaba icon with arrow
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              color: primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text(
-              '🕋',
-              style: TextStyle(fontSize: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '🕋',
+                  style: TextStyle(fontSize: 24),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: primaryColor,
+                  size: 16,
+                ),
+              ],
             ),
           ),
         ],
@@ -832,7 +1104,7 @@ class _PrayerSettingsSheetState extends State<_PrayerSettingsSheet> {
                     items: PrayerSettings.calculationMethods.entries
                         .map((e) => DropdownMenuItem(
                               value: e.key,
-                              child: Text(e.value),
+                              child: Text(e.value.name),
                             ))
                         .toList(),
                     onChanged: (value) => setState(() => _calculationMethod = value!),
@@ -892,5 +1164,54 @@ class _PrayerSettingsSheetState extends State<_PrayerSettingsSheet> {
         );
       },
     );
+  }
+}
+
+/// Mini compass painter for tick marks
+class _MiniCompassPainter extends CustomPainter {
+  final double compassHeading;
+  final Color primaryColor;
+
+  _MiniCompassPainter({
+    required this.compassHeading,
+    required this.primaryColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 4;
+
+    final paint = Paint()
+      ..strokeWidth = 1
+      ..strokeCap = StrokeCap.round;
+
+    // Draw tick marks (rotate with compass)
+    for (int i = 0; i < 12; i++) {
+      final angle = (i * 30 - compassHeading) * (math.pi / 180);
+      final isMajor = i % 3 == 0;
+      final tickLength = isMajor ? 6.0 : 3.0;
+
+      paint.color = isMajor
+          ? primaryColor.withValues(alpha: 0.6)
+          : primaryColor.withValues(alpha: 0.3);
+      paint.strokeWidth = isMajor ? 1.5 : 1.0;
+
+      final startPoint = Offset(
+        center.dx + (radius - tickLength) * math.sin(angle),
+        center.dy - (radius - tickLength) * math.cos(angle),
+      );
+      final endPoint = Offset(
+        center.dx + radius * math.sin(angle),
+        center.dy - radius * math.cos(angle),
+      );
+
+      canvas.drawLine(startPoint, endPoint, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniCompassPainter oldDelegate) {
+    return oldDelegate.compassHeading != compassHeading;
   }
 }
