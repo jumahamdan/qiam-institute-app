@@ -50,11 +50,23 @@ class Duaa {
 }
 
 class DuaaCategory {
+  // Original categories
   static const String morningEvening = 'morning_evening';
   static const String sleep = 'sleep';
   static const String masjid = 'masjid';
   static const String food = 'food';
   static const String forgivenessGuidance = 'forgiveness_guidance';
+
+  // New categories
+  static const String travel = 'travel';
+  static const String home = 'home';
+  static const String bathroom = 'bathroom';
+  static const String wudu = 'wudu';
+  static const String anxietyDistress = 'anxiety_distress';
+  static const String protection = 'protection';
+  static const String healthSickness = 'health_sickness';
+  static const String clothing = 'clothing';
+  static const String quranic = 'quranic';
 
   static String getDisplayName(String category) {
     switch (category) {
@@ -68,8 +80,62 @@ class DuaaCategory {
         return 'Food';
       case forgivenessGuidance:
         return 'Forgiveness & Guidance';
+      case travel:
+        return 'Travel';
+      case home:
+        return 'Home';
+      case bathroom:
+        return 'Bathroom';
+      case wudu:
+        return 'Wudu (Ablution)';
+      case anxietyDistress:
+        return 'Anxiety & Distress';
+      case protection:
+        return 'Protection';
+      case healthSickness:
+        return 'Health & Sickness';
+      case clothing:
+        return 'Clothing';
+      case quranic:
+        return 'Quranic Duas';
       default:
         return category;
+    }
+  }
+
+  /// Get icon for each category
+  static String getIcon(String category) {
+    switch (category) {
+      case morningEvening:
+        return '🌅';
+      case sleep:
+        return '🌙';
+      case masjid:
+        return '🕌';
+      case food:
+        return '🍽️';
+      case forgivenessGuidance:
+        return '🤲';
+      case travel:
+        return '✈️';
+      case home:
+        return '🏠';
+      case bathroom:
+        return '🚿';
+      case wudu:
+        return '💧';
+      case anxietyDistress:
+        return '💚';
+      case protection:
+        return '🛡️';
+      case healthSickness:
+        return '🏥';
+      case clothing:
+        return '👔';
+      case quranic:
+        return '📖';
+      default:
+        return '📿';
     }
   }
 
@@ -79,5 +145,14 @@ class DuaaCategory {
         masjid,
         food,
         forgivenessGuidance,
+        travel,
+        home,
+        bathroom,
+        wudu,
+        anxietyDistress,
+        protection,
+        healthSickness,
+        clothing,
+        quranic,
       ];
 }
