@@ -248,10 +248,9 @@ ${widget.duaa.translation}
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
-    final backgroundColor = primaryColor.withValues(alpha: 0.03);
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
