@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/prayer/prayer_settings.dart';
 import '../../services/qibla/qibla_service.dart';
+import '../qibla/qibla_screen.dart';
 
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
@@ -116,8 +117,16 @@ class _PrayerScreenState extends State<PrayerScreen> {
               _buildSunriseSunsetRow(),
               const SizedBox(height: 16),
 
-              // Mini Qibla compass
-              _buildMiniQiblaCompass(),
+              // Mini Qibla compass (tap to open full screen)
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const QiblaScreen()),
+                  );
+                },
+                child: _buildMiniQiblaCompass(),
+              ),
             ],
           ),
         ),
@@ -832,7 +841,7 @@ class _PrayerSettingsSheetState extends State<_PrayerSettingsSheet> {
                     items: PrayerSettings.calculationMethods.entries
                         .map((e) => DropdownMenuItem(
                               value: e.key,
-                              child: Text(e.value),
+                              child: Text(e.value.name),
                             ))
                         .toList(),
                     onChanged: (value) => setState(() => _calculationMethod = value!),
