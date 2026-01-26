@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: false,
-        loop: true,
+        loop: false,
         showLiveFullscreenButton: false,
       ),
     );
@@ -206,20 +206,29 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
-            ],
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          // Navigate to Prayer screen (index 2)
+          if (widget.onNavigate != null) {
+            widget.onNavigate!(2, 'Prayer Times');
+          }
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
+              ],
+            ),
           ),
-        ),
-        child: Row(
+          child: Row(
           children: [
             // Left side: Next Prayer label, name and countdown
             Expanded(
@@ -279,6 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

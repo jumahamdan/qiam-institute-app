@@ -22,8 +22,8 @@ class QiblaService {
   /// Initialize the Qibla service
   Future<void> initialize() async {
     await _locationService.initialize();
-    // Get the user's actual GPS location
-    await _locationService.getCurrentLocation();
+    // Only fetch GPS if not already cached (prevents duplicate GPS calls)
+    await _locationService.ensureLocationAvailable();
     _calculateQiblaDirection();
     await _checkCompassAvailability();
   }

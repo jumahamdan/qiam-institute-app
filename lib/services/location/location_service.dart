@@ -89,6 +89,18 @@ class LocationService {
     );
   }
 
+  /// Ensure location is fetched (only fetches GPS if not already cached in memory)
+  /// This prevents multiple GPS calls when multiple services need location
+  Future<void> ensureLocationAvailable() async {
+    if (_cachedPosition != null) {
+      return; // Already have location in memory
+    }
+    await getCurrentLocation();
+  }
+
+  /// Check if location is already available (no GPS call needed)
+  bool get hasLocation => _cachedPosition != null;
+
   String get locationName => _locationName ?? AppConstants.defaultLocationName;
 
   double get latitude => _cachedPosition?.latitude ?? AppConstants.defaultLatitude;
