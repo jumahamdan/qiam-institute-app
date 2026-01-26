@@ -30,7 +30,7 @@ class PrayerService {
   }
 
   Future<void> _updateLocation() async {
-    if (_settings.autoDetectLocation && _settings.locationMode == PrayerSettings.locationModeAuto) {
+    if (_settings.locationMode == PrayerSettings.locationModeAuto) {
       // Use shared LocationService (prevents duplicate GPS calls)
       await _locationService.initialize();
       await _locationService.ensureLocationAvailable();
