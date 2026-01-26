@@ -26,11 +26,6 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
-  // Light blue/teal theme colors
-  static const Color _primaryColor = Color(0xFF4A90A4);
-  static const Color _backgroundColor = Color(0xFFE8F4F8);
-  static const Color _cardColor = Color(0xFFD4EBF2);
-
   @override
   void initState() {
     super.initState();
@@ -109,10 +104,14 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final scaffoldBg = Theme.of(context).scaffoldBackgroundColor;
+    final cardColor = primaryColor.withValues(alpha: 0.1);
+
     if (!_isInitialized) {
       return Scaffold(
-        backgroundColor: _backgroundColor,
-        body: const Center(child: CircularProgressIndicator()),
+        backgroundColor: scaffoldBg,
+        body: Center(child: CircularProgressIndicator(color: primaryColor)),
       );
     }
 
@@ -131,20 +130,21 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
     }
 
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
             // Custom Header
-            _buildHeader(),
+            _buildHeader(primaryColor),
 
             // Info Card
-            _buildInfoCard(),
+            _buildInfoCard(primaryColor, cardColor),
 
             // Compass
             Expanded(
               child: Center(
                 child: _buildCompass(
+                  primaryColor: primaryColor,
                   qiblaDirection: qiblaDirection,
                   compassHeading: compassHeading,
                   isPointingToQibla: isPointingToQibla,
@@ -166,7 +166,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Color primaryColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -174,22 +174,24 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
         children: [
           // Back button
           _buildRoundedButton(
+            primaryColor: primaryColor,
             icon: Icons.arrow_back,
             onTap: () => Navigator.pop(context),
           ),
 
           // Title
-          const Text(
+          Text(
             'Qibla',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: _primaryColor,
+              color: primaryColor,
             ),
           ),
 
           // Refresh button
           _buildRoundedButton(
+            primaryColor: primaryColor,
             icon: Icons.refresh,
             onTap: _isRefreshing ? null : _refresh,
             isLoading: _isRefreshing,
@@ -200,6 +202,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
   }
 
   Widget _buildRoundedButton({
+    required Color primaryColor,
     required IconData icon,
     VoidCallback? onTap,
     bool isLoading = false,
@@ -217,21 +220,21 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
           height: 44,
           alignment: Alignment.center,
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: _primaryColor,
+                    color: primaryColor,
                   ),
                 )
-              : Icon(icon, color: _primaryColor, size: 22),
+              : Icon(icon, color: primaryColor, size: 22),
         ),
       ),
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(Color primaryColor, Color cardColor) {
     final prayerName = _nextPrayer?.name ?? 'Loading...';
     final timeUntil = _nextPrayer?.formattedTimeUntil ?? '--';
     final address = _fullAddress ?? _locationService.locationName;
@@ -240,7 +243,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: cardColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -248,10 +251,10 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
           // Current Prayer
           Text(
             'Now : $prayerName',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF2C3E50),
+              color: Colors.grey[800],
             ),
           ),
           const SizedBox(height: 4),
@@ -296,6 +299,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
   }
 
   Widget _buildCompass({
+    required Color primaryColor,
     required double qiblaDirection,
     required double compassHeading,
     required bool isPointingToQibla,
@@ -324,7 +328,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
               size: const Size(320, 320),
               painter: _CompassPainter(
                 compassHeading: compassHeading,
-                primaryColor: _primaryColor,
+                primaryColor: primaryColor,
               ),
             ),
 
@@ -345,7 +349,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: _primaryColor,
+                          color: primaryColor,
                         ),
                       ),
                     ),
@@ -359,7 +363,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: _primaryColor.withValues(alpha: 0.7),
+                            color: primaryColor.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -374,7 +378,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: _primaryColor.withValues(alpha: 0.7),
+                            color: primaryColor.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -389,7 +393,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: _primaryColor.withValues(alpha: 0.7),
+                            color: primaryColor.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -404,7 +408,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
               angle: compassAngle,
               child: CustomPaint(
                 size: const Size(320, 320),
-                painter: _NeedlePainter(primaryColor: _primaryColor),
+                painter: _NeedlePainter(primaryColor: primaryColor),
               ),
             ),
 
@@ -418,17 +422,17 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                   decoration: BoxDecoration(
                     color: isPointingToQibla
                         ? Colors.green.withValues(alpha: 0.2)
-                        : _primaryColor.withValues(alpha: 0.15),
+                        : primaryColor.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isPointingToQibla ? Colors.green : _primaryColor,
+                      color: isPointingToQibla ? Colors.green : primaryColor,
                       width: 2,
                     ),
                   ),
                   child: Icon(
                     Icons.mosque,
                     size: 24,
-                    color: isPointingToQibla ? Colors.green : _primaryColor,
+                    color: isPointingToQibla ? Colors.green : primaryColor,
                   ),
                 ),
               ),
@@ -439,10 +443,10 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: _primaryColor.withValues(alpha: 0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: _primaryColor.withValues(alpha: 0.3),
+                  color: primaryColor.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -455,7 +459,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: _primaryColor.withValues(alpha: 0.2),
+                        color: primaryColor.withValues(alpha: 0.2),
                         blurRadius: 8,
                       ),
                     ],

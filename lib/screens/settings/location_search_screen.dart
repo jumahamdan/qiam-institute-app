@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../config/constants.dart';
 import '../../services/location/location_service.dart';
 
 class LocationSearchResult {
@@ -128,6 +129,90 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
   }
 
   Future<void> _searchLocation(String query) async {
+    // Check if Google Places API key is configured
+    final apiKey = AppConstants.googlePlacesApiKey;
+    final useGooglePlaces = apiKey != 'YOUR_GOOGLE_PLACES_API_KEY' && apiKey.isNotEmpty;
+
+    if (useGooglePlaces) {
+      await _searchWithGooglePlaces(query, apiKey);
+    } else {
+      await _searchWithNominatim(query);
+    }
+  }
+
+  Future<void> _searchWithGooglePlaces(String query, String apiKey) async {
+    try {
+      // Use Google Places Autocomplete API
+      final uri = Uri.parse(
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json'
+        '?input=${Uri.encodeComponent(query)}'
+        '&types=(cities)'
+        '&key=$apiKey',
+      );
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final predictions = data['predictions'] as List<dynamic>? ?? [];
+
+        // Get details for each prediction to get coordinates
+        final results = <LocationSearchResult>[];
+        for (final prediction in predictions.take(5)) {
+          final placeId = prediction['place_id'] as String;
+          final details = await _getPlaceDetails(placeId, apiKey);
+          if (details != null) {
+            results.add(details);
+          }
+        }
+
+        setState(() {
+          _searchResults = results;
+          _isSearching = false;
+        });
+      } else {
+        // Fallback to Nominatim if Google fails
+        await _searchWithNominatim(query);
+      }
+    } catch (e) {
+      // Fallback to Nominatim on error
+      await _searchWithNominatim(query);
+    }
+  }
+
+  Future<LocationSearchResult?> _getPlaceDetails(String placeId, String apiKey) async {
+    try {
+      final uri = Uri.parse(
+        'https://maps.googleapis.com/maps/api/place/details/json'
+        '?place_id=$placeId'
+        '&fields=name,formatted_address,geometry'
+        '&key=$apiKey',
+      );
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final result = data['result'];
+        if (result != null) {
+          final geometry = result['geometry'];
+          final location = geometry?['location'];
+          if (location != null) {
+            return LocationSearchResult(
+              name: result['formatted_address'] ?? result['name'] ?? 'Unknown',
+              latitude: (location['lat'] as num).toDouble(),
+              longitude: (location['lng'] as num).toDouble(),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Silently fail
+    }
+    return null;
+  }
+
+  Future<void> _searchWithNominatim(String query) async {
     try {
       final uri = Uri.parse(
         'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(query)}&format=json&limit=10&addressdetails=1',
@@ -143,7 +228,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
         setState(() {
           _searchResults = data.map((item) {
             return LocationSearchResult(
-              name: _formatLocationName(item),
+              name: _formatNominatimName(item),
               latitude: double.parse(item['lat']),
               longitude: double.parse(item['lon']),
             );
@@ -164,7 +249,7 @@ class _LocationSearchScreenState extends State<LocationSearchScreen> {
     }
   }
 
-  String _formatLocationName(Map<String, dynamic> item) {
+  String _formatNominatimName(Map<String, dynamic> item) {
     final address = item['address'] as Map<String, dynamic>?;
     if (address != null) {
       final city = address['city'] ??

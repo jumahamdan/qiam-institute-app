@@ -278,6 +278,61 @@ class PrayerService {
     return week;
   }
 
+  /// Get prayer times for a specific date as a list
+  List<PrayerTimeInfo> getPrayerListForDate(DateTime date) {
+    final prayers = getPrayerTimesForDate(date);
+    final now = DateTime.now();
+    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+
+    String? nextPrayerName;
+    if (isToday) {
+      nextPrayerName = getNextPrayer().name;
+    }
+
+    return [
+      PrayerTimeInfo('Fajr', _applyCorrection(prayers.fajr, 'Fajr'), nextPrayerName == 'Fajr'),
+      PrayerTimeInfo('Dhuhr', _applyCorrection(prayers.dhuhr, 'Dhuhr'), nextPrayerName == 'Dhuhr'),
+      PrayerTimeInfo('Asr', _applyCorrection(prayers.asr, 'Asr'), nextPrayerName == 'Asr'),
+      PrayerTimeInfo('Maghrib', _applyCorrection(prayers.maghrib, 'Maghrib'), nextPrayerName == 'Maghrib'),
+      PrayerTimeInfo('Isha', _applyCorrection(prayers.isha, 'Isha'), nextPrayerName == 'Isha'),
+    ];
+  }
+
+  /// Get sunrise for a specific date
+  DateTime getSunriseForDate(DateTime date) {
+    final prayers = getPrayerTimesForDate(date);
+    return _applyCorrection(prayers.sunrise, 'Sunrise');
+  }
+
+  /// Get sunset for a specific date
+  DateTime getSunsetForDate(DateTime date) {
+    final prayers = getPrayerTimesForDate(date);
+    return _applyCorrection(prayers.maghrib, 'Maghrib');
+  }
+
+  /// Get all prayer times for a month
+  Future<List<DailyPrayerTimes>> getMonthPrayerTimes(int year, int month) async {
+    final List<DailyPrayerTimes> monthTimes = [];
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(year, month, day);
+      final prayers = getPrayerTimesForDate(date);
+
+      monthTimes.add(DailyPrayerTimes(
+        date: date,
+        fajr: _applyCorrection(prayers.fajr, 'Fajr'),
+        sunrise: _applyCorrection(prayers.sunrise, 'Sunrise'),
+        dhuhr: _applyCorrection(prayers.dhuhr, 'Dhuhr'),
+        asr: _applyCorrection(prayers.asr, 'Asr'),
+        maghrib: _applyCorrection(prayers.maghrib, 'Maghrib'),
+        isha: _applyCorrection(prayers.isha, 'Isha'),
+      ));
+    }
+
+    return monthTimes;
+  }
+
   /// Format time for display
   static String formatTime(DateTime time) {
     return DateFormat('h:mm a').format(time);
@@ -341,4 +396,25 @@ class DayPrayerTimes {
 
   String get dayName => DateFormat('EEE').format(date);
   String get shortDate => DateFormat('M/d').format(date);
+}
+
+/// Data class for daily prayer times (used in monthly/yearly tables)
+class DailyPrayerTimes {
+  final DateTime date;
+  final DateTime fajr;
+  final DateTime sunrise;
+  final DateTime dhuhr;
+  final DateTime asr;
+  final DateTime maghrib;
+  final DateTime isha;
+
+  DailyPrayerTimes({
+    required this.date,
+    required this.fajr,
+    required this.sunrise,
+    required this.dhuhr,
+    required this.asr,
+    required this.maghrib,
+    required this.isha,
+  });
 }

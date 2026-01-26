@@ -472,22 +472,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Theme.of(context).colorScheme.primary,
-                    letterSpacing: 1,
+                Flexible(
+                  child: Text(
+                    title.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 1,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(width: 8),
-                  Text(
-                    '• $subtitle',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[500],
+                  Flexible(
+                    child: Text(
+                      '• $subtitle',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
