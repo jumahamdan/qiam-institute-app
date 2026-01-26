@@ -35,14 +35,20 @@ class PrayerService {
       await _locationService.initialize();
       await _locationService.ensureLocationAvailable();
 
-      final lat = _locationService.latitude;
-      final lng = _locationService.longitude;
+      // Only use and persist location if GPS was successful
+      if (_locationService.hasLocation) {
+        final lat = _locationService.latitude;
+        final lng = _locationService.longitude;
 
-      _coordinates = Coordinates(lat, lng);
-      _settings.latitude = lat;
-      _settings.longitude = lng;
-      _locationName = _locationService.locationName;
-      _settings.locationName = _locationName;
+        _coordinates = Coordinates(lat, lng);
+        _settings.latitude = lat;
+        _settings.longitude = lng;
+        _locationName = _locationService.locationName;
+        _settings.locationName = _locationName;
+      } else {
+        // GPS failed - fall back to stored/default without overwriting settings
+        _useStoredOrDefaultLocation();
+      }
     } else {
       _useStoredOrDefaultLocation();
     }

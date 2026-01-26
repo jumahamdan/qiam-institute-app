@@ -206,6 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           // Navigate to Prayer screen (index 2)
