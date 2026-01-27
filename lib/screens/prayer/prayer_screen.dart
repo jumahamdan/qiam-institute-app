@@ -441,13 +441,14 @@ class _PrayerScreenState extends State<PrayerScreen> {
           // Center: Qibla (tappable)
           Expanded(
             flex: 2,
-            child: GestureDetector(
+            child: InkWell(
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const QiblaScreen()),
                 );
               },
+              borderRadius: BorderRadius.circular(999),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Column(
