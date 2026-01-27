@@ -77,6 +77,7 @@ firebase_options.dart
 *.pem
 *.p12
 *.p8
+keystore_base64*.txt
 
 # Miscellaneous
 *.log
