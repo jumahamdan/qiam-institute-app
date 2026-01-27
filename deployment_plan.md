@@ -59,7 +59,7 @@ This plan covers the requirements to publish the Qiam Institute app on Google Pl
 The GitHub Actions workflow (`.github/workflows/build-and-distribute.yml`) now:
 
 1. **Runs tests** on all pushes and PRs
-2. **Builds release** APK and AAB with production signing
+2. **Builds release** APK and AAB with production signing (skipped on PRs)
 3. **Distributes to Firebase**:
    - `develop` branch -> notifies `qiam-developers` group
    - `master`/`main` branch -> notifies `qiam-testers` group

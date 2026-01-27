@@ -23,7 +23,7 @@ The **build number** auto-increments with each GitHub Actions workflow run.
 | Push to `feature/**` | Yes | Yes | Yes | No |
 | Push to `develop` | Yes | Yes | Yes | Yes (qiam-developers) |
 | Push to `master` | Yes | Yes | Yes | Yes (qiam-testers) |
-| Pull Request | Yes | Yes | Yes | No |
+| Pull Request | Yes | No | No | No |
 
 ### Build Artifacts
 
@@ -160,7 +160,10 @@ flutter test
 
 ## Local Signing Setup
 
-For local release builds, create `android/key.properties`:
+For local release builds:
+
+1. Place keystore at `android/app/upload-keystore.jks`
+2. Create `android/key.properties`:
 
 ```properties
 storePassword=your-keystore-password
@@ -168,6 +171,8 @@ keyPassword=your-key-password
 keyAlias=upload
 storeFile=upload-keystore.jks
 ```
+
+Note: `storeFile` path is relative to `android/app/` directory.
 
 Then build:
 ```bash

@@ -119,9 +119,9 @@ The project uses GitHub Actions for continuous integration and deployment.
 
 ### Automated Builds
 
-Every push triggers:
+Every push to a branch triggers:
 1. **Test Suite** — Runs all Flutter tests
-2. **Release Build** — Builds signed APK and AAB
+2. **Release Build** — Builds signed APK and AAB (skipped for pull requests)
 
 ### Firebase App Distribution
 
