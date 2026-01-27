@@ -104,12 +104,22 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
     final angleDiff = ((qiblaDirection - compassHeading) % 360).abs();
     final isPointingToQibla = angleDiff < 5 || angleDiff > 355;
 
-    // Provide haptic feedback only when first aligned
-    if (isPointingToQibla && !_wasAligned) {
-      HapticFeedback.mediumImpact();
-      _wasAligned = true;
-    } else if (!isPointingToQibla) {
-      _wasAligned = false;
+    // Handle alignment transitions and haptics outside of the synchronous build
+    final shouldAlignNow = isPointingToQibla && !_wasAligned;
+    final shouldUnalignNow = !isPointingToQibla && _wasAligned;
+
+    if (shouldAlignNow || shouldUnalignNow) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          if (shouldAlignNow) {
+            HapticFeedback.mediumImpact();
+            _wasAligned = true;
+          } else if (shouldUnalignNow) {
+            _wasAligned = false;
+          }
+        });
+      });
     }
 
     return Scaffold(
