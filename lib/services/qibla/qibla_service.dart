@@ -101,17 +101,17 @@ class QiblaService {
   /// Check if device has compass
   bool get hasCompass => _hasCompass;
 
-  /// Get Qibla direction as cardinal direction (e.g., "NE")
+  /// Get Qibla direction as 16-point cardinal direction (e.g., "NNE")
   String get qiblaCardinalDirection {
     final direction = _qiblaDirection ?? 0;
-    if (direction >= 337.5 || direction < 22.5) return 'N';
-    if (direction >= 22.5 && direction < 67.5) return 'NE';
-    if (direction >= 67.5 && direction < 112.5) return 'E';
-    if (direction >= 112.5 && direction < 157.5) return 'SE';
-    if (direction >= 157.5 && direction < 202.5) return 'S';
-    if (direction >= 202.5 && direction < 247.5) return 'SW';
-    if (direction >= 247.5 && direction < 292.5) return 'W';
-    return 'NW';
+    const directions = [
+      'N', 'NNE', 'NE', 'ENE',
+      'E', 'ESE', 'SE', 'SSE',
+      'S', 'SSW', 'SW', 'WSW',
+      'W', 'WNW', 'NW', 'NNW'
+    ];
+    final index = ((direction + 11.25) % 360 / 22.5).floor();
+    return directions[index];
   }
 
   /// Approximate distance to Makkah in km using Haversine formula
