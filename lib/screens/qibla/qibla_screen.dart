@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../services/qibla/qibla_service.dart';
-import '../../services/prayer/prayer_service.dart';
 import '../../services/location/location_service.dart';
 
 class QiblaScreen extends StatefulWidget {
@@ -14,14 +13,11 @@ class QiblaScreen extends StatefulWidget {
 
 class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStateMixin {
   final QiblaService _qiblaService = QiblaService();
-  final PrayerService _prayerService = PrayerService();
   final LocationService _locationService = LocationService();
 
   QiblaData? _qiblaData;
-  NextPrayerInfo? _nextPrayer;
-  String? _fullAddress;
   bool _isInitialized = false;
-  bool _isRefreshing = false;
+  bool _wasAligned = false; // Track alignment state for haptic
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -41,7 +37,6 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
 
   Future<void> _initServices() async {
     await _qiblaService.initialize();
-    await _prayerService.initialize();
     await _locationService.initialize();
 
     _qiblaService.startListening();
@@ -62,37 +57,8 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
         accuracy: null,
         hasCompass: _qiblaService.hasCompass,
       );
-      _nextPrayer = _prayerService.getNextPrayer();
       _isInitialized = true;
     });
-
-    // Get full address
-    _loadAddress();
-  }
-
-  Future<void> _loadAddress() async {
-    final address = await _locationService.getFullAddress();
-    if (mounted && address != null) {
-      setState(() => _fullAddress = address);
-    }
-  }
-
-  Future<void> _refresh() async {
-    setState(() => _isRefreshing = true);
-
-    // Haptic feedback
-    HapticFeedback.mediumImpact();
-
-    // Re-initialize services
-    await _qiblaService.initialize();
-    _qiblaService.startListening();
-
-    setState(() {
-      _nextPrayer = _prayerService.getNextPrayer();
-      _isRefreshing = false;
-    });
-
-    await _loadAddress();
   }
 
   @override
@@ -102,11 +68,25 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
     super.dispose();
   }
 
+  /// Get shortened location (city, state/country)
+  String get _shortLocation {
+    final fullName = _locationService.locationName;
+    // If it's already short, return as is
+    if (fullName.length <= 25) return fullName;
+
+    // Try to extract city and state/country
+    final parts = fullName.split(', ');
+    if (parts.length >= 2) {
+      // Return first part (city) and last part (state/country)
+      return '${parts[0]}, ${parts[parts.length - 1]}';
+    }
+    return fullName;
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
     final scaffoldBg = Theme.of(context).scaffoldBackgroundColor;
-    final cardColor = primaryColor.withValues(alpha: 0.1);
 
     if (!_isInitialized) {
       return Scaffold(
@@ -124,9 +104,12 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
     final angleDiff = ((qiblaDirection - compassHeading) % 360).abs();
     final isPointingToQibla = angleDiff < 5 || angleDiff > 355;
 
-    // Provide haptic feedback when aligned
-    if (isPointingToQibla) {
-      HapticFeedback.lightImpact();
+    // Provide haptic feedback only when first aligned
+    if (isPointingToQibla && !_wasAligned) {
+      HapticFeedback.mediumImpact();
+      _wasAligned = true;
+    } else if (!isPointingToQibla) {
+      _wasAligned = false;
     }
 
     return Scaffold(
@@ -134,11 +117,19 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
       body: SafeArea(
         child: Column(
           children: [
-            // Custom Header
+            // Custom Header (minimal)
             _buildHeader(primaryColor),
 
-            // Info Card
-            _buildInfoCard(primaryColor, cardColor),
+            // Location (short)
+            _buildLocationRow(primaryColor),
+
+            // User guidance instruction
+            if (hasCompass && !isPointingToQibla)
+              _buildUserGuidance(primaryColor),
+
+            // Alignment message when facing Qibla
+            if (isPointingToQibla)
+              _buildAlignmentMessage(),
 
             // Compass
             Expanded(
@@ -154,12 +145,17 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
               ),
             ),
 
-            // Status message
+            // Info section below compass
+            _buildInfoSection(primaryColor, qiblaDirection),
+
+            // Status message (calibration/no compass)
             if (!hasCompass || needsCalibration)
               Padding(
-                padding: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: _buildStatusMessage(hasCompass, needsCalibration),
               ),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -181,7 +177,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
 
           // Title
           Text(
-            'Qibla',
+            'Qibla Compass',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -189,13 +185,8 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
             ),
           ),
 
-          // Refresh button
-          _buildRoundedButton(
-            primaryColor: primaryColor,
-            icon: Icons.refresh,
-            onTap: _isRefreshing ? null : _refresh,
-            isLoading: _isRefreshing,
-          ),
+          // Empty placeholder for symmetry
+          const SizedBox(width: 44, height: 44),
         ],
       ),
     );
@@ -205,7 +196,6 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
     required Color primaryColor,
     required IconData icon,
     VoidCallback? onTap,
-    bool isLoading = false,
   }) {
     return Material(
       color: Colors.white,
@@ -219,79 +209,180 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
           width: 44,
           height: 44,
           alignment: Alignment.center,
-          child: isLoading
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: primaryColor,
-                  ),
-                )
-              : Icon(icon, color: primaryColor, size: 22),
+          child: Icon(icon, color: primaryColor, size: 22),
         ),
       ),
     );
   }
 
-  Widget _buildInfoCard(Color primaryColor, Color cardColor) {
-    final prayerName = _nextPrayer?.name ?? 'Loading...';
-    final timeUntil = _nextPrayer?.formattedTimeUntil ?? '--';
-    final address = _fullAddress ?? _locationService.locationName;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
+  Widget _buildLocationRow(Color primaryColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Current Prayer
-          Text(
-            'Now : $prayerName',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
+          Icon(
+            Icons.location_on,
+            size: 16,
+            color: Colors.grey[500],
           ),
-          const SizedBox(height: 4),
-
-          // Time remaining
+          const SizedBox(width: 4),
           Text(
-            '$timeUntil left',
+            _shortLocation,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               color: Colors.grey[600],
             ),
           ),
-          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
 
-          // Location
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.location_on,
-                size: 16,
-                color: Colors.grey[500],
+  Widget _buildUserGuidance(Color primaryColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Text(
+        'Hold phone flat and rotate until aligned',
+        style: TextStyle(
+          fontSize: 13,
+          color: Colors.grey[500],
+          fontStyle: FontStyle.italic,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildAlignmentMessage() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.green.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 20),
+            const SizedBox(width: 8),
+            const Text(
+              "You're facing Qibla!",
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
               ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  address,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoSection(Color primaryColor, double qiblaDirection) {
+    final distance = _qiblaService.getDistanceToMakkah();
+    final cardinalDirection = _qiblaService.qiblaCardinalDirection;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          // Distance to Makkah
+          Expanded(
+            child: Column(
+              children: [
+                Icon(Icons.straighten, color: primaryColor, size: 22),
+                const SizedBox(height: 4),
+                Text(
+                  '${distance.toStringAsFixed(0)} km',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.grey[800],
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                Text(
+                  'to Makkah',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Divider
+          Container(
+            width: 1,
+            height: 50,
+            color: Colors.grey[300],
+          ),
+
+          // Qibla bearing
+          Expanded(
+            child: Column(
+              children: [
+                Icon(Icons.explore, color: primaryColor, size: 22),
+                const SizedBox(height: 4),
+                Text(
+                  '${qiblaDirection.toStringAsFixed(1)}°',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                Text(
+                  cardinalDirection,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Divider
+          Container(
+            width: 1,
+            height: 50,
+            color: Colors.grey[300],
+          ),
+
+          // Tip
+          Expanded(
+            child: Column(
+              children: [
+                Icon(Icons.smartphone, color: primaryColor, size: 22),
+                const SizedBox(height: 4),
+                Text(
+                  'Hold flat',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                Text(
+                  'for accuracy',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -318,14 +409,14 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
         );
       },
       child: SizedBox(
-        width: 320,
-        height: 320,
+        width: 280,
+        height: 280,
         child: Stack(
           alignment: Alignment.center,
           children: [
             // Outer circle with tick marks
             CustomPaint(
-              size: const Size(320, 320),
+              size: const Size(280, 280),
               painter: _CompassPainter(
                 compassHeading: compassHeading,
                 primaryColor: primaryColor,
@@ -336,18 +427,18 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
             Transform.rotate(
               angle: compassAngle,
               child: SizedBox(
-                width: 280,
-                height: 280,
+                width: 240,
+                height: 240,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     // N
                     Positioned(
-                      top: 15,
+                      top: 12,
                       child: Text(
                         'N',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: primaryColor,
                         ),
@@ -355,13 +446,13 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                     ),
                     // S
                     Positioned(
-                      bottom: 15,
+                      bottom: 12,
                       child: Transform.rotate(
                         angle: math.pi,
                         child: Text(
                           'S',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: primaryColor.withValues(alpha: 0.7),
                           ),
@@ -370,13 +461,13 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                     ),
                     // E
                     Positioned(
-                      right: 15,
+                      right: 12,
                       child: Transform.rotate(
                         angle: -math.pi / 2,
                         child: Text(
                           'E',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: primaryColor.withValues(alpha: 0.7),
                           ),
@@ -385,13 +476,13 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                     ),
                     // W
                     Positioned(
-                      left: 15,
+                      left: 12,
                       child: Transform.rotate(
                         angle: math.pi / 2,
                         child: Text(
                           'W',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: primaryColor.withValues(alpha: 0.7),
                           ),
@@ -407,7 +498,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
             Transform.rotate(
               angle: compassAngle,
               child: CustomPaint(
-                size: const Size(320, 320),
+                size: const Size(280, 280),
                 painter: _NeedlePainter(primaryColor: primaryColor),
               ),
             ),
@@ -431,7 +522,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                   ),
                   child: Icon(
                     Icons.mosque,
-                    size: 24,
+                    size: 22,
                     color: isPointingToQibla ? Colors.green : primaryColor,
                   ),
                 ),
@@ -440,8 +531,8 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
 
             // Center Kaaba decoration
             Container(
-              width: 60,
-              height: 60,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -452,8 +543,8 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
               ),
               child: Center(
                 child: Container(
-                  width: 40,
-                  height: 40,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -467,7 +558,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
                   child: const Center(
                     child: Text(
                       '🕋',
-                      style: TextStyle(fontSize: 22),
+                      style: TextStyle(fontSize: 20),
                     ),
                   ),
                 ),
@@ -540,7 +631,7 @@ class _CompassPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 20;
+    final radius = size.width / 2 - 18;
 
     final paint = Paint()
       ..strokeWidth = 2
@@ -550,7 +641,7 @@ class _CompassPainter extends CustomPainter {
     for (int i = 0; i < 60; i++) {
       final angle = (i * 6 - compassHeading) * (math.pi / 180);
       final isMajor = i % 5 == 0;
-      final tickLength = isMajor ? 18.0 : 10.0;
+      final tickLength = isMajor ? 16.0 : 8.0;
 
       paint.color = isMajor
           ? primaryColor.withValues(alpha: 0.8)
@@ -592,9 +683,9 @@ class _NeedlePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final needlePath = Path();
-    needlePath.moveTo(center.dx, center.dy - 80); // Top point
-    needlePath.lineTo(center.dx - 6, center.dy - 20);
-    needlePath.lineTo(center.dx + 6, center.dy - 20);
+    needlePath.moveTo(center.dx, center.dy - 70); // Top point
+    needlePath.lineTo(center.dx - 5, center.dy - 18);
+    needlePath.lineTo(center.dx + 5, center.dy - 18);
     needlePath.close();
 
     canvas.drawPath(needlePath, needlePaint);
@@ -605,9 +696,9 @@ class _NeedlePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final bottomPath = Path();
-    bottomPath.moveTo(center.dx, center.dy + 80); // Bottom point
-    bottomPath.lineTo(center.dx - 6, center.dy + 20);
-    bottomPath.lineTo(center.dx + 6, center.dy + 20);
+    bottomPath.moveTo(center.dx, center.dy + 70); // Bottom point
+    bottomPath.lineTo(center.dx - 5, center.dy + 18);
+    bottomPath.lineTo(center.dx + 5, center.dy + 18);
     bottomPath.close();
 
     canvas.drawPath(bottomPath, bottomPaint);
