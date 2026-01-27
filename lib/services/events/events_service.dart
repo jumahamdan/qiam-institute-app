@@ -27,18 +27,12 @@ class EventsService {
         },
       );
 
-      // Debug: print the URL being called
-      print('EventsService: Fetching from ${uri.toString()}');
-
       final response = await http.get(
         uri,
         headers: {
           'Accept': 'application/json',
         },
       ).timeout(const Duration(seconds: 15));
-
-      // Debug: print response info
-      print('EventsService: Response status ${response.statusCode}, body length: ${response.body.length}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

@@ -565,7 +565,7 @@ class _VolunteerScreenState extends State<VolunteerScreen> {
                   Expanded(
                     flex: 2,
                     child: DropdownButtonFormField<String>(
-                      value: _selectedState,
+                      initialValue: _selectedState,
                       decoration: const InputDecoration(
                         labelText: 'State *',
                         border: OutlineInputBorder(),

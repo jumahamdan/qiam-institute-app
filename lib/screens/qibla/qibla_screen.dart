@@ -301,8 +301,9 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: primaryColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -335,7 +336,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
           Container(
             width: 1,
             height: 50,
-            color: Colors.grey[300],
+            color: primaryColor.withValues(alpha: 0.2),
           ),
 
           // Qibla bearing
@@ -367,7 +368,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
           Container(
             width: 1,
             height: 50,
-            color: Colors.grey[300],
+            color: primaryColor.withValues(alpha: 0.2),
           ),
 
           // Tip

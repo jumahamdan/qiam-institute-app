@@ -226,7 +226,7 @@ class _MainNavigationState extends State<MainNavigation> {
             child: Image.asset(
               'assets/images/logo.png',
               height: 32,
-              errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 24),
+              errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 24),
             ),
           ),
         ),
@@ -256,7 +256,7 @@ class _MainNavigationState extends State<MainNavigation> {
         child: Image.asset(
           'assets/images/logo.png',
           height: 40,
-          errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 32),
+          errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 32),
         ),
       ),
       actions: [
@@ -299,13 +299,13 @@ class _MainNavigationState extends State<MainNavigation> {
               child: Image.asset(
                 'assets/images/logo.png',
                 height: 24,
-                errorBuilder: (_, __, ___) => Icon(Icons.home_outlined, color: Colors.grey[600]),
+                errorBuilder: (_, _, _) => Icon(Icons.home_outlined, color: Colors.grey[600]),
               ),
             ),
             selectedIcon: Image.asset(
               'assets/images/logo.png',
               height: 24,
-              errorBuilder: (_, __, ___) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
+              errorBuilder: (_, _, _) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
             ),
             label: 'Home',
           ),

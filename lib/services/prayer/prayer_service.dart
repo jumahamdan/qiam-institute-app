@@ -156,12 +156,10 @@ class PrayerService {
   }
 
   Coordinates get coordinates {
-    if (_coordinates == null) {
-      _coordinates = Coordinates(
-        AppConstants.defaultLatitude,
-        AppConstants.defaultLongitude,
-      );
-    }
+    _coordinates ??= Coordinates(
+      AppConstants.defaultLatitude,
+      AppConstants.defaultLongitude,
+    );
     return _coordinates!;
   }
 

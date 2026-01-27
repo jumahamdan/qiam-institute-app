@@ -439,7 +439,7 @@ class _ValuesCard extends StatelessWidget {
                         child: Image.asset(
                           imagePath,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(
+                          errorBuilder: (_, _, _) => Icon(
                             Icons.favorite,
                             color: color,
                             size: 14,

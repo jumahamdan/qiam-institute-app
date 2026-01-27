@@ -222,7 +222,7 @@ class _EventCard extends StatelessWidget {
                 child: Image.network(
                   event.imageUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     child: Center(
                       child: Icon(
