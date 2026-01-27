@@ -63,6 +63,7 @@ The app includes an extensive collection of Islamic supplications organized by c
 - Real-time compass pointing to Makkah
 - Beautiful themed UI matching app design
 - Haptic feedback when aligned with Qibla
+- Distance to Makkah and cardinal direction display
 - Calibration guidance
 - Mini compass widget on prayer screen
 
@@ -105,12 +106,41 @@ flutter run
 # Android APK
 flutter build apk --release
 
-# Android App Bundle
+# Android App Bundle (for Play Store)
 flutter build appbundle --release
 
 # iOS (requires macOS)
 flutter build ios --release
 ```
+
+## CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment.
+
+### Automated Builds
+
+Every push to a branch triggers:
+1. **Test Suite** — Runs all Flutter tests
+2. **Release Build** — Builds signed APK and AAB (skipped for pull requests)
+
+### Firebase App Distribution
+
+Builds are automatically distributed to testers:
+- **`develop` branch** — Sent to `qiam-developers` group
+- **`master` branch** — Sent to `qiam-testers` group
+
+### Required Secrets
+
+For CI/CD to work, configure these GitHub Secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `KEYSTORE_BASE64` | Base64-encoded upload keystore |
+| `KEYSTORE_PASSWORD` | Keystore password |
+| `KEY_ALIAS` | Key alias for signing |
+| `GOOGLE_SERVICES_JSON` | Firebase config (base64) |
+| `FIREBASE_APP_ID` | Firebase App ID |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase service account JSON |
 
 ## Project Structure
 

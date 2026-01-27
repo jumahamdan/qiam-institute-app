@@ -1,6 +1,6 @@
 # Qiam Institute App — Development Status
 
-**Last Updated:** 2026-01-25
+**Last Updated:** 2026-01-27
 
 ## Project Goal
 
@@ -17,7 +17,7 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [x] App icon and splash screen
 
 ### Home Screen
-- [x] Featured YouTube video with replay functionality
+- [x] Featured YouTube video with replay functionality (muted by default)
 - [x] Next prayer time countdown
 - [x] Quick navigation cards
 - [x] Community values showcase
@@ -49,6 +49,10 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [x] Haptic feedback when aligned
 - [x] Calibration guidance for inaccurate sensors
 - [x] Error handling for devices without compass
+- [x] Distance to Makkah display
+- [x] 16-point cardinal direction display
+- [x] Landscape orientation support
+- [x] User guidance text ("Turn left/right")
 
 ### Daily Duas
 - [x] 52+ authentic duas with proper hadith references
@@ -77,13 +81,48 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [x] Theme-aware backgrounds (not dark)
 - [x] Proper overflow handling
 - [x] Error states and loading indicators
+- [x] All lint warnings resolved
+
+---
+
+## CI/CD & Distribution
+
+### GitHub Actions Pipeline
+- [x] Automated tests on all pushes and PRs
+- [x] Release APK build with production signing
+- [x] Release AAB build for Play Store
+- [x] Firebase App Distribution integration
+- [x] Automatic changelog generation from commits
+- [x] Branch-based distribution:
+  - `develop` -> qiam-developers group
+  - `master` -> qiam-testers group
+
+### Android Signing
+- [x] Production keystore generated (`upload-keystore.jks`)
+- [x] Release signing configured in `build.gradle.kts`
+- [x] ProGuard/R8 minification enabled
+- [x] Keystore stored securely in GitHub Secrets
+
+### GitHub Secrets Configured
+- [x] `KEYSTORE_BASE64` - Upload keystore (base64)
+- [x] `KEYSTORE_PASSWORD` - Keystore password
+- [x] `KEY_ALIAS` - Key alias
+- [x] `GOOGLE_SERVICES_JSON` - Firebase config
+- [x] `FIREBASE_APP_ID` - Firebase App ID
+- [x] `FIREBASE_SERVICE_ACCOUNT` - Firebase service account
 
 ---
 
 ## In Progress
 
+### Play Store Deployment
+- [ ] Privacy policy creation and hosting
+- [ ] Play Store listing assets (screenshots, descriptions)
+- [ ] Google Play Console account setup
+- [ ] Version bump to 1.0.0
+
 ### Notifications
-- [ ] Firebase project setup
+- [ ] Firebase project setup (partially done)
 - [ ] Android FCM wiring
 - [ ] iOS APNs + FCM wiring
 - [ ] Topic-based broadcast notifications
@@ -93,10 +132,10 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 ## Remaining Tasks
 
 ### High Priority
-- [ ] Push notifications implementation
-- [ ] iOS build and TestFlight deployment
+- [ ] Privacy policy page (required for Play Store)
 - [ ] Play Store metadata and screenshots
-- [ ] Privacy policy page
+- [ ] iOS build and TestFlight deployment
+- [ ] Push notifications implementation
 
 ### Medium Priority
 - [ ] Prayer time notifications (optional alerts for each prayer)
@@ -119,22 +158,6 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [ ] Add unit tests for services
 - [ ] Add widget tests for key screens
 - [ ] Code documentation
-- [ ] CI/CD pipeline setup (GitHub Actions)
-
----
-
-## Distribution Status
-
-### Android
-- [x] Debug builds working
-- [x] Release APK builds
-- [ ] Firebase App Distribution setup
-- [ ] Play Store internal testing track
-
-### iOS
-- [ ] iOS build configuration
-- [ ] Apple Developer account setup
-- [ ] TestFlight distribution
 
 ---
 
@@ -148,6 +171,12 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 ---
 
 ## Changelog
+
+### 2026-01-27
+- Configured Play Store release signing (keystore, build.gradle.kts, proguard)
+- Updated CI/CD pipeline to build both APK and AAB
+- Added keystore secrets to GitHub for CI builds
+- Fixed keystore path issue in CI workflow
 
 ### 2026-01-25
 - Expanded Daily Duas from 10 to 52+ authentic duas

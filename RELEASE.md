@@ -6,76 +6,109 @@ The app uses **semantic versioning**: `MAJOR.MINOR.PATCH` (e.g., `0.1.0`)
 
 | Change Type | Example | When to Use |
 |-------------|---------|-------------|
-| Patch | 0.1.0 → 0.1.1 | Bug fixes, small tweaks |
-| Minor | 0.1.1 → 0.2.0 | New features (backwards compatible) |
-| Major | 0.2.0 → 1.0.0 | Production release or breaking changes |
+| Patch | 0.1.0 -> 0.1.1 | Bug fixes, small tweaks |
+| Minor | 0.1.1 -> 0.2.0 | New features (backwards compatible) |
+| Major | 0.2.0 -> 1.0.0 | Production release or breaking changes |
 
-The **build number** (the number in parentheses like `(18)`) auto-increments with each workflow run.
+The **build number** auto-increments with each GitHub Actions workflow run.
+
+---
+
+## CI/CD Pipeline
+
+### What Happens Automatically
+
+| Action | Tests | APK | AAB | Firebase Distribution |
+|--------|-------|-----|-----|----------------------|
+| Push to `feature/**` | Yes | Yes | Yes | No |
+| Push to `develop` | Yes | Yes | Yes | Yes (qiam-developers) |
+| Push to `master` | Yes | Yes | Yes | Yes (qiam-testers) |
+| Pull Request | Yes | No | No | No |
+
+### Build Artifacts
+
+Every successful build produces:
+- **APK** — `qiam-institute-apk` artifact (for direct installation / Firebase)
+- **AAB** — `qiam-institute-aab` artifact (for Play Store upload)
+
+Download artifacts from the GitHub Actions run page.
+
+---
 
 ## How to Release
 
-### 1. Update Version (if needed)
+### Development Release (to developers)
 
-Edit `pubspec.yaml`:
-```yaml
-version: 0.2.0+1  # Change 0.1.0 to your new version
-```
+1. Merge your feature branch to `develop`
+2. The pipeline automatically:
+   - Runs tests
+   - Builds signed APK and AAB
+   - Distributes APK to `qiam-developers` group on Firebase
 
-### 2. Commit Your Changes
+### Production Release (to testers)
 
-```bash
-git add .
-git commit -m "Release v0.2.0: Add new events screen"
-```
+1. Merge `develop` to `master`
+2. The pipeline automatically:
+   - Runs tests
+   - Builds signed APK and AAB
+   - Distributes APK to `qiam-testers` group on Firebase
 
-### 3. Create a Git Tag
+### Play Store Release
 
-```bash
-git tag v0.2.0
-git push origin master
-git push origin v0.2.0
-```
+1. Update version in `pubspec.yaml`:
+   ```yaml
+   version: 1.0.0+1  # Change to your new version
+   ```
 
-### 4. Done!
+2. Commit and push to `master`:
+   ```bash
+   git add pubspec.yaml
+   git commit -m "Release v1.0.0: Initial production release"
+   git push origin master
+   ```
 
-The workflow will automatically:
-- Run tests
-- Build the APK
-- Upload to Firebase App Distribution
-- Notify testers
+3. Wait for the build to complete
 
-## Development Workflow
+4. Download the AAB artifact from GitHub Actions
 
-| Action | What Happens |
-|--------|--------------|
-| Push to master | Tests run, APK builds, but NO Firebase deploy |
-| Create tag `v*` | Tests run, APK builds, AND deploys to Firebase |
+5. Upload to Google Play Console:
+   - Go to Release > Production > Create new release
+   - Upload the `.aab` file
+   - Add release notes
+   - Submit for review
 
-This means you can push as many times as you want during development without spamming testers with new builds.
+---
 
 ## Quick Commands
 
 ```bash
-# See all tags
-git tag
+# Check current version
+grep 'version:' pubspec.yaml
 
-# Create and push a release
-git tag v0.2.0
-git push origin v0.2.0
+# See recent builds
+gh run list --limit 5
 
-# Delete a tag (if you made a mistake)
-git tag -d v0.2.0
-git push origin --delete v0.2.0
+# Download latest APK artifact
+gh run download --name qiam-institute-apk
+
+# Download latest AAB artifact
+gh run download --name qiam-institute-aab
+
+# View build logs
+gh run view <run-id> --log
 ```
+
+---
 
 ## Release Notes
 
 Release notes are automatically generated from:
 - Version number from `pubspec.yaml`
-- Git commit messages since last tag
+- Git commit messages (last 10 non-merge commits)
 - Build date and commit hash
 
-To write good release notes, use descriptive commit messages:
+Write descriptive commit messages for better release notes:
+
 ```bash
 # Good
 git commit -m "Add events screen with calendar view"
@@ -84,4 +117,65 @@ git commit -m "Fix prayer time calculation for DST"
 # Not helpful
 git commit -m "update"
 git commit -m "fix bug"
+```
+
+---
+
+## GitHub Secrets Required
+
+| Secret | Description |
+|--------|-------------|
+| `KEYSTORE_BASE64` | Upload keystore encoded in base64 |
+| `KEYSTORE_PASSWORD` | Password for keystore and key |
+| `KEY_ALIAS` | Key alias (e.g., `upload`) |
+| `GOOGLE_SERVICES_JSON` | Firebase config file (base64) |
+| `FIREBASE_APP_ID` | Firebase App ID for distribution |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase service account JSON |
+
+---
+
+## Troubleshooting
+
+### Build fails at signing step
+
+Check that all keystore secrets are configured correctly:
+```bash
+gh secret list
+```
+
+Should show: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`
+
+### Firebase distribution fails
+
+Ensure `FIREBASE_APP_ID` and `FIREBASE_SERVICE_ACCOUNT` are configured.
+
+### Tests fail
+
+Run tests locally first:
+```bash
+flutter test
+```
+
+---
+
+## Local Signing Setup
+
+For local release builds:
+
+1. Place keystore at `android/app/upload-keystore.jks`
+2. Create `android/key.properties`:
+
+```properties
+storePassword=your-keystore-password
+keyPassword=your-key-password
+keyAlias=upload
+storeFile=upload-keystore.jks
+```
+
+Note: `storeFile` path is relative to `android/app/` directory.
+
+Then build:
+```bash
+flutter build apk --release
+flutter build appbundle --release
 ```
