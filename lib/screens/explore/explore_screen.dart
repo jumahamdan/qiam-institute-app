@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../config/constants.dart';
+import '../../config/responsive.dart';
 
 class ExploreScreen extends StatelessWidget {
   final void Function(int screenIndex, String title)? onNavigate;
@@ -16,7 +17,12 @@ class ExploreScreen extends StatelessWidget {
     }
   }
 
-  void _navigate(BuildContext context, int screenIndex, String title, String route) {
+  void _navigate(
+    BuildContext context,
+    int screenIndex,
+    String title,
+    String route,
+  ) {
     if (onNavigate != null) {
       onNavigate!(screenIndex, title);
     } else {
@@ -26,18 +32,35 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenPadding = Responsive.screenPadding(context);
+    final gridSpacing = Responsive.gridSpacing(context);
+    final gridColumns = Responsive.gridColumns(
+      context,
+      compact: 2,
+      medium: 3,
+      expanded: 4,
+    );
+
+    // Aspect ratio tuned per breakpoint
+    final aspectRatio = Responsive.value<double>(
+      context,
+      compact: 1.1,
+      medium: 1.0,
+      expanded: 1.1,
+    );
+
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: screenPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Text(
               'Explore',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
@@ -46,14 +69,14 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // 3x2 Grid of feature cards using Expanded
+            // Responsive Grid of feature cards
             Expanded(
               child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.1,
-                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: gridColumns,
+                mainAxisSpacing: gridSpacing,
+                crossAxisSpacing: gridSpacing,
+                childAspectRatio: aspectRatio,
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   _ExploreCard(
                     icon: Icons.event,
@@ -63,14 +86,16 @@ class ExploreScreen extends StatelessWidget {
                     onTap: () => _navigate(context, 10, 'Events', '/events'),
                   ),
                   _ValuesCard(
-                    onTap: () => _navigate(context, 11, 'Our Values', '/values'),
+                    onTap: () =>
+                        _navigate(context, 11, 'Our Values', '/values'),
                   ),
                   _ExploreCard(
                     icon: Icons.people,
                     title: 'Volunteer',
                     subtitle: 'Join our team',
                     color: const Color(0xFF2196F3),
-                    onTap: () => _navigate(context, 13, 'Volunteer', '/volunteer'),
+                    onTap: () =>
+                        _navigate(context, 13, 'Volunteer', '/volunteer'),
                   ),
                   _ExploreCard(
                     icon: Icons.play_circle_filled,
@@ -91,7 +116,12 @@ class ExploreScreen extends StatelessWidget {
                     title: 'Islamic Calendar',
                     subtitle: 'Important dates',
                     color: const Color(0xFF795548),
-                    onTap: () => _navigate(context, 16, 'Islamic Calendar', '/islamic-calendar'),
+                    onTap: () => _navigate(
+                      context,
+                      16,
+                      'Islamic Calendar',
+                      '/islamic-calendar',
+                    ),
                   ),
                 ],
               ),
@@ -143,7 +173,9 @@ class ExploreScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                    Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.8),
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -151,7 +183,9 @@ class ExploreScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -163,7 +197,10 @@ class ExploreScreen extends StatelessWidget {
                   onTap: () => _launchUrl(AppConstants.donateUrl),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 16,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -271,10 +308,7 @@ class _ExploreCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: Colors.grey[500], fontSize: 11),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -352,8 +386,7 @@ class _DuaExploreIconPainter extends CustomPainter {
 
     canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
     canvas.drawCircle(moonCenter, moonRadius, moonPaint);
-    final erasePaint = Paint()
-      ..blendMode = BlendMode.clear;
+    final erasePaint = Paint()..blendMode = BlendMode.clear;
     canvas.drawCircle(
       Offset(moonCenter.dx + moonRadius * 0.4, moonCenter.dy),
       moonRadius * 0.75,
@@ -368,20 +401,34 @@ class _DuaExploreIconPainter extends CustomPainter {
 
     // Left hand (simple oval)
     canvas.save();
-    canvas.translate(center.dx - size.width * 0.12, center.dy + size.height * 0.08);
+    canvas.translate(
+      center.dx - size.width * 0.12,
+      center.dy + size.height * 0.08,
+    );
     canvas.rotate(-0.3);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: size.width * 0.15, height: size.width * 0.22),
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: size.width * 0.15,
+        height: size.width * 0.22,
+      ),
       handPaint,
     );
     canvas.restore();
 
     // Right hand (simple oval)
     canvas.save();
-    canvas.translate(center.dx + size.width * 0.12, center.dy + size.height * 0.08);
+    canvas.translate(
+      center.dx + size.width * 0.12,
+      center.dy + size.height * 0.08,
+    );
     canvas.rotate(0.3);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: size.width * 0.15, height: size.width * 0.22),
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: size.width * 0.15,
+        height: size.width * 0.22,
+      ),
       handPaint,
     );
     canvas.restore();
@@ -439,11 +486,8 @@ class _ValuesCard extends StatelessWidget {
                         child: Image.asset(
                           imagePath,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => Icon(
-                            Icons.favorite,
-                            color: color,
-                            size: 14,
-                          ),
+                          errorBuilder: (_, _, _) =>
+                              Icon(Icons.favorite, color: color, size: 14),
                         ),
                       ),
                     );
@@ -453,18 +497,12 @@ class _ValuesCard extends StatelessWidget {
               const SizedBox(height: 8),
               const Text(
                 'Our Values',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 2),
               Text(
                 'What we stand for',
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: Colors.grey[500], fontSize: 11),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -499,9 +537,7 @@ class _SocialButton extends StatelessWidget {
           color: color.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: Center(
-          child: FaIcon(icon, color: color, size: 20),
-        ),
+        child: Center(child: FaIcon(icon, color: color, size: 20)),
       ),
     );
   }
