@@ -10,14 +10,14 @@ class Responsive {
   Responsive._();
 
   // Breakpoint thresholds (Material Design 3)
-  static const double compactMaxWidth = 599;
-  static const double mediumMaxWidth = 839;
+  static const double compactMaxWidth = 600;
+  static const double mediumMaxWidth = 840;
 
   /// Returns the current breakpoint category
   static ScreenSize screenSize(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    if (width <= compactMaxWidth) return ScreenSize.compact;
-    if (width <= mediumMaxWidth) return ScreenSize.medium;
+    if (width < compactMaxWidth) return ScreenSize.compact;
+    if (width < mediumMaxWidth) return ScreenSize.medium;
     return ScreenSize.expanded;
   }
 

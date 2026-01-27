@@ -41,15 +41,11 @@ class ExploreScreen extends StatelessWidget {
       expanded: 4,
     );
 
-    // Calculate aspect ratio based on available height and number of rows
-    final cardCount = 6;
-    final rowCount = (cardCount / gridColumns).ceil();
-
-    // On larger screens with fewer rows, we can use taller cards
+    // Aspect ratio tuned per breakpoint
     final aspectRatio = Responsive.value<double>(
       context,
       compact: 1.1,
-      medium: rowCount <= 2 ? 1.0 : 0.95,
+      medium: 1.0,
       expanded: 1.1,
     );
 
@@ -73,14 +69,13 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Responsive Grid of feature cards - now scrollable for large screens
+            // Responsive Grid of feature cards
             Expanded(
               child: GridView.count(
                 crossAxisCount: gridColumns,
                 mainAxisSpacing: gridSpacing,
                 crossAxisSpacing: gridSpacing,
                 childAspectRatio: aspectRatio,
-                // Allow scrolling on larger screens where cards might not fit
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   _ExploreCard(
