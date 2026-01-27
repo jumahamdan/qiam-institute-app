@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:adhan/adhan.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import '../location/location_service.dart';
 
@@ -19,6 +18,10 @@ class QiblaService {
   double? _qiblaDirection;
   bool _hasCompass = true;
 
+  // Kaaba coordinates (exact location)
+  static const double _kaabaLat = 21.4225;
+  static const double _kaabaLng = 39.8262;
+
   /// Initialize the Qibla service
   Future<void> initialize() async {
     await _locationService.initialize();
@@ -28,14 +31,30 @@ class QiblaService {
     await _checkCompassAvailability();
   }
 
+  /// Calculate Qibla direction using great-circle bearing formula
+  /// This gives the initial bearing (forward azimuth) from current location to Kaaba
   void _calculateQiblaDirection() {
-    final coordinates = Coordinates(
-      _locationService.latitude,
-      _locationService.longitude,
-    );
-    final qibla = Qibla(coordinates);
-    _qiblaDirection = qibla.direction;
+    final lat1 = _locationService.latitude;
+    final lng1 = _locationService.longitude;
+
+    // Convert to radians
+    final phi1 = _toRadians(lat1);
+    final phi2 = _toRadians(_kaabaLat);
+    final deltaLambda = _toRadians(_kaabaLng - lng1);
+
+    // Great-circle bearing formula (spherical law of cosines)
+    // θ = atan2(sin(Δλ) × cos(φ2), cos(φ1) × sin(φ2) − sin(φ1) × cos(φ2) × cos(Δλ))
+    final y = math.sin(deltaLambda) * math.cos(phi2);
+    final x = math.cos(phi1) * math.sin(phi2) -
+        math.sin(phi1) * math.cos(phi2) * math.cos(deltaLambda);
+
+    final bearing = math.atan2(y, x);
+
+    // Convert to degrees and normalize to 0-360
+    _qiblaDirection = (_toDegrees(bearing) + 360) % 360;
   }
+
+  double _toDegrees(double radians) => radians * 180 / math.pi;
 
   Future<void> _checkCompassAvailability() async {
     try {
@@ -95,23 +114,19 @@ class QiblaService {
     return 'NW';
   }
 
-  /// Approximate distance to Makkah in km
+  /// Approximate distance to Makkah in km using Haversine formula
   double getDistanceToMakkah() {
-    // Makkah coordinates
-    const makkahLat = 21.4225;
-    const makkahLng = 39.8262;
-
     final lat = _locationService.latitude;
     final lng = _locationService.longitude;
 
     // Haversine formula for distance
     const earthRadius = 6371.0; // km
-    final dLat = _toRadians(makkahLat - lat);
-    final dLng = _toRadians(makkahLng - lng);
+    final dLat = _toRadians(_kaabaLat - lat);
+    final dLng = _toRadians(_kaabaLng - lng);
 
     final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_toRadians(lat)) *
-            math.cos(_toRadians(makkahLat)) *
+            math.cos(_toRadians(_kaabaLat)) *
             math.sin(dLng / 2) *
             math.sin(dLng / 2);
 
