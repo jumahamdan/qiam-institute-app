@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
       initialVideoId: videoId,
       flags: const YoutubePlayerFlags(
         autoPlay: true,
-        mute: false,
+        mute: true,
         loop: false,
         showLiveFullscreenButton: false,
       ),
@@ -674,7 +674,7 @@ class _ValueMiniCard extends StatelessWidget {
               Image.asset(
                 imagePath,
                 height: 40,
-                errorBuilder: (_, __, ___) => Icon(
+                errorBuilder: (_, _, _) => Icon(
                   Icons.star,
                   size: 32,
                   color: Theme.of(context).colorScheme.primary,
