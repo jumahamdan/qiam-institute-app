@@ -40,6 +40,18 @@ dependencies:
   # Share content
   share_plus: ^10.0.0
 
+  # Firebase & Notifications
+  firebase_core: ^3.8.1
+  firebase_messaging: ^15.1.6
+  flutter_local_notifications: ^18.0.1
+
+  # Quran text and data
+  quran: ^1.4.1
+
+  # Audio player for Quran recitation
+  just_audio: ^0.9.40
+  audio_session: ^0.1.21
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
