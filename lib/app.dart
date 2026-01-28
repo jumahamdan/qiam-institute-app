@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'config/constants.dart';
 import 'config/theme.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/explore/explore_screen.dart';
@@ -236,7 +237,7 @@ class _MainNavigationState extends State<MainNavigation> {
           child: GestureDetector(
             onTap: () => setState(() => _selectedIndex = 0),
             child: Image.asset(
-              'assets/images/logo.png',
+              AppConstants.logoPath,
               height: 32,
               errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 24),
             ),
@@ -266,7 +267,7 @@ class _MainNavigationState extends State<MainNavigation> {
       title: GestureDetector(
         onTap: () => setState(() => _selectedIndex = 0),
         child: Image.asset(
-          'assets/images/logo.png',
+          AppConstants.logoPath,
           height: 40,
           errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 32),
         ),
@@ -309,13 +310,13 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Opacity(
               opacity: 0.6,
               child: Image.asset(
-                'assets/images/logo.png',
+                AppConstants.logoPath,
                 height: 24,
                 errorBuilder: (_, _, _) => Icon(Icons.home_outlined, color: Colors.grey[600]),
               ),
             ),
             selectedIcon: Image.asset(
-              'assets/images/logo.png',
+              AppConstants.logoPath,
               height: 24,
               errorBuilder: (_, _, _) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
             ),

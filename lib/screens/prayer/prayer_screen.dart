@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/prayer/prayer_settings.dart';
 import '../../services/qibla/qibla_service.dart';
@@ -182,7 +183,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
                     Image.asset(
                       _isQiamMode
                           ? 'assets/images/logo_white.png'
-                          : 'assets/images/logo.png',
+                          : AppConstants.logoPath,
                       width: 20,
                       height: 20,
                     ),
@@ -367,16 +368,16 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF1a1a2e),
-            const Color(0xFF16213e),
+            Color(0xFF1a1a2e),
+            Color(0xFF16213e),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
       child: Row(
         children: [
@@ -781,49 +782,25 @@ class _PrayerScreenState extends State<PrayerScreen> {
   }
 
 
+  /// Prayer display configuration - consolidates icons, colors, and iqamah offsets
+  static const _prayerConfig = {
+    'Fajr': (Icons.dark_mode_outlined, Color(0xFF5C6BC0), 20),
+    'Dhuhr': (Icons.wb_sunny_rounded, Color(0xFFFFB300), 15),
+    'Asr': (Icons.cloud_outlined, Color(0xFFFF7043), 15),
+    'Maghrib': (Icons.wb_twilight_rounded, Color(0xFFE91E63), 5),
+    'Isha': (Icons.nightlight_round, Color(0xFF3F51B5), 15),
+  };
+
   IconData _getPrayerIcon(String prayer) {
-    switch (prayer) {
-      case 'Fajr':
-        return Icons.dark_mode_outlined;
-      case 'Dhuhr':
-        return Icons.wb_sunny_rounded;
-      case 'Asr':
-        return Icons.cloud_outlined;
-      case 'Maghrib':
-        return Icons.wb_twilight_rounded;
-      case 'Isha':
-        return Icons.nightlight_round;
-      default:
-        return Icons.access_time;
-    }
+    return _prayerConfig[prayer]?.$1 ?? Icons.access_time;
   }
 
   Color _getPrayerColor(String prayer) {
-    switch (prayer) {
-      case 'Fajr':
-        return const Color(0xFF5C6BC0); // Indigo
-      case 'Dhuhr':
-        return const Color(0xFFFFB300); // Amber
-      case 'Asr':
-        return const Color(0xFFFF7043); // Deep Orange
-      case 'Maghrib':
-        return const Color(0xFFE91E63); // Pink
-      case 'Isha':
-        return const Color(0xFF3F51B5); // Indigo
-      default:
-        return Colors.grey;
-    }
+    return _prayerConfig[prayer]?.$2 ?? Colors.grey;
   }
 
   int? _getIqamahOffset(String prayer) {
-    const offsets = {
-      'Fajr': 20,
-      'Dhuhr': 15,
-      'Asr': 15,
-      'Maghrib': 5,
-      'Isha': 15,
-    };
-    return offsets[prayer];
+    return _prayerConfig[prayer]?.$3;
   }
 }
 

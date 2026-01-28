@@ -115,7 +115,7 @@ class ExploreScreen extends StatelessWidget {
                   ),
                   _ValuesCard(
                     onTap: () =>
-                        _navigate(context, 11, 'Our Values', '/values'),
+                        _navigate(context, 11, AppConstants.ourValuesTitle, '/values'),
                   ),
                   _ExploreCard(
                     icon: Icons.people,
@@ -684,7 +684,7 @@ class _ValuesCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Our Values',
+                AppConstants.ourValuesTitle,
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 2),

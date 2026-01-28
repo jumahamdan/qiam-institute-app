@@ -601,10 +601,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildCorrectionTile(String prayer, int minutes) {
-    final isPositive = minutes > 0;
-    final isNegative = minutes < 0;
+  /// Returns background color for correction value display
+  Color _getCorrectionBackgroundColor(int minutes) {
+    if (minutes > 0) return Colors.green[50]!;
+    if (minutes < 0) return Colors.red[50]!;
+    return Colors.grey[100]!;
+  }
 
+  /// Returns text color for correction value display
+  Color _getCorrectionTextColor(int minutes) {
+    if (minutes > 0) return Colors.green[700]!;
+    if (minutes < 0) return Colors.red[700]!;
+    return Colors.grey[600]!;
+  }
+
+  Widget _buildCorrectionTile(String prayer, int minutes) {
     return ListTile(
       dense: true,
       title: Text(prayer),
@@ -619,11 +630,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 50,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isPositive
-                  ? Colors.green[50]
-                  : isNegative
-                      ? Colors.red[50]
-                      : Colors.grey[100],
+              color: _getCorrectionBackgroundColor(minutes),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -632,11 +639,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isPositive
-                    ? Colors.green[700]
-                    : isNegative
-                        ? Colors.red[700]
-                        : Colors.grey[600],
+                color: _getCorrectionTextColor(minutes),
               ),
             ),
           ),

@@ -64,61 +64,41 @@ class PrayerService {
     _locationName = _settings.locationName ?? AppConstants.defaultLocationName;
   }
 
+  /// Maps setting keys to calculation methods from the adhan package
+  static const _calculationMethodMap = {
+    'mwl': CalculationMethod.muslim_world_league,
+    'egyptian': CalculationMethod.egyptian,
+    'karachi': CalculationMethod.karachi,
+    'umm_al_qura': CalculationMethod.umm_al_qura,
+    'dubai': CalculationMethod.dubai,
+    'qatar': CalculationMethod.qatar,
+    'kuwait': CalculationMethod.kuwait,
+    'singapore': CalculationMethod.singapore,
+    'tehran': CalculationMethod.tehran,
+    'turkey': CalculationMethod.turkey,
+    'isna': CalculationMethod.north_america,
+  };
+
+  /// Maps setting keys to high latitude rules
+  static const _highLatitudeRuleMap = {
+    'middle_of_night': HighLatitudeRule.middle_of_the_night,
+    'one_seventh': HighLatitudeRule.seventh_of_the_night,
+    'angle_based': HighLatitudeRule.twilight_angle,
+  };
+
   void _updateCalculationParams() {
-    switch (_settings.calculationMethod) {
-      case 'mwl':
-        _params = CalculationMethod.muslim_world_league.getParameters();
-        break;
-      case 'egyptian':
-        _params = CalculationMethod.egyptian.getParameters();
-        break;
-      case 'karachi':
-        _params = CalculationMethod.karachi.getParameters();
-        break;
-      case 'umm_al_qura':
-        _params = CalculationMethod.umm_al_qura.getParameters();
-        break;
-      case 'dubai':
-        _params = CalculationMethod.dubai.getParameters();
-        break;
-      case 'qatar':
-        _params = CalculationMethod.qatar.getParameters();
-        break;
-      case 'kuwait':
-        _params = CalculationMethod.kuwait.getParameters();
-        break;
-      case 'singapore':
-        _params = CalculationMethod.singapore.getParameters();
-        break;
-      case 'tehran':
-        _params = CalculationMethod.tehran.getParameters();
-        break;
-      case 'turkey':
-        _params = CalculationMethod.turkey.getParameters();
-        break;
-      case 'isna':
-      default:
-        _params = CalculationMethod.north_america.getParameters();
-    }
+    // Get calculation method from map or default to north_america
+    final method = _calculationMethodMap[_settings.calculationMethod]
+        ?? CalculationMethod.north_america;
+    _params = method.getParameters();
 
     // Set Asr madhab
     _params!.madhab = _settings.asrMethod == 'hanafi' ? Madhab.hanafi : Madhab.shafi;
 
-    // Set high latitude rule
-    switch (_settings.highLatitudeRule) {
-      case 'middle_of_night':
-        _params!.highLatitudeRule = HighLatitudeRule.middle_of_the_night;
-        break;
-      case 'one_seventh':
-        _params!.highLatitudeRule = HighLatitudeRule.seventh_of_the_night;
-        break;
-      case 'angle_based':
-        _params!.highLatitudeRule = HighLatitudeRule.twilight_angle;
-        break;
-      case 'none':
-      default:
-        // Default behavior
-        break;
+    // Set high latitude rule if configured
+    final highLatRule = _highLatitudeRuleMap[_settings.highLatitudeRule];
+    if (highLatRule != null) {
+      _params!.highLatitudeRule = highLatRule;
     }
   }
 
