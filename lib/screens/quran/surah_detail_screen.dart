@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:just_audio/just_audio.dart';
 import '../../services/quran/quran_service.dart';
+import '../../services/quran/quran_audio_service.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   final Surah surah;
@@ -20,11 +22,20 @@ class SurahDetailScreen extends StatefulWidget {
 
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   final QuranService _quranService = QuranService();
+  final QuranAudioService _audioService = QuranAudioService();
   late List<Verse> _verses;
   late ScrollController _scrollController;
   Set<String> _bookmarks = {};
   double _arabicFontSize = 28.0;
   double _translationFontSize = 14.0;
+
+  // Audio state
+  Reciter _currentReciter = QuranAudioService.reciters.first;
+  bool _isPlaying = false;
+  bool _isLoading = false;
+  int? _currentPlayingVerse;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
 
   static const String _arabicFontSizeKey = 'quran_arabic_font_size';
   static const String _translationFontSizeKey = 'quran_translation_font_size';
@@ -36,12 +47,61 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     _verses = _quranService.getSurahVerses(widget.surah.number);
     _loadSettings();
     _loadBookmarks();
+    _loadAudioSettings();
+    _setupAudioListeners();
 
     // Scroll to initial verse after build
     if (widget.initialVerse != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToVerse(widget.initialVerse!);
       });
+    }
+  }
+
+  void _setupAudioListeners() {
+    // Listen to player state changes
+    _audioService.playerStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state.playing;
+          _isLoading = state.processingState == ProcessingState.loading ||
+              state.processingState == ProcessingState.buffering;
+        });
+      }
+    });
+
+    // Listen to position changes
+    _audioService.positionStream.listen((position) {
+      if (mounted) {
+        setState(() => _position = position);
+      }
+    });
+
+    // Listen to duration changes
+    _audioService.durationStream.listen((duration) {
+      if (mounted && duration != null) {
+        setState(() => _duration = duration);
+      }
+    });
+
+    // Listen to current index changes (for playlist)
+    _audioService.currentIndexStream.listen((index) {
+      if (mounted && index != null) {
+        // Update current playing verse based on playlist index
+        final startVerse = _currentPlayingVerse ?? 1;
+        setState(() {
+          _currentPlayingVerse = startVerse + index;
+        });
+        // Auto-scroll to current verse
+        _scrollToVerse(_currentPlayingVerse!);
+      }
+    });
+  }
+
+  Future<void> _loadAudioSettings() async {
+    final reciter = await _audioService.getSelectedReciter();
+    if (mounted) {
+      setState(() => _currentReciter = reciter);
     }
   }
 
@@ -112,6 +172,163 @@ ${verse.translation}
       const SnackBar(
         content: Text('Verse copied to clipboard'),
         duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Audio control methods
+  Future<void> _playVerse(int verseNumber) async {
+    try {
+      setState(() {
+        _currentPlayingVerse = verseNumber;
+        _isLoading = true;
+      });
+      await _audioService.playVerse(widget.surah.number, verseNumber);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error playing audio: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _playSurahFromVerse(int startVerse) async {
+    try {
+      setState(() {
+        _currentPlayingVerse = startVerse;
+        _isLoading = true;
+      });
+      await _audioService.playSurah(
+        widget.surah.number,
+        startVerse,
+        widget.surah.verseCount,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error playing audio: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _togglePlayPause() async {
+    if (_isPlaying) {
+      await _audioService.pause();
+    } else if (_currentPlayingVerse != null) {
+      await _audioService.resume();
+    } else {
+      await _playSurahFromVerse(1);
+    }
+  }
+
+  Future<void> _stopAudio() async {
+    await _audioService.stop();
+    setState(() {
+      _currentPlayingVerse = null;
+      _position = Duration.zero;
+      _duration = Duration.zero;
+    });
+  }
+
+  void _showReciterSelector() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (context, scrollController) {
+          final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Select Reciter',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: EdgeInsets.only(bottom: bottomPadding + 16),
+                  itemCount: QuranAudioService.reciters.length,
+                  itemBuilder: (context, index) {
+                    final reciter = QuranAudioService.reciters[index];
+                    final isSelected = reciter.id == _currentReciter.id;
+                    return ListTile(
+                      selected: isSelected,
+                      selectedTileColor: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.1),
+                      leading: CircleAvatar(
+                        backgroundColor: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey[200],
+                        child: Icon(
+                          Icons.person,
+                          color: isSelected ? Colors.white : Colors.grey[600],
+                        ),
+                      ),
+                      title: Text(
+                        reciter.name,
+                        style: TextStyle(
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      subtitle: Text(
+                        reciter.nameArabic +
+                            (reciter.style.isNotEmpty
+                                ? ' (${reciter.style})'
+                                : ''),
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      trailing: isSelected
+                          ? Icon(Icons.check_circle,
+                              color: Theme.of(context).colorScheme.primary)
+                          : null,
+                      onTap: () async {
+                        await _audioService.setSelectedReciter(reciter.id);
+                        setState(() => _currentReciter = reciter);
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        // If currently playing, restart with new reciter
+                        if (_isPlaying && _currentPlayingVerse != null) {
+                          await _playSurahFromVerse(_currentPlayingVerse!);
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -214,6 +431,7 @@ ${verse.translation}
   @override
   void dispose() {
     _scrollController.dispose();
+    _audioService.stop();
     super.dispose();
   }
 
@@ -239,56 +457,102 @@ ${verse.translation}
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.record_voice_over),
+            onPressed: _showReciterSelector,
+            tooltip: 'Select Reciter',
+          ),
+          IconButton(
             icon: const Icon(Icons.text_fields),
             onPressed: _showFontSizeDialog,
             tooltip: 'Font Size',
           ),
         ],
       ),
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          // Save last read position on scroll
-          if (notification is ScrollEndNotification) {
-            final visibleVerse = (_scrollController.offset / 150).round() + 1;
-            if (visibleVerse > 0 && visibleVerse <= _verses.length) {
-              _saveLastRead(visibleVerse);
-            }
-          }
-          return false;
-        },
-        child: ListView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(16),
-          itemCount: _verses.length + 1, // +1 for Basmala header
-          itemBuilder: (context, index) {
-            // Basmala header (except for At-Tawbah)
-            if (index == 0) {
-              return _SurahHeader(
-                surah: widget.surah,
-                showBasmala: _quranService.surahHasBasmala(widget.surah.number),
-                basmala: _quranService.getBasmala(),
-                primaryColor: primaryColor,
-                arabicFontSize: _arabicFontSize,
-              );
-            }
+      body: Column(
+        children: [
+          // Main content
+          Expanded(
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) {
+                // Save last read position on scroll
+                if (notification is ScrollEndNotification) {
+                  final visibleVerse = (_scrollController.offset / 150).round() + 1;
+                  if (visibleVerse > 0 && visibleVerse <= _verses.length) {
+                    _saveLastRead(visibleVerse);
+                  }
+                }
+                return false;
+              },
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                itemCount: _verses.length + 1, // +1 for Basmala header
+                itemBuilder: (context, index) {
+                  // Basmala header (except for At-Tawbah)
+                  if (index == 0) {
+                    return _SurahHeader(
+                      surah: widget.surah,
+                      showBasmala: _quranService.surahHasBasmala(widget.surah.number),
+                      basmala: _quranService.getBasmala(),
+                      primaryColor: primaryColor,
+                      arabicFontSize: _arabicFontSize,
+                      onPlayFromStart: () => _playSurahFromVerse(1),
+                      isPlaying: _isPlaying && _currentPlayingVerse == 1,
+                      isLoading: _isLoading && _currentPlayingVerse == 1,
+                    );
+                  }
 
-            final verse = _verses[index - 1];
-            final isBookmarked = _bookmarks.contains(
-              '${widget.surah.number}:${verse.verseNumber}',
-            );
+                  final verse = _verses[index - 1];
+                  final isBookmarked = _bookmarks.contains(
+                    '${widget.surah.number}:${verse.verseNumber}',
+                  );
+                  final isCurrentlyPlaying = _currentPlayingVerse == verse.verseNumber;
 
-            return _VerseCard(
-              verse: verse,
-              isBookmarked: isBookmarked,
-              arabicFontSize: _arabicFontSize,
-              translationFontSize: _translationFontSize,
+                  return _VerseCard(
+                    verse: verse,
+                    isBookmarked: isBookmarked,
+                    arabicFontSize: _arabicFontSize,
+                    translationFontSize: _translationFontSize,
+                    primaryColor: primaryColor,
+                    isPlaying: _isPlaying && isCurrentlyPlaying,
+                    isLoading: _isLoading && isCurrentlyPlaying,
+                    onBookmarkToggle: () => _toggleBookmark(verse.verseNumber),
+                    onShare: () => _shareVerse(verse),
+                    onCopy: () => _copyVerse(verse),
+                    onPlay: () => _playVerse(verse.verseNumber),
+                    onPlayFromHere: () => _playSurahFromVerse(verse.verseNumber),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // Audio player bar (show when audio is active)
+          if (_currentPlayingVerse != null)
+            _AudioPlayerBar(
+              reciterName: _currentReciter.name,
+              versePlaying: _currentPlayingVerse!,
+              totalVerses: widget.surah.verseCount,
+              isPlaying: _isPlaying,
+              isLoading: _isLoading,
+              position: _position,
+              duration: _duration,
               primaryColor: primaryColor,
-              onBookmarkToggle: () => _toggleBookmark(verse.verseNumber),
-              onShare: () => _shareVerse(verse),
-              onCopy: () => _copyVerse(verse),
-            );
-          },
-        ),
+              onPlayPause: _togglePlayPause,
+              onStop: _stopAudio,
+              onPrevious: () async {
+                if (_currentPlayingVerse! > 1) {
+                  await _playSurahFromVerse(_currentPlayingVerse! - 1);
+                }
+              },
+              onNext: () async {
+                if (_currentPlayingVerse! < widget.surah.verseCount) {
+                  await _playSurahFromVerse(_currentPlayingVerse! + 1);
+                }
+              },
+              onReciterTap: _showReciterSelector,
+            ),
+        ],
       ),
     );
   }
@@ -300,6 +564,9 @@ class _SurahHeader extends StatelessWidget {
   final String basmala;
   final Color primaryColor;
   final double arabicFontSize;
+  final VoidCallback onPlayFromStart;
+  final bool isPlaying;
+  final bool isLoading;
 
   const _SurahHeader({
     required this.surah,
@@ -307,6 +574,9 @@ class _SurahHeader extends StatelessWidget {
     required this.basmala,
     required this.primaryColor,
     required this.arabicFontSize,
+    required this.onPlayFromStart,
+    required this.isPlaying,
+    required this.isLoading,
   });
 
   @override
@@ -356,6 +626,27 @@ class _SurahHeader extends StatelessWidget {
               fontSize: 13,
             ),
           ),
+          // Play button
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: onPlayFromStart,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            icon: isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: primaryColor,
+                    ),
+                  )
+                : Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+            label: Text(isPlaying ? 'Playing...' : 'Play Surah'),
+          ),
           // Basmala
           if (showBasmala) ...[
             const SizedBox(height: 20),
@@ -389,9 +680,13 @@ class _VerseCard extends StatelessWidget {
   final double arabicFontSize;
   final double translationFontSize;
   final Color primaryColor;
+  final bool isPlaying;
+  final bool isLoading;
   final VoidCallback onBookmarkToggle;
   final VoidCallback onShare;
   final VoidCallback onCopy;
+  final VoidCallback onPlay;
+  final VoidCallback onPlayFromHere;
 
   const _VerseCard({
     required this.verse,
@@ -399,15 +694,26 @@ class _VerseCard extends StatelessWidget {
     required this.arabicFontSize,
     required this.translationFontSize,
     required this.primaryColor,
+    required this.isPlaying,
+    required this.isLoading,
     required this.onBookmarkToggle,
     required this.onShare,
     required this.onCopy,
+    required this.onPlay,
+    required this.onPlayFromHere,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: isPlaying ? primaryColor.withValues(alpha: 0.05) : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: isPlaying
+            ? BorderSide(color: primaryColor, width: 2)
+            : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -421,14 +727,16 @@ class _VerseCard extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: primaryColor.withValues(alpha: 0.1),
+                    color: isPlaying
+                        ? primaryColor
+                        : primaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
                       '${verse.verseNumber}',
                       style: TextStyle(
-                        color: primaryColor,
+                        color: isPlaying ? Colors.white : primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -471,6 +779,26 @@ class _VerseCard extends StatelessWidget {
                   ),
                 ],
                 const Spacer(),
+                // Play button
+                IconButton(
+                  icon: isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: primaryColor,
+                          ),
+                        )
+                      : Icon(
+                          isPlaying ? Icons.pause_circle : Icons.play_circle,
+                          color: primaryColor,
+                          size: 24,
+                        ),
+                  onPressed: isLoading ? null : onPlay,
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Play verse',
+                ),
                 // Action buttons
                 IconButton(
                   icon: Icon(
@@ -523,6 +851,182 @@ class _VerseCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _AudioPlayerBar extends StatelessWidget {
+  final String reciterName;
+  final int versePlaying;
+  final int totalVerses;
+  final bool isPlaying;
+  final bool isLoading;
+  final Duration position;
+  final Duration duration;
+  final Color primaryColor;
+  final VoidCallback onPlayPause;
+  final VoidCallback onStop;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final VoidCallback onReciterTap;
+
+  const _AudioPlayerBar({
+    required this.reciterName,
+    required this.versePlaying,
+    required this.totalVerses,
+    required this.isPlaying,
+    required this.isLoading,
+    required this.position,
+    required this.duration,
+    required this.primaryColor,
+    required this.onPlayPause,
+    required this.onStop,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onReciterTap,
+  });
+
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+
+    return Container(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 12,
+        bottom: 12 + bottomPadding,
+      ),
+      decoration: BoxDecoration(
+        color: primaryColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Reciter and verse info
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: onReciterTap,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person, color: Colors.white70, size: 16),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          reciterName,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down,
+                          color: Colors.white70, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+              Text(
+                'Verse $versePlaying of $totalVerses',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Progress bar
+          Row(
+            children: [
+              Text(
+                _formatDuration(position),
+                style: const TextStyle(color: Colors.white70, fontSize: 10),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: duration.inMilliseconds > 0
+                      ? position.inMilliseconds / duration.inMilliseconds
+                      : 0,
+                  backgroundColor: Colors.white24,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatDuration(duration),
+                style: const TextStyle(color: Colors.white70, fontSize: 10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Controls
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.stop, color: Colors.white70),
+                onPressed: onStop,
+                tooltip: 'Stop',
+              ),
+              IconButton(
+                icon: const Icon(Icons.skip_previous, color: Colors.white),
+                onPressed: versePlaying > 1 ? onPrevious : null,
+                tooltip: 'Previous verse',
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: isLoading
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: primaryColor,
+                          ),
+                        )
+                      : Icon(
+                          isPlaying ? Icons.pause : Icons.play_arrow,
+                          color: primaryColor,
+                        ),
+                  onPressed: isLoading ? null : onPlayPause,
+                  tooltip: isPlaying ? 'Pause' : 'Play',
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.skip_next, color: Colors.white),
+                onPressed: versePlaying < totalVerses ? onNext : null,
+                tooltip: 'Next verse',
+              ),
+              const SizedBox(width: 40), // Balance the stop button
+            ],
+          ),
+        ],
       ),
     );
   }

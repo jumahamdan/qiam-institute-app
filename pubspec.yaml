@@ -43,6 +43,10 @@ dependencies:
   # Quran text and data
   quran: ^1.4.1
 
+  # Audio player for Quran recitation
+  just_audio: ^0.9.40
+  audio_session: ^0.1.21
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
