@@ -65,6 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final announcementsEnabled = await _notificationService.areAnnouncementsNotificationsEnabled();
     final liveEnabled = await _notificationService.areLiveNotificationsEnabled();
 
+    if (!mounted) return;
     setState(() {
       _notificationsEnabled = notificationsEnabled;
       _eventsEnabled = eventsEnabled;

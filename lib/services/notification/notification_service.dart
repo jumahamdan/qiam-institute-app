@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+  // Initialize local notifications in background isolate
+  await NotificationService._initializeForBackground();
   await NotificationService._showLocalNotification(message);
 }
 
@@ -45,6 +47,24 @@ class NotificationService {
   static const String topicAll = 'all';
 
   bool _isInitialized = false;
+  static bool _backgroundInitialized = false;
+
+  /// Initialize local notifications for background isolate
+  static Future<void> _initializeForBackground() async {
+    if (_backgroundInitialized) return;
+
+    const androidSettings = AndroidInitializationSettings('ic_notification');
+    const initSettings = InitializationSettings(android: androidSettings);
+    await _localNotifications.initialize(initSettings);
+
+    // Ensure channel exists
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_channel);
+
+    _backgroundInitialized = true;
+  }
 
   /// Initialize the notification service
   Future<void> initialize() async {
@@ -67,7 +87,7 @@ class NotificationService {
 
   /// Set up local notifications plugin
   Future<void> _setupLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
+    const androidSettings = AndroidInitializationSettings('ic_notification');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -168,7 +188,7 @@ class NotificationService {
       channelDescription: _channel.description,
       importance: _channel.importance,
       priority: Priority.high,
-      icon: '@drawable/ic_notification',
+      icon: 'ic_notification',
       color: const Color(0xFF8224E3),
     );
 
