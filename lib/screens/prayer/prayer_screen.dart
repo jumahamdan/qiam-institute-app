@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/prayer/prayer_settings.dart';
 import '../../services/qibla/qibla_service.dart';
@@ -182,7 +183,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
                     Image.asset(
                       _isQiamMode
                           ? 'assets/images/logo_white.png'
-                          : 'assets/images/logo.png',
+                          : AppConstants.logoPath,
                       width: 20,
                       height: 20,
                     ),
