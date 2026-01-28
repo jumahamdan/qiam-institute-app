@@ -32,12 +32,21 @@ jobs:
       - name: Run Tests with Coverage
         run: flutter test --coverage
 
+      - name: Verify Coverage Report
+        run: |
+          echo "Coverage report contents (first 50 lines):"
+          head -50 coverage/lcov.info
+          echo "---"
+          echo "Total lines in coverage report:"
+          wc -l coverage/lcov.info
+
       - name: SonarCloud Scan
         # Run on PRs and merges to develop/main (skip feature branch pushes to save CI minutes)
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: SonarSource/sonarcloud-github-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
     name: Build Release
