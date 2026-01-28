@@ -271,7 +271,7 @@ List<Dhikr> presets = [
 - [x] Visual progress indicator (circle)
 - [x] Completion celebration (subtle animation)
 - [x] Lifetime statistics tracking
-- [x] Reset / Undo last tap
+- [x] Reset count
 - [ ] Keep screen awake option
 - [ ] Works in landscape mode
 

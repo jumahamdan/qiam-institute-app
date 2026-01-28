@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -34,8 +35,15 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   bool _isPlaying = false;
   bool _isLoading = false;
   int? _currentPlayingVerse;
+  int? _playlistStartVerse; // Track where playlist started for correct verse calculation
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+
+  // Stream subscriptions (to cancel in dispose)
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<Duration?>? _durationSubscription;
+  StreamSubscription<int?>? _currentIndexSubscription;
 
   static const String _arabicFontSizeKey = 'quran_arabic_font_size';
   static const String _translationFontSizeKey = 'quran_translation_font_size';
@@ -60,7 +68,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
   void _setupAudioListeners() {
     // Listen to player state changes
-    _audioService.playerStateStream.listen((state) {
+    _playerStateSubscription = _audioService.playerStateStream.listen((state) {
       if (mounted) {
         setState(() {
           _isPlaying = state.playing;
@@ -71,26 +79,25 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     });
 
     // Listen to position changes
-    _audioService.positionStream.listen((position) {
+    _positionSubscription = _audioService.positionStream.listen((position) {
       if (mounted) {
         setState(() => _position = position);
       }
     });
 
     // Listen to duration changes
-    _audioService.durationStream.listen((duration) {
+    _durationSubscription = _audioService.durationStream.listen((duration) {
       if (mounted && duration != null) {
         setState(() => _duration = duration);
       }
     });
 
     // Listen to current index changes (for playlist)
-    _audioService.currentIndexStream.listen((index) {
-      if (mounted && index != null) {
-        // Update current playing verse based on playlist index
-        final startVerse = _currentPlayingVerse ?? 1;
+    _currentIndexSubscription = _audioService.currentIndexStream.listen((index) {
+      if (mounted && index != null && _playlistStartVerse != null) {
+        // Update current playing verse based on playlist index and start verse
         setState(() {
-          _currentPlayingVerse = startVerse + index;
+          _currentPlayingVerse = _playlistStartVerse! + index;
         });
         // Auto-scroll to current verse
         _scrollToVerse(_currentPlayingVerse!);
@@ -197,6 +204,7 @@ ${verse.translation}
     try {
       setState(() {
         _currentPlayingVerse = startVerse;
+        _playlistStartVerse = startVerse; // Track where playlist started
         _isLoading = true;
       });
       await _audioService.playSurah(
@@ -227,6 +235,7 @@ ${verse.translation}
     await _audioService.stop();
     setState(() {
       _currentPlayingVerse = null;
+      _playlistStartVerse = null;
       _position = Duration.zero;
       _duration = Duration.zero;
     });
@@ -430,6 +439,11 @@ ${verse.translation}
 
   @override
   void dispose() {
+    // Cancel all stream subscriptions
+    _playerStateSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _durationSubscription?.cancel();
+    _currentIndexSubscription?.cancel();
     _scrollController.dispose();
     _audioService.stop();
     super.dispose();
