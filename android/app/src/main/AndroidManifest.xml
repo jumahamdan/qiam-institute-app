@@ -40,10 +40,10 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="qiam_notifications" />
 
-        <!-- FCM default notification icon -->
+        <!-- FCM default notification icon (must be monochrome/white on transparent) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
+            android:resource="@drawable/ic_notification" />
 
         <!-- FCM default notification color -->
         <meta-data

@@ -67,7 +67,7 @@ class NotificationService {
 
   /// Set up local notifications plugin
   Future<void> _setupLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings('@drawable/ic_notification');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -162,14 +162,14 @@ class NotificationService {
     final notification = message.notification;
     if (notification == null) return;
 
-    const androidDetails = AndroidNotificationDetails(
-      'qiam_notifications',
-      'Qiam Institute Notifications',
-      channelDescription: 'Notifications from Qiam Institute',
-      importance: Importance.high,
+    final androidDetails = AndroidNotificationDetails(
+      _channel.id,
+      _channel.name,
+      channelDescription: _channel.description,
+      importance: _channel.importance,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
-      color: Color(0xFF8224E3),
+      icon: '@drawable/ic_notification',
+      color: const Color(0xFF8224E3),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -178,7 +178,7 @@ class NotificationService {
       presentSound: true,
     );
 
-    const details = NotificationDetails(
+    final details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
