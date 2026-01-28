@@ -471,7 +471,7 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.green.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
           border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
         ),
         child: Row(

@@ -18,6 +18,9 @@ import 'screens/about/about_screen.dart';
 import 'screens/contact/contact_screen.dart';
 import 'screens/events/events_screen.dart';
 
+/// Path to the app logo asset
+const _kLogoPath = 'assets/images/logo.png';
+
 class QiamApp extends StatelessWidget {
   const QiamApp({super.key});
 
@@ -236,7 +239,7 @@ class _MainNavigationState extends State<MainNavigation> {
           child: GestureDetector(
             onTap: () => setState(() => _selectedIndex = 0),
             child: Image.asset(
-              'assets/images/logo.png',
+              _kLogoPath,
               height: 32,
               errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 24),
             ),
@@ -266,7 +269,7 @@ class _MainNavigationState extends State<MainNavigation> {
       title: GestureDetector(
         onTap: () => setState(() => _selectedIndex = 0),
         child: Image.asset(
-          'assets/images/logo.png',
+          _kLogoPath,
           height: 40,
           errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 32),
         ),
@@ -309,13 +312,13 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Opacity(
               opacity: 0.6,
               child: Image.asset(
-                'assets/images/logo.png',
+                _kLogoPath,
                 height: 24,
                 errorBuilder: (_, _, _) => Icon(Icons.home_outlined, color: Colors.grey[600]),
               ),
             ),
             selectedIcon: Image.asset(
-              'assets/images/logo.png',
+              _kLogoPath,
               height: 24,
               errorBuilder: (_, _, _) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
             ),

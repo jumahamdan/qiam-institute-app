@@ -672,14 +672,14 @@ class NamesOfAllahService {
       arabic: 'النُّورُ',
       transliteration: 'An-Nur',
       meaning: 'The Light',
-      description: 'The One who guides.',
+      description: 'The One who is the light of the heavens and earth, illuminating hearts with guidance.',
     ),
     NameOfAllah(
       number: 94,
       arabic: 'الْهَادِي',
       transliteration: 'Al-Hadi',
       meaning: 'The Guide',
-      description: 'The One who guides.',
+      description: 'The One who guides His creation to what is beneficial for them.',
     ),
     NameOfAllah(
       number: 95,
@@ -707,7 +707,7 @@ class NamesOfAllahService {
       arabic: 'الرَّشِيدُ',
       transliteration: 'Ar-Rashid',
       meaning: 'The Guide to the Right Path',
-      description: 'The One who guides.',
+      description: 'The One who directs all affairs with perfect wisdom toward the right path.',
     ),
     NameOfAllah(
       number: 99,
