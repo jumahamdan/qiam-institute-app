@@ -40,6 +40,9 @@ dependencies:
   # Share content
   share_plus: ^10.0.0
 
+  # Quran text and data
+  quran: ^1.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

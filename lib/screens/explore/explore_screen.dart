@@ -46,15 +46,35 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // 3x2 Grid of feature cards using Expanded
+            // Grid of feature cards using Expanded
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
                 childAspectRatio: 1.1,
-                physics: const NeverScrollableScrollPhysics(),
                 children: [
+                  _ExploreCard(
+                    customIcon: _QuranExploreIcon(color: const Color(0xFF1B5E20)),
+                    title: 'Quran',
+                    subtitle: 'Read & listen',
+                    color: const Color(0xFF1B5E20),
+                    onTap: () => _navigate(context, 17, 'Quran', '/quran'),
+                  ),
+                  _ExploreCard(
+                    customIcon: _DuaExploreIcon(color: const Color(0xFF9C27B0)),
+                    title: 'Daily Duaa',
+                    subtitle: 'Supplications',
+                    color: const Color(0xFF9C27B0),
+                    onTap: () => _navigate(context, 15, 'Daily Duaa', '/duaa'),
+                  ),
+                  _ExploreCard(
+                    customIcon: _TasbihExploreIcon(color: const Color(0xFF00695C)),
+                    title: 'Tasbih',
+                    subtitle: 'Dhikr counter',
+                    color: const Color(0xFF00695C),
+                    onTap: () => _navigate(context, 18, 'Tasbih Counter', '/tasbih'),
+                  ),
                   _ExploreCard(
                     icon: Icons.event,
                     title: 'Events',
@@ -78,13 +98,6 @@ class ExploreScreen extends StatelessWidget {
                     subtitle: 'Videos & content',
                     color: const Color(0xFFFF5722),
                     onTap: () => _navigate(context, 12, 'Media', '/media'),
-                  ),
-                  _ExploreCard(
-                    customIcon: _DuaExploreIcon(color: const Color(0xFF9C27B0)),
-                    title: 'Daily Duaa',
-                    subtitle: 'Supplications',
-                    color: const Color(0xFF9C27B0),
-                    onTap: () => _navigate(context, 15, 'Daily Duaa', '/duaa'),
                   ),
                   _ExploreCard(
                     icon: Icons.calendar_month,
@@ -385,6 +398,173 @@ class _DuaExploreIconPainter extends CustomPainter {
       handPaint,
     );
     canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Quran icon - open book with Arabic text for Explore card
+class _QuranExploreIcon extends StatelessWidget {
+  final Color color;
+
+  const _QuranExploreIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: CustomPaint(
+        size: const Size(28, 28),
+        painter: _QuranExploreIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+/// Custom painter for Quran explore icon (open book with star)
+class _QuranExploreIconPainter extends CustomPainter {
+  final Color color;
+
+  _QuranExploreIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Draw open book shape
+    final bookPath = Path();
+
+    // Left page
+    bookPath.moveTo(size.width * 0.5, size.height * 0.2);
+    bookPath.quadraticBezierTo(
+      size.width * 0.25, size.height * 0.15,
+      size.width * 0.1, size.height * 0.25,
+    );
+    bookPath.lineTo(size.width * 0.1, size.height * 0.8);
+    bookPath.quadraticBezierTo(
+      size.width * 0.3, size.height * 0.75,
+      size.width * 0.5, size.height * 0.85,
+    );
+
+    // Right page
+    bookPath.quadraticBezierTo(
+      size.width * 0.7, size.height * 0.75,
+      size.width * 0.9, size.height * 0.8,
+    );
+    bookPath.lineTo(size.width * 0.9, size.height * 0.25);
+    bookPath.quadraticBezierTo(
+      size.width * 0.75, size.height * 0.15,
+      size.width * 0.5, size.height * 0.2,
+    );
+
+    canvas.drawPath(bookPath, paint);
+
+    // Draw spine line
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.2),
+      Offset(size.width * 0.5, size.height * 0.85),
+      paint,
+    );
+
+    // Draw small star/decorative element on the book
+    final starCenter = Offset(size.width * 0.5, size.height * 0.5);
+    final starRadius = size.width * 0.08;
+
+    // Simple 4-pointed star
+    final starPath = Path();
+    starPath.moveTo(starCenter.dx, starCenter.dy - starRadius);
+    starPath.lineTo(starCenter.dx + starRadius * 0.3, starCenter.dy - starRadius * 0.3);
+    starPath.lineTo(starCenter.dx + starRadius, starCenter.dy);
+    starPath.lineTo(starCenter.dx + starRadius * 0.3, starCenter.dy + starRadius * 0.3);
+    starPath.lineTo(starCenter.dx, starCenter.dy + starRadius);
+    starPath.lineTo(starCenter.dx - starRadius * 0.3, starCenter.dy + starRadius * 0.3);
+    starPath.lineTo(starCenter.dx - starRadius, starCenter.dy);
+    starPath.lineTo(starCenter.dx - starRadius * 0.3, starCenter.dy - starRadius * 0.3);
+    starPath.close();
+
+    canvas.drawPath(starPath, fillPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Tasbih icon - prayer beads for Explore card
+class _TasbihExploreIcon extends StatelessWidget {
+  final Color color;
+
+  const _TasbihExploreIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: CustomPaint(
+        size: const Size(28, 28),
+        painter: _TasbihExploreIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+/// Custom painter for Tasbih explore icon (prayer beads)
+class _TasbihExploreIconPainter extends CustomPainter {
+  final Color color;
+
+  _TasbihExploreIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final strokePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.04;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final beadRadius = size.width * 0.08;
+    final ringRadius = size.width * 0.32;
+
+    // Draw the string/ring
+    canvas.drawCircle(center, ringRadius, strokePaint);
+
+    // Draw beads around the circle
+    const beadCount = 8;
+    for (int i = 0; i < beadCount; i++) {
+      final angle = (i * 2 * math.pi / beadCount) - math.pi / 2;
+      final beadCenter = Offset(
+        center.dx + ringRadius * math.cos(angle),
+        center.dy + ringRadius * math.sin(angle),
+      );
+      canvas.drawCircle(beadCenter, beadRadius, paint);
+    }
+
+    // Draw the tassel/marker bead at top
+    final tasselY = center.dy - ringRadius - beadRadius * 2;
+    canvas.drawLine(
+      Offset(center.dx, center.dy - ringRadius - beadRadius),
+      Offset(center.dx, tasselY),
+      strokePaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx, tasselY - beadRadius),
+      beadRadius * 1.2,
+      paint,
+    );
   }
 
   @override
