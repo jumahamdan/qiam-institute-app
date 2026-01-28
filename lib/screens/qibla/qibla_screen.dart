@@ -957,14 +957,10 @@ class _CompassPainter extends CustomPainter {
       final angle = (i * 6 - compassHeading) * (math.pi / 180);
       final isMajor = i % 5 == 0;
       final isCardinal = i % 15 == 0; // N, E, S, W
-      final tickLength = isCardinal ? 20.0 : (isMajor ? 14.0 : 8.0);
+      final tickLength = _getTickLength(isCardinal, isMajor);
 
-      paint.color = isCardinal
-          ? primaryColor
-          : (isMajor
-              ? primaryColor.withValues(alpha: 0.85)
-              : primaryColor.withValues(alpha: 0.4));
-      paint.strokeWidth = isCardinal ? 3.5 : (isMajor ? 2.8 : 1.8);
+      paint.color = _getTickColor(isCardinal, isMajor, primaryColor);
+      paint.strokeWidth = _getTickWidth(isCardinal, isMajor);
 
       final startPoint = Offset(
         center.dx + (radius - tickLength) * math.sin(angle),
@@ -977,6 +973,27 @@ class _CompassPainter extends CustomPainter {
 
       canvas.drawLine(startPoint, endPoint, paint);
     }
+  }
+
+  /// Returns tick mark length based on type
+  double _getTickLength(bool isCardinal, bool isMajor) {
+    if (isCardinal) return 20.0;
+    if (isMajor) return 14.0;
+    return 8.0;
+  }
+
+  /// Returns tick mark color based on type
+  Color _getTickColor(bool isCardinal, bool isMajor, Color primary) {
+    if (isCardinal) return primary;
+    if (isMajor) return primary.withValues(alpha: 0.85);
+    return primary.withValues(alpha: 0.4);
+  }
+
+  /// Returns tick mark stroke width based on type
+  double _getTickWidth(bool isCardinal, bool isMajor) {
+    if (isCardinal) return 3.5;
+    if (isMajor) return 2.8;
+    return 1.8;
   }
 
   @override

@@ -167,13 +167,20 @@ class Event {
     if (allDay) return 'All Day';
 
     String formatHour(DateTime dt) {
-      final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+      final hour = _convertTo12Hour(dt.hour);
       final minute = dt.minute.toString().padLeft(2, '0');
       final period = dt.hour >= 12 ? 'PM' : 'AM';
       return '$hour:$minute $period';
     }
 
     return '${formatHour(startDate)} - ${formatHour(endDate)}';
+  }
+
+  /// Converts 24-hour to 12-hour format
+  int _convertTo12Hour(int hour24) {
+    if (hour24 == 0) return 12;
+    if (hour24 > 12) return hour24 - 12;
+    return hour24;
   }
 }
 
