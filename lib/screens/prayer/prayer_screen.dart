@@ -188,7 +188,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Qiam',
+                      'Qiam Location',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -225,7 +225,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Location',
+                      'My Location',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
