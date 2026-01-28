@@ -32,10 +32,10 @@ jobs:
       - name: Run Tests with Coverage
         run: flutter test --coverage
 
-      - name: SonarQube Scan
+      - name: SonarCloud Scan
         # Run on PRs and merges to develop/main (skip feature branch pushes to save CI minutes)
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarcloud-github-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
