@@ -97,8 +97,7 @@ class QuranAudioService {
       id: 'maher',
       name: 'Maher Al-Muaiqly',
       nameArabic: 'ماهر المعيقلي',
-      baseUrl: 'https://everyayah.com/data/MasharRasheed_192kbps',
-      // Note: MasharRasheed folder is used as a placeholder; verify against everyayah.com
+      baseUrl: 'https://everyayah.com/data/Maher_AlMuaiqly_64kbps',
     ),
   ];
 
