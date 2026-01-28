@@ -12,11 +12,13 @@ on:
 
 jobs:
   test:
-    name: Run Tests
+    name: Test & Analyze
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for SonarQube analysis
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -27,8 +29,15 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Run Tests
-        run: flutter test
+      - name: Run Tests with Coverage
+        run: flutter test --coverage
+
+      - name: SonarQube Scan
+        # Run on PRs and merges to develop/main (skip feature branch pushes to save CI minutes)
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build:
     name: Build Release
