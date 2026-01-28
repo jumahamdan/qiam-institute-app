@@ -10,6 +10,9 @@ import 'screens/values/values_screen.dart';
 import 'screens/media/media_screen.dart';
 import 'screens/islamic_calendar/islamic_calendar_screen.dart';
 import 'screens/duaa/duaa_screen.dart';
+import 'screens/quran/quran_screen.dart';
+import 'screens/tasbih/tasbih_screen.dart';
+import 'screens/names_of_allah/names_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/contact/contact_screen.dart';
@@ -33,6 +36,9 @@ class QiamApp extends StatelessWidget {
         '/qibla': (context) => const QiblaScreen(),
         '/islamic-calendar': (context) => const IslamicCalendarScreen(),
         '/duaa': (context) => const DuaaScreen(),
+        '/quran': (context) => const QuranScreen(),
+        '/tasbih': (context) => const TasbihScreen(),
+        '/names-of-allah': (context) => const NamesOfAllahScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/about': (context) => const AboutScreen(),
         '/contact': (context) => const ContactScreen(),
@@ -168,6 +174,12 @@ class _MainNavigationState extends State<MainNavigation> {
         );
       case 16:
         return const IslamicCalendarScreen();
+      case 17:
+        return const QuranScreen();
+      case 18:
+        return const TasbihScreen();
+      case 19:
+        return const NamesOfAllahScreen();
       // More menu screens
       case 20:
         return const AboutScreen();
