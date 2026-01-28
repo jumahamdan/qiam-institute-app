@@ -6,6 +6,9 @@ class AppConstants {
   // Assets
   static const String logoPath = 'assets/images/logo.png';
 
+  // Screen titles
+  static const String ourValuesTitle = 'Our Values';
+
   // URLs
   static const String websiteUrl = 'https://qiaminstitute.org';
   static const String eventsUrl = 'https://qiaminstitute.org/events/';

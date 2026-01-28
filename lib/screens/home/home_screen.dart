@@ -16,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 // Navigation constants
-const _kOurValuesTitle = 'Our Values';
 const _kOurValuesIndex = 11;
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -335,13 +334,13 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              _kOurValuesTitle,
+              AppConstants.ourValuesTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             TextButton(
-              onPressed: () => widget.onNavigate?.call(_kOurValuesIndex, _kOurValuesTitle),
+              onPressed: () => widget.onNavigate?.call(_kOurValuesIndex, AppConstants.ourValuesTitle),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 minimumSize: const Size(0, 36),
@@ -369,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   name: value['name']!,
                   arabic: value['arabic']!,
                   imagePath: 'assets/images/values/${value['image']}',
-                  onTap: () => widget.onNavigate?.call(_kOurValuesIndex, _kOurValuesTitle),
+                  onTap: () => widget.onNavigate?.call(_kOurValuesIndex, AppConstants.ourValuesTitle),
                 ),
               ),
             );
