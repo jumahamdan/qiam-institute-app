@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'app.dart';
 import 'services/notification/notification_service.dart';
+import 'utils/orientation_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Set app default orientation to portrait
+  await OrientationHelper.lockPortrait();
 
   try {
     // Initialize Firebase

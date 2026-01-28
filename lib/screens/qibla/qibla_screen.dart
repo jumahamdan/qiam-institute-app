@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../services/qibla/qibla_service.dart';
 import '../../services/location/location_service.dart';
+import '../../utils/orientation_helper.dart';
 
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({super.key});
@@ -27,6 +28,8 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
+    // Allow rotation for landscape Qibla view
+    OrientationHelper.allowAllOrientations();
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -84,6 +87,8 @@ class _QiblaScreenState extends State<QiblaScreen> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    // Restore portrait lock when leaving Qibla screen
+    OrientationHelper.lockPortrait();
     _pulseController.dispose();
     _qiblaService.stopListening();
     super.dispose();
