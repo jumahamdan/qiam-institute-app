@@ -45,11 +45,18 @@ class LocationService {
   /// Respects 30-minute throttle - returns cached location if fetched recently
   Future<LocationResult> getCurrentLocation({bool forceRefresh = false}) async {
     // Check if we should use cached location (throttling)
-    if (!forceRefresh && _cachedPosition != null) {
-      final shouldRefresh = await _shouldRefreshLocation();
-      if (!shouldRefresh) {
-        // Use cached location - not enough time has passed
-        return LocationResult.success(_cachedPosition!);
+    if (!forceRefresh) {
+      // Lazily load cached location from persistent storage on cold start
+      if (_cachedPosition == null) {
+        await _loadCachedLocation();
+      }
+
+      if (_cachedPosition != null) {
+        final shouldRefresh = await _shouldRefreshLocation();
+        if (!shouldRefresh) {
+          // Use cached location - not enough time has passed
+          return LocationResult.success(_cachedPosition!);
+        }
       }
     }
 
