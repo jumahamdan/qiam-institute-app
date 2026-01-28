@@ -32,13 +32,49 @@ jobs:
       - name: Run Tests with Coverage
         run: flutter test --coverage
 
-      - name: Verify Coverage Report
+      - name: Convert LCOV to SonarCloud Generic Coverage Format
         run: |
-          echo "Coverage report contents (first 50 lines):"
-          head -50 coverage/lcov.info
-          echo "---"
-          echo "Total lines in coverage report:"
-          wc -l coverage/lcov.info
+          # Convert LCOV to SonarCloud's Generic Test Data format
+          python3 << 'EOF'
+          import re
+
+          def convert_lcov_to_sonar(lcov_path, output_path):
+              with open(lcov_path, 'r') as f:
+                  content = f.read()
+
+              files = {}
+              current_file = None
+
+              for line in content.split('\n'):
+                  if line.startswith('SF:'):
+                      current_file = line[3:]
+                      files[current_file] = {}
+                  elif line.startswith('DA:') and current_file:
+                      parts = line[3:].split(',')
+                      line_num = int(parts[0])
+                      hits = int(parts[1])
+                      files[current_file][line_num] = hits > 0
+
+              # Generate SonarCloud Generic Test Data XML
+              xml_lines = ['<coverage version="1">']
+              for filepath, lines in files.items():
+                  xml_lines.append(f'  <file path="{filepath}">')
+                  for line_num, covered in sorted(lines.items()):
+                      covered_str = "true" if covered else "false"
+                      xml_lines.append(f'    <lineToCover lineNumber="{line_num}" covered="{covered_str}"/>')
+                  xml_lines.append('  </file>')
+              xml_lines.append('</coverage>')
+
+              with open(output_path, 'w') as f:
+                  f.write('\n'.join(xml_lines))
+
+              print(f"Converted {len(files)} files to SonarCloud format")
+
+          convert_lcov_to_sonar('coverage/lcov.info', 'coverage/sonar-coverage.xml')
+          EOF
+
+          echo "First 30 lines of sonar-coverage.xml:"
+          head -30 coverage/sonar-coverage.xml
 
       - name: SonarCloud Scan
         # Run on PRs and merges to develop/main (skip feature branch pushes to save CI minutes)
