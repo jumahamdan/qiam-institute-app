@@ -14,6 +14,7 @@ import 'screens/duaa/duaa_screen.dart';
 import 'screens/quran/quran_screen.dart';
 import 'screens/tasbih/tasbih_screen.dart';
 import 'screens/names_of_allah/names_screen.dart';
+import 'screens/hadith/hadith_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/contact/contact_screen.dart';
@@ -40,6 +41,7 @@ class QiamApp extends StatelessWidget {
         '/quran': (context) => const QuranScreen(),
         '/tasbih': (context) => const TasbihScreen(),
         '/names-of-allah': (context) => const NamesOfAllahScreen(),
+        '/hadith': (context) => const HadithScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/about': (context) => const AboutScreen(),
         '/contact': (context) => const ContactScreen(),
@@ -59,6 +61,7 @@ class _MainNavigationState extends State<MainNavigation> {
   // Main tabs: 0 = Home, 1 = Explore, 2 = Prayers, 3 = More (bottom sheet)
   // Secondary screens (keep bottom nav visible):
   // 10 = Events, 11 = Values, 12 = Media, 13 = Volunteer, 14 = Qibla, 15 = Duaa, 16 = Islamic Calendar
+  // 17 = Quran, 18 = Tasbih, 19 = Names of Allah, 23 = Hadith
   // 20 = About, 21 = Contact, 22 = Settings
   int _selectedIndex = 0;
   String? _currentScreenTitle;
@@ -181,6 +184,8 @@ class _MainNavigationState extends State<MainNavigation> {
         return const TasbihScreen();
       case 19:
         return const NamesOfAllahScreen();
+      case 23:
+        return const HadithScreen();
       // More menu screens
       case 20:
         return const AboutScreen();
