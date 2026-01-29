@@ -224,16 +224,18 @@ class AdhanScheduler {
     await prefs.setBool('adhan_alarm_${alarmId}_reminder', isReminder);
   }
 
-  /// Schedule midnight reschedule.
+  /// Schedule daily reschedule for tomorrow's prayers.
   Future<void> _scheduleMidnightReschedule() async {
     final tomorrow = DateTime.now().add(const Duration(days: 1));
-    // Schedule at 12:05 AM to ensure date has changed
-    final midnight = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 0, 5);
+    // Schedule at 3:00 AM to ensure:
+    // 1. Date has changed and any late Isha corrections are handled
+    // 2. Well before typical Fajr times (even with corrections)
+    final rescheduleTime = DateTime(tomorrow.year, tomorrow.month, tomorrow.day, 3, 0);
 
     await AndroidAlarmManager.cancel(AdhanAlarmIds.midnightReschedule);
 
     await AndroidAlarmManager.oneShotAt(
-      midnight,
+      rescheduleTime,
       AdhanAlarmIds.midnightReschedule,
       _midnightRescheduleCallback,
       exact: true,
@@ -241,7 +243,7 @@ class AdhanScheduler {
       rescheduleOnReboot: true,
     );
 
-    debugPrint('AdhanScheduler: Scheduled midnight reschedule at $midnight');
+    debugPrint('AdhanScheduler: Scheduled daily reschedule at $rescheduleTime');
   }
 
   /// Cancel all adhan alarms.
