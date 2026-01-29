@@ -47,4 +47,10 @@ Future<void> _requestPermissions() async {
   if (notificationStatus.isDenied) {
     await Permission.notification.request();
   }
+
+  // Request exact alarm permission (Android 14+) for adhan scheduling
+  final exactAlarmStatus = await Permission.scheduleExactAlarm.status;
+  if (exactAlarmStatus.isDenied) {
+    await Permission.scheduleExactAlarm.request();
+  }
 }
