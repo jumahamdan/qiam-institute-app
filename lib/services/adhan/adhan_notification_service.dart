@@ -28,6 +28,21 @@ class AdhanNotificationService {
   static const String _adhanChannelId = 'adhan_notifications';
   static const String _reminderChannelId = 'adhan_reminders';
 
+  // Deterministic notification IDs to avoid collision
+  static const Map<String, int> _notificationIds = {
+    'Fajr': 3001,
+    'Dhuhr': 3002,
+    'Asr': 3003,
+    'Maghrib': 3004,
+    'Isha': 3005,
+  };
+
+  static int _getNotificationId(String prayer) =>
+      _notificationIds[prayer] ?? 3001;
+
+  static int _getReminderNotificationId(String prayer) =>
+      (_notificationIds[prayer] ?? 3001) + 100;
+
   /// Whether the service is initialized.
   bool get isInitialized => _isInitialized;
 
@@ -111,11 +126,6 @@ class AdhanNotificationService {
 
     // Play audio
     await _audioService.playAdhan(prayer);
-
-    // Vibrate if enabled
-    if (_settings.vibrateEnabled) {
-      // Vibration is handled by the notification
-    }
   }
 
   /// Called when adhan playback completes.
@@ -141,7 +151,7 @@ class AdhanNotificationService {
     );
 
     await _localNotifications.show(
-      prayer.hashCode,
+      _getNotificationId(prayer),
       'Adhan - $prayer',
       'It\'s time for $prayer prayer',
       const NotificationDetails(android: androidDetails),
@@ -164,7 +174,7 @@ class AdhanNotificationService {
     );
 
     await _localNotifications.show(
-      prayer.hashCode + 1000,
+      _getReminderNotificationId(prayer),
       'Prayer Reminder',
       '$prayer prayer in $minutes minutes',
       const NotificationDetails(android: androidDetails),
@@ -174,7 +184,7 @@ class AdhanNotificationService {
 
   /// Cancel adhan notification for a prayer.
   Future<void> cancelAdhanNotification(String prayer) async {
-    await _localNotifications.cancel(prayer.hashCode);
+    await _localNotifications.cancel(_getNotificationId(prayer));
   }
 
   // ==================== Settings API ====================
@@ -302,8 +312,10 @@ class AdhanNotificationService {
   // ==================== Lifecycle ====================
 
   /// Dispose resources.
-  void dispose() {
-    _scheduler.dispose();
+  Future<void> dispose() async {
+    AdhanScheduler.onAdhanAlarm = null;
+    _audioService.onPlaybackComplete = null;
+    await _scheduler.dispose();
     _audioService.dispose();
   }
 }

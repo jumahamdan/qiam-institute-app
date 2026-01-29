@@ -19,6 +19,7 @@ class AdhanAudioService {
   bool _isPlaying = false;
   String? _currentPrayer;
   StreamSubscription<PlayerState>? _playerStateSubscription;
+  Timer? _previewTimer;
 
   /// Whether adhan is currently playing.
   bool get isPlaying => _isPlaying;
@@ -113,7 +114,8 @@ class AdhanAudioService {
       await _audioPlayer.play();
 
       // Auto-stop after preview duration
-      Future.delayed(previewDuration, () {
+      _previewTimer?.cancel();
+      _previewTimer = Timer(previewDuration, () {
         if (_isPlaying) {
           stopAdhan();
         }
@@ -126,7 +128,7 @@ class AdhanAudioService {
 
   /// Stop the currently playing adhan.
   Future<void> stopAdhan() async {
-    if (!_isPlaying && _currentPrayer == null) return;
+    if (!_isPlaying) return;
 
     debugPrint('AdhanAudioService: Stopping adhan');
     await _cleanup();
@@ -141,6 +143,9 @@ class AdhanAudioService {
   Future<void> _cleanup() async {
     _isPlaying = false;
     _currentPrayer = null;
+
+    _previewTimer?.cancel();
+    _previewTimer = null;
 
     _playerStateSubscription?.cancel();
     _playerStateSubscription = null;

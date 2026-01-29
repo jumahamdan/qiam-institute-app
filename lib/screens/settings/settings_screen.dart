@@ -488,7 +488,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const AdhanSettingsScreen()),
-                ),
+                ).then((_) => _loadAdhanSettings()),
               ),
             ],
           ],
@@ -865,7 +865,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       },
-    );
+    ).then((_) => _adhanService.stopPreview());
   }
 
   void _showAsrMethodPicker() {

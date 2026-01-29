@@ -107,7 +107,8 @@ class AdhanScheduler {
   }
 
   void _setupAlarmPort() {
-    // Remove existing port if any
+    // Close existing port and remove mapping if any (handles hot reload)
+    _receivePort?.close();
     IsolateNameServer.removePortNameMapping(adhanPortName);
 
     // Create new receive port
@@ -260,7 +261,9 @@ class AdhanScheduler {
   }
 
   /// Dispose resources.
-  void dispose() {
+  Future<void> dispose() async {
+    // Cancel all scheduled alarms
+    await cancelAllAdhans();
     _receivePort?.close();
     IsolateNameServer.removePortNameMapping(adhanPortName);
   }
