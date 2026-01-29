@@ -779,7 +779,7 @@ class HadithData {
 
     Hadith(
       id: 44,
-      hadithNumber: '6116',
+      hadithNumber: '6114',
       narrator: _abuHurairah,
       arabic:
           'لَيْسَ الشَّدِيدُ بِالصُّرَعَةِ، إِنَّمَا الشَّدِيدُ الَّذِي يَمْلِكُ نَفْسَهُ عِنْدَ الْغَضَبِ',
@@ -795,21 +795,21 @@ class HadithData {
 
     Hadith(
       id: 45,
-      hadithNumber: '6094',
+      hadithNumber: '1956',
       narrator: _abuHurairah,
       arabic:
           'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ',
       transliteration: 'Tabassumuka fi wajhi akhika laka sadaqah',
       translation: 'Your smile to your brother is charity.',
       source: 'Sunan At-Tirmidhi 1956',
-      collection: HadithCollection.bukhari,
+      collection: HadithCollection.tirmidhi,
       grade: HadithGrade.sahih,
       topic: HadithTopic.charity,
     ),
 
     Hadith(
       id: 46,
-      hadithNumber: '5063',
+      hadithNumber: '3939',
       narrator: _anasIbnMalik,
       arabic:
           'حُبِّبَ إِلَيَّ مِنَ الدُّنْيَا النِّسَاءُ وَالطِّيبُ، وَجُعِلَتْ قُرَّةُ عَيْنِي فِي الصَّلاَةِ',
@@ -818,14 +818,14 @@ class HadithData {
       translation:
           'Made beloved to me from this world are women and perfume, and the coolness of my eyes has been made in prayer.',
       source: 'Sunan An-Nasa\'i 3939',
-      collection: HadithCollection.bukhari,
+      collection: HadithCollection.nasai,
       grade: HadithGrade.sahih,
       topic: HadithTopic.prayer,
     ),
 
     Hadith(
       id: 47,
-      hadithNumber: '6137',
+      hadithNumber: '6927',
       narrator: 'Aisha (RA)',
       arabic:
           'إِنَّ اللَّهَ رَفِيقٌ يُحِبُّ الرِّفْقَ فِي الأَمْرِ كُلِّهِ',
@@ -857,7 +857,7 @@ class HadithData {
 
     Hadith(
       id: 49,
-      hadithNumber: '481',
+      hadithNumber: '647',
       narrator: _abuHurairah,
       arabic:
           'صَلاَةُ الرَّجُلِ فِي جَمَاعَةٍ تَزِيدُ عَلَى صَلاَتِهِ فِي بَيْتِهِ وَصَلاَتِهِ فِي سُوقِهِ بِضْعًا وَعِشْرِينَ دَرَجَةً',
@@ -873,7 +873,7 @@ class HadithData {
 
     Hadith(
       id: 50,
-      hadithNumber: '5997',
+      hadithNumber: '1954',
       narrator: _abuHurairah,
       arabic:
           'مَنْ لاَ يَشْكُرُ النَّاسَ لاَ يَشْكُرُ اللَّهَ',
@@ -881,14 +881,14 @@ class HadithData {
       translation:
           'He who does not thank people does not thank Allah.',
       source: 'Sunan At-Tirmidhi 1954',
-      collection: HadithCollection.bukhari,
+      collection: HadithCollection.tirmidhi,
       grade: HadithGrade.sahih,
       topic: HadithTopic.manners,
     ),
 
     Hadith(
       id: 51,
-      hadithNumber: '52',
+      hadithNumber: '6011',
       narrator: 'An-Nu\'man ibn Bashir (RA)',
       arabic:
           'مَثَلُ الْمُؤْمِنِينَ فِي تَوَادِّهِمْ وَتَرَاحُمِهِمْ وَتَعَاطُفِهِمْ مَثَلُ الْجَسَدِ، إِذَا اشْتَكَى مِنْهُ عُضْوٌ تَدَاعَى لَهُ سَائِرُ الْجَسَدِ بِالسَّهَرِ وَالْحُمَّى',
