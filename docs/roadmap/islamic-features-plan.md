@@ -16,7 +16,7 @@
 | 3. 99 Names of Allah | Custom build | Grid/list view + detail sheet | ✅ Complete |
 | 4. Hadith Collection | Custom build | Full screen with tabs, search + bookmarks | ✅ Complete |
 | 5. Dua Collection | `muslim_data_flutter` | Hisnul Muslim with categories | 🔄 Content Revamp Planned |
-| 6. Adhan Notifications | TBD | Settings integration + background service | ⏳ **Next Major Feature** |
+| 6. Adhan Notifications | `android_alarm_manager_plus` + `just_audio` | Settings integration + background service | ✅ Complete |
 
 ### Implementation Summary
 
@@ -25,12 +25,10 @@
 - **Tasbih Counter**: 9 preset dhikr phrases, lifetime stats, haptic feedback, progress tracking
 - **99 Names of Allah**: All 99 names with Arabic, transliteration, meaning & description, grid/list toggle, search
 - **Hadith Collection**: Tabs for collections (Bukhari, Muslim, Nawawi, Qudsi), search, bookmarks, share functionality
+- **Adhan Notifications**: Background audio playback, per-prayer settings, multiple adhan sounds (Makkah, Madinah, Mishary), pre-prayer reminders, volume control, separate Fajr sound option
 
 **In Progress:**
 - **Dua Collection**: Exists but needs content revamp using `muslim_data_flutter` (Hisnul Muslim)
-
-**Pending Features:**
-- **Adhan Notifications**: Prayer time alerts with adhan audio (Next Priority)
 
 ---
 
@@ -344,9 +342,9 @@ dependencies:
 
 ---
 
-## Feature 6: Adhan Notifications ⏳ NEXT MAJOR FEATURE
+## Feature 6: Adhan Notifications ✅ COMPLETE
 
-### Priority: **HIGH - Next to Implement**
+### Status: ✅ Fully Implemented
 
 ### Architecture
 
@@ -355,19 +353,23 @@ dependencies:
 │                    ADHAN SYSTEM                             │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  1. Prayer times calculated (already done ✅)               │
+│  1. Prayer times calculated (PrayerService ✅)              │
 │                                                             │
-│  2. Schedule native alarms for each prayer                  │
-│     └── Uses AlarmManager (Android) / UNNotification (iOS) │
+│  2. Schedule alarms via AlarmManager                        │
+│     └── Survives app kill & device reboot                   │
+│     └── Reschedules daily at 3:00 AM                       │
 │                                                             │
 │  3. When alarm fires:                                       │
-│     └── Play adhan audio file (even if app closed)         │
+│     └── Start foreground service (audio keeps playing)     │
+│     └── Play adhan audio via just_audio                    │
 │     └── Show notification with prayer name                 │
 │                                                             │
 │  4. User can customize:                                     │
-│     └── Enable/disable per prayer                          │
-│     └── Choose adhan sound (Makkah, Madinah, etc.)        │
-│     └── Set pre-adhan reminder (5 min before)              │
+│     └── Enable/disable globally or per prayer              │
+│     └── Choose adhan sound (Makkah, Madinah, Mishary)     │
+│     └── Set pre-adhan reminder (5-30 min before)          │
+│     └── Separate Fajr adhan sound option                   │
+│     └── Volume and vibration controls                      │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -422,15 +424,20 @@ assets/
     notification_short.mp3    # Short beep option
 ```
 
-### Key Features
+### Implemented Features
 
-- [ ] Schedule notifications for all 5 prayers
-- [ ] Play actual adhan audio (full or short version)
-- [ ] Work when app is closed/killed
-- [ ] Per-prayer enable/disable
-- [ ] Multiple adhan sounds to choose from
-- [ ] Fajr special adhan option
-- [ ] Pre-adhan reminder option
+- [x] Schedule notifications for all 5 prayers
+- [x] Play actual adhan audio (Makkah, Madinah, Mishary)
+- [x] Work when app is closed/killed (foreground service)
+- [x] Per-prayer enable/disable
+- [x] Multiple adhan sounds to choose from
+- [x] Fajr special adhan option
+- [x] Pre-adhan reminder option (5, 10, 15, 20, 30 min)
+- [x] Volume control
+- [x] Vibration toggle
+- [x] Sound preview in settings
+- [x] Survives device reboot
+- [x] Android 14+ SCHEDULE_EXACT_ALARM permission handling
 - [ ] Iqamah reminder (X minutes after adhan)
 - [ ] Do Not Disturb awareness
 
@@ -614,7 +621,7 @@ Qibla accuracy is slightly off. Current implementation detects when accuracy < 1
 | **3** | 99 Names of Allah | ✅ Complete | `pr-11` |
 | **4** | Hadith Collection | ✅ Complete | merged |
 | **5** | Dua Content Revamp | 🔄 In Progress | TBD |
-| **6** | Adhan Notifications | ⏳ **Next Priority** | TBD |
+| **6** | Adhan Notifications | ✅ Complete | `feature/adhan-notifications` (PR #18) |
 | **7** | Qibla Calibration | ⏳ Planned | TBD |
 
 ---
@@ -633,6 +640,8 @@ lib/
       names_screen.dart           ✅ Grid/list view + detail sheet
     hadith/
       hadith_screen.dart          ✅ Tabs + search + bookmarks
+    settings/
+      adhan_settings_screen.dart  ✅ Advanced adhan settings UI
   services/
     quran/
       quran_audio_service.dart    ✅ 10 reciters, playlist support
@@ -643,6 +652,22 @@ lib/
       names_service.dart          ✅ All 99 names with descriptions
     hadith/
       hadith_service.dart         ✅ Hadith data management
+    adhan/
+      adhan_notification_service.dart ✅ Main orchestrator
+      adhan_scheduler.dart            ✅ AlarmManager scheduling
+      adhan_audio_service.dart        ✅ Foreground service + audio
+      adhan_settings.dart             ✅ SharedPreferences persistence
+      adhan_sounds.dart               ✅ Sound catalog
+
+assets/
+  audio/
+    adhan/
+      makkah.mp3                  ✅ Ahmad al Nafees (3.3 MB)
+      madinah.mp3                 ✅ Hafiz Mustafa Özcan (3.7 MB)
+      mishary.mp3                 ✅ Mishary Rashid Alafasy (5.2 MB)
+      fajr_makkah.mp3             ✅ Traditional Fajr melody (3.8 MB)
+      fajr_madinah.mp3            ✅ Traditional Fajr melody (3.8 MB)
+      beep.mp3                    ✅ Short notification (17 KB)
 ```
 
 ## Files to Create/Modify (for remaining features)
@@ -657,12 +682,6 @@ lib/
   services/
     dua/                          🔄 Rename from duaa/
       dua_service.dart            🔄 Integrate muslim_data_flutter
-    adhan/
-      adhan_notification_service.dart ⏳
-assets/
-  audio/
-    adhan_makkah.mp3              ⏳ Need to source/license
-    adhan_madinah.mp3             ⏳
 ```
 
 ---
