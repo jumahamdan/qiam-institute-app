@@ -107,6 +107,13 @@ class ExploreScreen extends StatelessWidget {
                     onTap: () => _navigate(context, 19, '99 Names of Allah', '/names-of-allah'),
                   ),
                   _ExploreCard(
+                    customIcon: _HadithExploreIcon(color: const Color(0xFF6D4C41)),
+                    title: 'Hadith',
+                    subtitle: 'Prophetic traditions',
+                    color: const Color(0xFF6D4C41),
+                    onTap: () => _navigate(context, 23, 'Hadith Collection', '/hadith'),
+                  ),
+                  _ExploreCard(
                     icon: Icons.event,
                     title: 'Events',
                     subtitle: 'Upcoming programs',
@@ -619,6 +626,124 @@ class _TasbihExploreIconPainter extends CustomPainter {
       Offset(center.dx, tasselY - beadRadius),
       beadRadius * 1.2,
       paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Hadith icon - scroll/book with text for Explore card
+class _HadithExploreIcon extends StatelessWidget {
+  final Color color;
+
+  const _HadithExploreIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: CustomPaint(
+        size: const Size(28, 28),
+        painter: _HadithExploreIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+/// Custom painter for Hadith explore icon (scroll with text lines)
+class _HadithExploreIconPainter extends CustomPainter {
+  final Color color;
+
+  _HadithExploreIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Draw scroll shape
+    final scrollPath = Path();
+
+    // Main scroll body
+    final scrollLeft = size.width * 0.15;
+    final scrollRight = size.width * 0.85;
+    final scrollTop = size.height * 0.15;
+    final scrollBottom = size.height * 0.85;
+
+    // Left curl
+    scrollPath.moveTo(scrollLeft + size.width * 0.08, scrollTop);
+    scrollPath.quadraticBezierTo(
+      scrollLeft - size.width * 0.05, scrollTop,
+      scrollLeft, size.height * 0.3,
+    );
+    scrollPath.lineTo(scrollLeft, size.height * 0.7);
+    scrollPath.quadraticBezierTo(
+      scrollLeft - size.width * 0.05, scrollBottom,
+      scrollLeft + size.width * 0.08, scrollBottom,
+    );
+
+    // Bottom edge
+    scrollPath.lineTo(scrollRight - size.width * 0.08, scrollBottom);
+
+    // Right curl
+    scrollPath.quadraticBezierTo(
+      scrollRight + size.width * 0.05, scrollBottom,
+      scrollRight, size.height * 0.7,
+    );
+    scrollPath.lineTo(scrollRight, size.height * 0.3);
+    scrollPath.quadraticBezierTo(
+      scrollRight + size.width * 0.05, scrollTop,
+      scrollRight - size.width * 0.08, scrollTop,
+    );
+
+    // Top edge
+    scrollPath.close();
+
+    canvas.drawPath(scrollPath, paint);
+
+    // Draw text lines on the scroll
+    final lineY1 = size.height * 0.35;
+    final lineY2 = size.height * 0.5;
+    final lineY3 = size.height * 0.65;
+    final lineLeft = size.width * 0.3;
+    final lineRight = size.width * 0.7;
+
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.04
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(lineLeft, lineY1),
+      Offset(lineRight, lineY1),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(lineLeft + size.width * 0.05, lineY2),
+      Offset(lineRight - size.width * 0.05, lineY2),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(lineLeft, lineY3),
+      Offset(lineRight - size.width * 0.1, lineY3),
+      linePaint,
+    );
+
+    // Draw small decorative dot at top center
+    canvas.drawCircle(
+      Offset(size.width * 0.5, size.height * 0.22),
+      size.width * 0.04,
+      fillPaint,
     );
   }
 
