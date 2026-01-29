@@ -1,8 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../../config/theme.dart';
 import 'adhan_audio_service.dart';
 import 'adhan_scheduler.dart';
 import 'adhan_settings.dart';
@@ -134,7 +133,7 @@ class AdhanNotificationService {
       importance: Importance.max,
       priority: Priority.max,
       icon: 'ic_notification',
-      color: Color(0xFF8224E3),
+      color: AppTheme.primaryColor,
       ongoing: true,
       autoCancel: false,
       category: AndroidNotificationCategory.alarm,
@@ -161,7 +160,7 @@ class AdhanNotificationService {
       importance: Importance.high,
       priority: Priority.high,
       icon: 'ic_notification',
-      color: Color(0xFF8224E3),
+      color: AppTheme.primaryColor,
     );
 
     await _localNotifications.show(

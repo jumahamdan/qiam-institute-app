@@ -133,7 +133,11 @@ class PrayerService {
 
     // Reschedule adhan notifications with updated prayer times
     if (AdhanNotificationService().isInitialized) {
-      await AdhanNotificationService().reschedule();
+      try {
+        await AdhanNotificationService().reschedule();
+      } catch (e) {
+        // Safely ignore reschedule errors (e.g., due to failed initialization)
+      }
     }
   }
 

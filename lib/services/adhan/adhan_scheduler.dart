@@ -148,7 +148,8 @@ class AdhanScheduler {
     final now = DateTime.now();
 
     for (final prayer in prayers) {
-      if (prayer.time.isAfter(now)) {
+      // Add small buffer to account for processing delays and clock drift
+      if (prayer.time.isAfter(now.subtract(const Duration(seconds: 30)))) {
         await _schedulePrayerAdhan(prayer.name, prayer.time);
       }
     }

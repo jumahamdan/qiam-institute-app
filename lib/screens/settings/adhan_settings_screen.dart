@@ -26,6 +26,13 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
     _loadSettings();
   }
 
+  @override
+  void dispose() {
+    // Stop any playing preview when leaving the screen
+    _adhanService.stopPreview();
+    super.dispose();
+  }
+
   void _loadSettings() {
     setState(() {
       _selectedSound = _adhanService.selectedSoundId;

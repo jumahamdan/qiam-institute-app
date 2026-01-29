@@ -132,9 +132,9 @@ class AdhanAudioService {
     await _cleanup();
   }
 
-  void _onPlaybackComplete() {
+  Future<void> _onPlaybackComplete() async {
     debugPrint('AdhanAudioService: Playback completed');
-    _cleanup();
+    await _cleanup();
     onPlaybackComplete?.call();
   }
 
@@ -159,10 +159,32 @@ class AdhanAudioService {
     );
   }
 
-  Future<void> _stopForegroundService() async {
-    try {
-      await FlutterForegroundTask.stopService();
-    } catch (_) {}
+  Future<void> _stopForegroundService({int retryCount = 3}) async {
+    var attempt = 0;
+
+    while (attempt < retryCount) {
+      try {
+        await FlutterForegroundTask.stopService();
+        return;
+      } catch (e) {
+        attempt++;
+        debugPrint(
+          'AdhanAudioService: Failed to stop foreground service '
+          '(attempt $attempt of $retryCount): $e',
+        );
+
+        if (attempt >= retryCount) {
+          debugPrint(
+            'AdhanAudioService: Giving up on stopping foreground service '
+            'after $retryCount attempts.',
+          );
+          return;
+        }
+
+        // Small delay before retrying to handle transient issues.
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+    }
   }
 
   /// Update volume during playback.
