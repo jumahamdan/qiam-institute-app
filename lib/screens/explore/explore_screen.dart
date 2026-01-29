@@ -107,7 +107,7 @@ class ExploreScreen extends StatelessWidget {
                     onTap: () => _navigate(context, 19, '99 Names of Allah', '/names-of-allah'),
                   ),
                   _ExploreCard(
-                    customIcon: _HadithExploreIcon(color: const Color(0xFF6D4C41)),
+                    customIcon: const _HadithExploreIcon(color: Color(0xFF6D4C41)),
                     title: 'Hadith',
                     subtitle: 'Prophetic traditions',
                     color: const Color(0xFF6D4C41),

@@ -3,6 +3,12 @@ import '../../models/hadith.dart';
 /// Static hadith data containing curated authentic hadith
 /// Includes: Complete 40 Nawawi + Selected Bukhari + Selected Muslim
 class HadithData {
+  // Common narrator names to avoid duplication
+  static const String _abuHurairah = 'Abu Hurairah (RA)';
+  static const String _abdullahIbnUmar = 'Abdullah ibn Umar (RA)';
+  static const String _abdullahIbnAbbas = 'Abdullah ibn Abbas (RA)';
+  static const String _anasIbnMalik = 'Anas ibn Malik (RA)';
+
   static const List<Hadith> allHadiths = [
     // ══════════════════════════════════════════════════════════════════════
     // 40 NAWAWI COLLECTION - Foundational Hadith
@@ -47,7 +53,7 @@ class HadithData {
     Hadith(
       id: 3,
       hadithNumber: '3',
-      narrator: 'Abdullah ibn Umar (RA)',
+      narrator: _abdullahIbnUmar,
       arabic:
           'بُنِيَ الْإِسْلَامُ عَلَى خَمْسٍ: شَهَادَةِ أَنْ لَا إلَهَ إلَّا اللَّهُ وَأَنَّ مُحَمَّدًا رَسُولُ اللَّهِ، وَإِقَامِ الصَّلَاةِ، وَإِيتَاءِ الزَّكَاةِ، وَحَجِّ الْبَيْتِ، وَصَوْمِ رَمَضَانَ',
       transliteration:
@@ -133,7 +139,7 @@ class HadithData {
     Hadith(
       id: 8,
       hadithNumber: '8',
-      narrator: 'Abdullah ibn Umar (RA)',
+      narrator: _abdullahIbnUmar,
       arabic:
           'أُمِرْت أَنْ أُقَاتِلَ النَّاسَ حَتَّى يَشْهَدُوا أَنْ لَا إلَهَ إلَّا اللَّهُ وَأَنَّ مُحَمَّدًا رَسُولُ اللَّهِ، وَيُقِيمُوا الصَّلَاةَ، وَيُؤْتُوا الزَّكَاةَ...',
       transliteration:
@@ -151,7 +157,7 @@ class HadithData {
     Hadith(
       id: 9,
       hadithNumber: '9',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَا نَهَيْتُكُمْ عَنْهُ فَاجْتَنِبُوهُ، وَمَا أَمَرْتُكُمْ بِهِ فَأْتُوا مِنْهُ مَا اسْتَطَعْتُمْ، فَإِنَّمَا أَهْلَكَ الَّذِينَ مِنْ قَبْلِكُمْ كَثْرَةُ مَسَائِلِهِمْ وَاخْتِلَافُهُمْ عَلَى أَنْبِيَائِهِمْ',
       transliteration:
@@ -169,7 +175,7 @@ class HadithData {
     Hadith(
       id: 10,
       hadithNumber: '10',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'إنَّ اللَّهَ طَيِّبٌ لَا يَقْبَلُ إلَّا طَيِّبًا، وَإِنَّ اللَّهَ أَمَرَ الْمُؤْمِنِينَ بِمَا أَمَرَ بِهِ الْمُرْسَلِينَ',
       transliteration:
@@ -204,7 +210,7 @@ class HadithData {
     Hadith(
       id: 12,
       hadithNumber: '12',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مِنْ حُسْنِ إسْلَامِ الْمَرْءِ تَرْكُهُ مَا لَا يَعْنِيهِ',
       transliteration: 'Min husni islami al-mar\'i tarkuhu ma la ya\'nih',
@@ -221,7 +227,7 @@ class HadithData {
     Hadith(
       id: 13,
       hadithNumber: '13',
-      narrator: 'Anas ibn Malik (RA)',
+      narrator: _anasIbnMalik,
       arabic:
           'لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ',
       transliteration:
@@ -256,7 +262,7 @@ class HadithData {
     Hadith(
       id: 15,
       hadithNumber: '15',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ، وَمَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيُكْرِمْ جَارَهُ، وَمَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيُكْرِمْ ضَيْفَهُ',
       transliteration:
@@ -274,7 +280,7 @@ class HadithData {
     Hadith(
       id: 16,
       hadithNumber: '16',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'لَا تَغْضَبْ',
       transliteration: 'La taghdab',
@@ -326,7 +332,7 @@ class HadithData {
     Hadith(
       id: 19,
       hadithNumber: '19',
-      narrator: 'Abdullah ibn Abbas (RA)',
+      narrator: _abdullahIbnAbbas,
       arabic:
           'يَا غُلَامُ، إنِّي أُعَلِّمُك كَلِمَاتٍ: احْفَظْ اللَّهَ يَحْفَظْك، احْفَظْ اللَّهَ تَجِدْهُ تُجَاهَك، إذَا سَأَلْت فَاسْأَلْ اللَّهَ، وَإِذَا اسْتَعَنْت فَاسْتَعِنْ بِاللَّهِ...',
       transliteration:
@@ -450,7 +456,7 @@ class HadithData {
     Hadith(
       id: 26,
       hadithNumber: '26',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'كُلُّ سُلَامَى مِنْ النَّاسِ عَلَيْهِ صَدَقَةٌ، كُلَّ يَوْمٍ تَطْلُعُ فِيهِ الشَّمْسُ تَعْدِلُ بَيْنَ اثْنَيْنِ صَدَقَةٌ...',
       transliteration:
@@ -574,7 +580,7 @@ class HadithData {
     Hadith(
       id: 33,
       hadithNumber: '33',
-      narrator: 'Abdullah ibn Abbas (RA)',
+      narrator: _abdullahIbnAbbas,
       arabic:
           'لَوْ يُعْطَى النَّاسُ بِدَعْوَاهُمْ، لَادَّعَى رِجَالٌ أَمْوَالَ قَوْمٍ وَدِمَاءَهُمْ، لَكِنَّ الْبَيِّنَةَ عَلَى الْمُدَّعِي، وَالْيَمِينَ عَلَى مَنْ أَنْكَرَ',
       transliteration:
@@ -610,7 +616,7 @@ class HadithData {
     Hadith(
       id: 35,
       hadithNumber: '35',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'لَا تَحَاسَدُوا، وَلَا تَنَاجَشُوا، وَلَا تَبَاغَضُوا، وَلَا تَدَابَرُوا، وَلَا يَبِعْ بَعْضُكُمْ عَلَى بَيْعِ بَعْضٍ، وَكُونُوا عِبَادَ اللَّهِ إخْوَانًا...',
       transliteration:
@@ -628,7 +634,7 @@ class HadithData {
     Hadith(
       id: 36,
       hadithNumber: '36',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَنْ نَفَّسَ عَنْ مُؤْمِنٍ كُرْبَةً مِنْ كُرَبِ الدُّنْيَا نَفَّسَ اللَّهُ عَنْهُ كُرْبَةً مِنْ كُرَبِ يَوْمِ الْقِيَامَةِ...',
       transliteration:
@@ -646,7 +652,7 @@ class HadithData {
     Hadith(
       id: 37,
       hadithNumber: '37',
-      narrator: 'Abdullah ibn Abbas (RA)',
+      narrator: _abdullahIbnAbbas,
       arabic:
           'إنَّ اللَّهَ كَتَبَ الْحَسَنَاتِ وَالسَّيِّئَاتِ، ثُمَّ بَيَّنَ ذَلِكَ، فَمَنْ هَمَّ بِحَسَنَةٍ فَلَمْ يَعْمَلْهَا كَتَبَهَا اللَّهُ عِنْدَهُ حَسَنَةً كَامِلَةً...',
       transliteration:
@@ -664,7 +670,7 @@ class HadithData {
     Hadith(
       id: 38,
       hadithNumber: '38',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'إنَّ اللَّهَ تَعَالَى قَالَ: مَنْ عَادَى لِي وَلِيًّا فَقَدْ آذَنْتُهُ بِالْحَرْبِ، وَمَا تَقَرَّبَ إلَيَّ عَبْدِي بِشَيْءٍ أَحَبَّ إلَيَّ مِمَّا افْتَرَضْتُ عَلَيْهِ...',
       transliteration:
@@ -682,7 +688,7 @@ class HadithData {
     Hadith(
       id: 39,
       hadithNumber: '39',
-      narrator: 'Abdullah ibn Abbas (RA)',
+      narrator: _abdullahIbnAbbas,
       arabic:
           'إنَّ اللَّهَ تَجَاوَزَ لِي عَنْ أُمَّتِي الْخَطَأَ وَالنِّسْيَانَ وَمَا اُسْتُكْرِهُوا عَلَيْهِ',
       transliteration:
@@ -700,7 +706,7 @@ class HadithData {
     Hadith(
       id: 40,
       hadithNumber: '40',
-      narrator: 'Abdullah ibn Umar (RA)',
+      narrator: _abdullahIbnUmar,
       arabic:
           'كُنْ فِي الدُّنْيَا كَأَنَّك غَرِيبٌ أَوْ عَابِرُ سَبِيلٍ',
       transliteration:
@@ -736,7 +742,7 @@ class HadithData {
     Hadith(
       id: 42,
       hadithNumber: '42',
-      narrator: 'Anas ibn Malik (RA)',
+      narrator: _anasIbnMalik,
       arabic:
           'يَا ابْنَ آدَمَ، إِنَّكَ مَا دَعَوْتَنِي وَرَجَوْتَنِي غَفَرْت لَك عَلَى مَا كَانَ مِنْك وَلَا أُبَالِي، يَا ابْنَ آدَمَ، لَوْ بَلَغَتْ ذُنُوبُك عَنَانَ السَّمَاءِ ثُمَّ اسْتَغْفَرْتَنِي غَفَرْت لَك...',
       transliteration:
@@ -758,7 +764,7 @@ class HadithData {
     Hadith(
       id: 43,
       hadithNumber: '6018',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلاَ يُؤْذِ جَارَهُ',
       transliteration:
@@ -774,7 +780,7 @@ class HadithData {
     Hadith(
       id: 44,
       hadithNumber: '6116',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'لَيْسَ الشَّدِيدُ بِالصُّرَعَةِ، إِنَّمَا الشَّدِيدُ الَّذِي يَمْلِكُ نَفْسَهُ عِنْدَ الْغَضَبِ',
       transliteration:
@@ -790,7 +796,7 @@ class HadithData {
     Hadith(
       id: 45,
       hadithNumber: '6094',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ',
       transliteration: 'Tabassumuka fi wajhi akhika laka sadaqah',
@@ -804,7 +810,7 @@ class HadithData {
     Hadith(
       id: 46,
       hadithNumber: '5063',
-      narrator: 'Anas ibn Malik (RA)',
+      narrator: _anasIbnMalik,
       arabic:
           'حُبِّبَ إِلَيَّ مِنَ الدُّنْيَا النِّسَاءُ وَالطِّيبُ، وَجُعِلَتْ قُرَّةُ عَيْنِي فِي الصَّلاَةِ',
       transliteration:
@@ -836,7 +842,7 @@ class HadithData {
     Hadith(
       id: 48,
       hadithNumber: '2442',
-      narrator: 'Abdullah ibn Umar (RA)',
+      narrator: _abdullahIbnUmar,
       arabic:
           'الْمُسْلِمُ أَخُو الْمُسْلِمِ، لاَ يَظْلِمُهُ وَلاَ يُسْلِمُهُ',
       transliteration:
@@ -852,7 +858,7 @@ class HadithData {
     Hadith(
       id: 49,
       hadithNumber: '481',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'صَلاَةُ الرَّجُلِ فِي جَمَاعَةٍ تَزِيدُ عَلَى صَلاَتِهِ فِي بَيْتِهِ وَصَلاَتِهِ فِي سُوقِهِ بِضْعًا وَعِشْرِينَ دَرَجَةً',
       transliteration:
@@ -868,7 +874,7 @@ class HadithData {
     Hadith(
       id: 50,
       hadithNumber: '5997',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَنْ لاَ يَشْكُرُ النَّاسَ لاَ يَشْكُرُ اللَّهَ',
       transliteration: 'Man la yashkurun-nasa la yashkurullah',
@@ -919,7 +925,7 @@ class HadithData {
     Hadith(
       id: 53,
       hadithNumber: '2699',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَا نَقَصَتْ صَدَقَةٌ مِنْ مَالٍ، وَمَا زَادَ اللَّهُ عَبْدًا بِعَفْوٍ إِلاَّ عِزًّا، وَمَا تَوَاضَعَ أَحَدٌ لِلَّهِ إِلاَّ رَفَعَهُ اللَّهُ',
       transliteration:
@@ -935,7 +941,7 @@ class HadithData {
     Hadith(
       id: 54,
       hadithNumber: '34',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'الإِيمَانُ بِضْعٌ وَسَبْعُونَ - أَوْ بِضْعٌ وَسِتُّونَ - شُعْبَةً، فَأَفْضَلُهَا قَوْلُ لاَ إِلَهَ إِلاَّ اللَّهُ، وَأَدْنَاهَا إِمَاطَةُ الأَذَى عَنِ الطَّرِيقِ، وَالْحَيَاءُ شُعْبَةٌ مِنَ الإِيمَانِ',
       transliteration:
@@ -951,7 +957,7 @@ class HadithData {
     Hadith(
       id: 55,
       hadithNumber: '2865',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'إِذَا مَاتَ الإِنْسَانُ انْقَطَعَ عَنْهُ عَمَلُهُ إِلاَّ مِنْ ثَلاَثَةٍ: إِلاَّ مِنْ صَدَقَةٍ جَارِيَةٍ، أَوْ عِلْمٍ يُنْتَفَعُ بِهِ، أَوْ وَلَدٍ صَالِحٍ يَدْعُو لَهُ',
       transliteration:
@@ -967,7 +973,7 @@ class HadithData {
     Hadith(
       id: 56,
       hadithNumber: '2594',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'أَكْمَلُ الْمُؤْمِنِينَ إِيمَانًا أَحْسَنُهُمْ خُلُقًا، وَخِيَارُكُمْ خِيَارُكُمْ لِنِسَائِهِمْ',
       transliteration:
@@ -983,7 +989,7 @@ class HadithData {
     Hadith(
       id: 57,
       hadithNumber: '2674',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَنْ دَعَا إِلَى هُدًى كَانَ لَهُ مِنَ الأَجْرِ مِثْلُ أُجُورِ مَنْ تَبِعَهُ، لاَ يَنْقُصُ ذَلِكَ مِنْ أُجُورِهِمْ شَيْئًا',
       transliteration:
@@ -1015,7 +1021,7 @@ class HadithData {
     Hadith(
       id: 59,
       hadithNumber: '2607',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'لاَ تَدْخُلُونَ الْجَنَّةَ حَتَّى تُؤْمِنُوا، وَلاَ تُؤْمِنُوا حَتَّى تَحَابُّوا، أَوَلاَ أَدُلُّكُمْ عَلَى شَيْءٍ إِذَا فَعَلْتُمُوهُ تَحَابَبْتُمْ؟ أَفْشُوا السَّلاَمَ بَيْنَكُمْ',
       transliteration:
@@ -1031,7 +1037,7 @@ class HadithData {
     Hadith(
       id: 60,
       hadithNumber: '2687',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ',
       transliteration:
@@ -1061,7 +1067,7 @@ class HadithData {
     Hadith(
       id: 62,
       hadithNumber: '2626',
-      narrator: 'Abu Hurairah (RA)',
+      narrator: _abuHurairah,
       arabic:
           'الْمُؤْمِنُ الْقَوِيُّ خَيْرٌ وَأَحَبُّ إِلَى اللَّهِ مِنَ الْمُؤْمِنِ الضَّعِيفِ، وَفِي كُلٍّ خَيْرٌ',
       transliteration:

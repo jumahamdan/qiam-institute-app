@@ -315,6 +315,12 @@ class _BookmarksCard extends StatelessWidget {
     required this.onTap,
   });
 
+  String _getSubtitle() {
+    if (count == 0) return 'No saved hadith';
+    final plural = count == 1 ? '' : 's';
+    return '$count saved hadith$plural';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -351,9 +357,7 @@ class _BookmarksCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      count == 0
-                          ? 'No saved hadith'
-                          : '$count saved hadith${count == 1 ? '' : 's'}',
+                      _getSubtitle(),
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 13,

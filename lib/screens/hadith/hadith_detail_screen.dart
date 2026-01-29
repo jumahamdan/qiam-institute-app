@@ -131,10 +131,10 @@ ${widget.hadith.translation}
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.auto_stories, color: _themeColor),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Text(
                     'Commentary & Context',
                     style: TextStyle(
@@ -176,10 +176,10 @@ ${widget.hadith.translation}
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(Icons.text_fields, color: _themeColor),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Text(
                         'Arabic Font Size',
                         style: TextStyle(
@@ -519,7 +519,7 @@ ${widget.hadith.translation}
                           const SizedBox(width: 8),
                           Text(
                             HadithTopic.getDisplayName(widget.hadith.topic!),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               color: _themeColor,
@@ -540,7 +540,7 @@ ${widget.hadith.translation}
                       label: const Text('View Commentary'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _themeColor,
-                        side: BorderSide(color: _themeColor),
+                        side: const BorderSide(color: _themeColor),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 24, vertical: 12),
                       ),
