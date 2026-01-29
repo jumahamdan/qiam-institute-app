@@ -1,10 +1,12 @@
 # Qiam Institute App — Development Status
 
-**Last Updated:** 2026-01-25
+**Last Updated:** 2026-01-28
 
 ## Project Goal
 
-Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times, Qibla Compass, Daily Duas, and Notifications for iOS and Android.
+Ship a mobile app for Qiam Institute that provides Events, Prayer Times, Qibla Compass, Daily Duas, Quran Reader, Tasbih Counter, 99 Names of Allah, and Push Notifications for iOS and Android.
+
+> **Note:** Development is currently Android-first. iOS build will be addressed after Android release.
 
 ---
 
@@ -17,7 +19,7 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [x] App icon and splash screen
 
 ### Home Screen
-- [x] Featured YouTube video with replay functionality
+- [x] Featured YouTube video with replay functionality (muted by default)
 - [x] Next prayer time countdown
 - [x] Quick navigation cards
 - [x] Community values showcase
@@ -27,11 +29,6 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [x] Events list from WordPress API
 - [x] Event detail screen with full information
 - [x] Registration links
-- [x] Share functionality
-
-### Updates/Announcements
-- [x] Updates list from WordPress API
-- [x] Update detail screen
 - [x] Share functionality
 
 ### Prayer Times
@@ -49,6 +46,10 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [x] Haptic feedback when aligned
 - [x] Calibration guidance for inaccurate sensors
 - [x] Error handling for devices without compass
+- [x] Distance to Makkah display
+- [x] 16-point cardinal direction display
+- [x] Landscape orientation support
+- [x] User guidance text ("Turn left/right")
 
 ### Daily Duas
 - [x] 52+ authentic duas with proper hadith references
@@ -70,47 +71,120 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [x] Google Places API integration with Nominatim fallback
 - [x] Reverse geocoding for auto-detected locations
 - [x] Prayer calculation method selection
+- [x] Notification preferences (events, announcements, live)
 - [x] About section
+
+### Push Notifications (FCM)
+- [x] Firebase Cloud Messaging integration
+- [x] Android notification channel configuration
+- [x] Topic-based subscriptions (events, announcements, live)
+- [x] Notification settings UI in Settings screen
+- [x] Background message handler
+- [x] Foreground notification display
+
+### Quran Reader
+- [x] Full 114 surahs with metadata
+- [x] Arabic text with proper RTL rendering
+- [x] English translation (Saheeh International)
+- [x] Surah search by name or number
+- [x] Audio recitation with 10 popular reciters
+- [x] Verse-by-verse and continuous playback
+- [x] Adjustable font sizes (Arabic & translation)
+- [x] Share and copy verses
+- [x] Auto-scroll to playing verse
+
+### Tasbih Counter
+- [x] 9 preset dhikr phrases with hadith references
+- [x] Visual progress ring
+- [x] Haptic feedback on tap
+- [x] Customizable targets (33, 66, 99, 100, etc.)
+- [x] Lifetime statistics tracking
+- [x] Completion celebration animation
+- [x] Reset functionality
+
+### 99 Names of Allah
+- [x] Complete 99 names with Arabic text
+- [x] Transliteration and English meaning
+- [x] Detailed description for each name
+- [x] Grid and list view toggle
+- [x] Search functionality
+- [x] Detail bottom sheet
+
+### Islamic Calendar
+- [x] Hijri date display
+- [x] Important Islamic dates
 
 ### UI/UX
 - [x] Consistent theming across all screens
 - [x] Theme-aware backgrounds (not dark)
 - [x] Proper overflow handling
 - [x] Error states and loading indicators
+- [x] All lint warnings resolved
+- [x] Responsive grid layout on Explore screen
+- [x] Custom icons for Quran and Tasbih features
+
+---
+
+## CI/CD & Distribution
+
+### GitHub Actions Pipeline
+- [x] Automated tests on all pushes and PRs
+- [x] Release APK build with production signing
+- [x] Release AAB build for Play Store
+- [x] Firebase App Distribution integration
+- [x] Automatic changelog generation from commits
+- [x] Branch-based distribution:
+  - `develop` -> qiam-developers group
+  - `master` -> qiam-testers group
+
+### Android Signing
+- [x] Production keystore generated (`upload-keystore.jks`)
+- [x] Release signing configured in `build.gradle.kts`
+- [x] ProGuard/R8 minification enabled
+- [x] Keystore stored securely in GitHub Secrets
+
+### GitHub Secrets Configured
+- [x] `KEYSTORE_BASE64` - Upload keystore (base64)
+- [x] `KEYSTORE_PASSWORD` - Keystore password
+- [x] `KEY_ALIAS` - Key alias
+- [x] `GOOGLE_SERVICES_JSON` - Firebase config
+- [x] `FIREBASE_APP_ID` - Firebase App ID
+- [x] `FIREBASE_SERVICE_ACCOUNT` - Firebase service account
 
 ---
 
 ## In Progress
 
-### Notifications
-- [ ] Firebase project setup
-- [ ] Android FCM wiring
-- [ ] iOS APNs + FCM wiring
-- [ ] Topic-based broadcast notifications
+### Play Store Deployment
+- [ ] Privacy policy creation and hosting
+- [ ] Play Store listing assets (screenshots, descriptions)
+- [ ] Google Play Console account setup
+- [ ] Version bump to 1.0.0
 
 ---
 
 ## Remaining Tasks
 
 ### High Priority
-- [ ] Push notifications implementation
-- [ ] iOS build and TestFlight deployment
+- [ ] Privacy policy page (required for Play Store)
 - [ ] Play Store metadata and screenshots
-- [ ] Privacy policy page
+- [ ] iOS build and TestFlight deployment
 
 ### Medium Priority
-- [ ] Prayer time notifications (optional alerts for each prayer)
+- [ ] Adhan notifications (prayer time alerts with adhan audio)
+- [ ] Hadith collection feature
+- [ ] Quran bookmarks and last read position
 - [ ] Widget for home screen (Android)
 - [ ] Dark mode support
-- [ ] Localization (Arabic language support)
 
 ### Low Priority / Future
+- [ ] iOS APNs + FCM wiring
+- [ ] Localization (Arabic language support)
 - [ ] Offline event caching
 - [ ] User accounts/login
 - [ ] Donation integration
 - [ ] Community directory
 - [ ] Media/podcast section
-- [ ] Advanced theming options
 
 ---
 
@@ -119,22 +193,6 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - [ ] Add unit tests for services
 - [ ] Add widget tests for key screens
 - [ ] Code documentation
-- [ ] CI/CD pipeline setup (GitHub Actions)
-
----
-
-## Distribution Status
-
-### Android
-- [x] Debug builds working
-- [x] Release APK builds
-- [ ] Firebase App Distribution setup
-- [ ] Play Store internal testing track
-
-### iOS
-- [ ] iOS build configuration
-- [ ] Apple Developer account setup
-- [ ] TestFlight distribution
 
 ---
 
@@ -148,6 +206,26 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 ---
 
 ## Changelog
+
+### 2026-01-28
+- Added Quran Reader with full 114 surahs
+- Added audio recitation with 10 popular reciters (Alafasy, Abdul Basit, Husary, Sudais, etc.)
+- Added Tasbih Counter with 9 dhikr presets and lifetime stats
+- Added 99 Names of Allah with grid/list view and search
+- Implemented FCM push notifications for Android
+- Added notification settings UI with topic subscriptions
+- Added custom icons for Quran and Tasbih on Explore screen
+- Fixed Copilot review feedback (setState mounted check, notification icon format, stream subscriptions)
+- Fixed Maher Al-Muaiqly reciter URL
+
+### 2026-01-27
+- Configured Play Store release signing (keystore, build.gradle.kts, proguard)
+- Updated CI/CD pipeline to build both APK and AAB
+- Added keystore secrets to GitHub for CI builds
+- Fixed keystore path issue in CI workflow
+- Added GPS refresh throttling to prevent excessive API calls
+- Updated location tab labels for clarity
+- Improved responsive design across screens
 
 ### 2026-01-25
 - Expanded Daily Duas from 10 to 52+ authentic duas
@@ -166,4 +244,4 @@ Ship a mobile app for Qiam Institute that provides Events, Updates, Prayer Times
 - Core features implementation
 - Prayer times with Adhan library
 - Basic Qibla compass
-- Events and Updates from WordPress API
+- Events from WordPress API

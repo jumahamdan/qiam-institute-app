@@ -5,6 +5,7 @@ import '../../models/event.dart';
 /// Service to fetch events from Qiam Institute WordPress API
 class EventsService {
   static const String _baseUrl = 'https://qiaminstitute.org/wp-json/tribe/events/v1';
+  static const Map<String, String> _jsonHeaders = {'Accept': 'application/json'};
 
   /// Fetch upcoming events
   /// [perPage] - Number of events to fetch (default 10)
@@ -27,18 +28,10 @@ class EventsService {
         },
       );
 
-      // Debug: print the URL being called
-      print('EventsService: Fetching from ${uri.toString()}');
-
       final response = await http.get(
         uri,
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: _jsonHeaders,
       ).timeout(const Duration(seconds: 15));
-
-      // Debug: print response info
-      print('EventsService: Response status ${response.statusCode}, body length: ${response.body.length}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -62,9 +55,7 @@ class EventsService {
 
       final response = await http.get(
         uri,
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: _jsonHeaders,
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -103,9 +94,7 @@ class EventsService {
 
       final response = await http.get(
         uri,
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: _jsonHeaders,
       ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {

@@ -23,9 +23,9 @@ class ContactScreen extends StatelessWidget {
           children: [
             // Header with logo
             Image.asset(
-              'assets/images/logo.png',
+              AppConstants.logoPath,
               height: 56,
-              errorBuilder: (_, __, ___) => Icon(
+              errorBuilder: (_, _, _) => Icon(
                 Icons.mosque,
                 size: 56,
                 color: Theme.of(context).colorScheme.primary,

@@ -104,7 +104,7 @@ class _ValueCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(imagePath, height: 60, errorBuilder: (_, __, ___) =>
+              Image.asset(imagePath, height: 60, errorBuilder: (_, _, _) =>
                 Icon(Icons.star, size: 40, color: Theme.of(context).colorScheme.primary)),
               const SizedBox(height: 8),
               Text(name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), textAlign: TextAlign.center),
@@ -125,7 +125,7 @@ class _ValueCard extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Column(
           children: [
-            Image.asset(imagePath, height: 80, errorBuilder: (_, __, ___) =>
+            Image.asset(imagePath, height: 80, errorBuilder: (_, _, _) =>
               Icon(Icons.star, size: 60, color: Theme.of(context).colorScheme.primary)),
             const SizedBox(height: 12),
             Text(name),

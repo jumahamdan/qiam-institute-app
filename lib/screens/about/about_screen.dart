@@ -54,7 +54,7 @@ class AboutScreen extends StatelessWidget {
                           child: Image.asset(
                             'assets/images/imam_hassan.jpg',
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorBuilder: (_, _, _) => Container(
                               color: Colors.white,
                               child: Icon(
                                 Icons.person,

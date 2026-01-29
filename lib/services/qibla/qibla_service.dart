@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:adhan/adhan.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import '../location/location_service.dart';
 
@@ -19,6 +18,10 @@ class QiblaService {
   double? _qiblaDirection;
   bool _hasCompass = true;
 
+  // Kaaba coordinates (exact location)
+  static const double _kaabaLat = 21.4225;
+  static const double _kaabaLng = 39.8262;
+
   /// Initialize the Qibla service
   Future<void> initialize() async {
     await _locationService.initialize();
@@ -28,14 +31,30 @@ class QiblaService {
     await _checkCompassAvailability();
   }
 
+  /// Calculate Qibla direction using great-circle bearing formula
+  /// This gives the initial bearing (forward azimuth) from current location to Kaaba
   void _calculateQiblaDirection() {
-    final coordinates = Coordinates(
-      _locationService.latitude,
-      _locationService.longitude,
-    );
-    final qibla = Qibla(coordinates);
-    _qiblaDirection = qibla.direction;
+    final lat1 = _locationService.latitude;
+    final lng1 = _locationService.longitude;
+
+    // Convert to radians
+    final phi1 = _toRadians(lat1);
+    final phi2 = _toRadians(_kaabaLat);
+    final deltaLambda = _toRadians(_kaabaLng - lng1);
+
+    // Great-circle bearing formula (spherical law of cosines)
+    // θ = atan2(sin(Δλ) × cos(φ2), cos(φ1) × sin(φ2) − sin(φ1) × cos(φ2) × cos(Δλ))
+    final y = math.sin(deltaLambda) * math.cos(phi2);
+    final x = math.cos(phi1) * math.sin(phi2) -
+        math.sin(phi1) * math.cos(phi2) * math.cos(deltaLambda);
+
+    final bearing = math.atan2(y, x);
+
+    // Convert to degrees and normalize to 0-360
+    _qiblaDirection = (_toDegrees(bearing) + 360) % 360;
   }
+
+  double _toDegrees(double radians) => radians * 180 / math.pi;
 
   Future<void> _checkCompassAvailability() async {
     try {
@@ -82,36 +101,32 @@ class QiblaService {
   /// Check if device has compass
   bool get hasCompass => _hasCompass;
 
-  /// Get Qibla direction as cardinal direction (e.g., "NE")
+  /// Get Qibla direction as 16-point cardinal direction (e.g., "NNE")
   String get qiblaCardinalDirection {
     final direction = _qiblaDirection ?? 0;
-    if (direction >= 337.5 || direction < 22.5) return 'N';
-    if (direction >= 22.5 && direction < 67.5) return 'NE';
-    if (direction >= 67.5 && direction < 112.5) return 'E';
-    if (direction >= 112.5 && direction < 157.5) return 'SE';
-    if (direction >= 157.5 && direction < 202.5) return 'S';
-    if (direction >= 202.5 && direction < 247.5) return 'SW';
-    if (direction >= 247.5 && direction < 292.5) return 'W';
-    return 'NW';
+    const directions = [
+      'N', 'NNE', 'NE', 'ENE',
+      'E', 'ESE', 'SE', 'SSE',
+      'S', 'SSW', 'SW', 'WSW',
+      'W', 'WNW', 'NW', 'NNW'
+    ];
+    final index = ((direction + 11.25) % 360 / 22.5).floor();
+    return directions[index];
   }
 
-  /// Approximate distance to Makkah in km
+  /// Approximate distance to Makkah in km using Haversine formula
   double getDistanceToMakkah() {
-    // Makkah coordinates
-    const makkahLat = 21.4225;
-    const makkahLng = 39.8262;
-
     final lat = _locationService.latitude;
     final lng = _locationService.longitude;
 
     // Haversine formula for distance
     const earthRadius = 6371.0; // km
-    final dLat = _toRadians(makkahLat - lat);
-    final dLng = _toRadians(makkahLng - lng);
+    final dLat = _toRadians(_kaabaLat - lat);
+    final dLng = _toRadians(_kaabaLng - lng);
 
     final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_toRadians(lat)) *
-            math.cos(_toRadians(makkahLat)) *
+            math.cos(_toRadians(_kaabaLat)) *
             math.sin(dLng / 2) *
             math.sin(dLng / 2);
 

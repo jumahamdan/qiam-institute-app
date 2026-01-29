@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../config/constants.dart';
+import '../../config/responsive.dart';
 
 class ExploreScreen extends StatelessWidget {
   final void Function(int screenIndex, String title)? onNavigate;
@@ -16,7 +17,12 @@ class ExploreScreen extends StatelessWidget {
     }
   }
 
-  void _navigate(BuildContext context, int screenIndex, String title, String route) {
+  void _navigate(
+    BuildContext context,
+    int screenIndex,
+    String title,
+    String route,
+  ) {
     if (onNavigate != null) {
       onNavigate!(screenIndex, title);
     } else {
@@ -26,18 +32,35 @@ class ExploreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenPadding = Responsive.screenPadding(context);
+    final gridSpacing = Responsive.gridSpacing(context);
+    final gridColumns = Responsive.gridColumns(
+      context,
+      compact: 2,
+      medium: 3,
+      expanded: 4,
+    );
+
+    // Aspect ratio tuned per breakpoint
+    final aspectRatio = Responsive.value<double>(
+      context,
+      compact: 1.1,
+      medium: 1.0,
+      expanded: 1.1,
+    );
+
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: screenPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Text(
               'Explore',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 2),
             Text(
@@ -46,38 +69,21 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // 3x2 Grid of feature cards using Expanded
+            // Responsive Grid of feature cards
             Expanded(
               child: GridView.count(
-                crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.1,
-                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: gridColumns,
+                mainAxisSpacing: gridSpacing,
+                crossAxisSpacing: gridSpacing,
+                childAspectRatio: aspectRatio,
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   _ExploreCard(
-                    icon: Icons.event,
-                    title: 'Events',
-                    subtitle: 'Upcoming programs',
-                    color: const Color(0xFF4CAF50),
-                    onTap: () => _navigate(context, 10, 'Events', '/events'),
-                  ),
-                  _ValuesCard(
-                    onTap: () => _navigate(context, 11, 'Our Values', '/values'),
-                  ),
-                  _ExploreCard(
-                    icon: Icons.people,
-                    title: 'Volunteer',
-                    subtitle: 'Join our team',
-                    color: const Color(0xFF2196F3),
-                    onTap: () => _navigate(context, 13, 'Volunteer', '/volunteer'),
-                  ),
-                  _ExploreCard(
-                    icon: Icons.play_circle_filled,
-                    title: 'Media',
-                    subtitle: 'Videos & content',
-                    color: const Color(0xFFFF5722),
-                    onTap: () => _navigate(context, 12, 'Media', '/media'),
+                    customIcon: _QuranExploreIcon(color: const Color(0xFF1B5E20)),
+                    title: 'Quran',
+                    subtitle: 'Read & listen',
+                    color: const Color(0xFF1B5E20),
+                    onTap: () => _navigate(context, 17, 'Quran', '/quran'),
                   ),
                   _ExploreCard(
                     customIcon: _DuaExploreIcon(color: const Color(0xFF9C27B0)),
@@ -87,11 +93,63 @@ class ExploreScreen extends StatelessWidget {
                     onTap: () => _navigate(context, 15, 'Daily Duaa', '/duaa'),
                   ),
                   _ExploreCard(
+                    customIcon: _TasbihExploreIcon(color: const Color(0xFF00695C)),
+                    title: 'Tasbih',
+                    subtitle: 'Dhikr counter',
+                    color: const Color(0xFF00695C),
+                    onTap: () => _navigate(context, 18, 'Tasbih Counter', '/tasbih'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.auto_awesome,
+                    title: '99 Names',
+                    subtitle: 'Names of Allah',
+                    color: const Color(0xFFFFB300),
+                    onTap: () => _navigate(context, 19, '99 Names of Allah', '/names-of-allah'),
+                  ),
+                  _ExploreCard(
+                    customIcon: const _HadithExploreIcon(color: Color(0xFF6D4C41)),
+                    title: 'Hadith',
+                    subtitle: 'Prophetic traditions',
+                    color: const Color(0xFF6D4C41),
+                    onTap: () => _navigate(context, 23, 'Hadith Collection', '/hadith'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.event,
+                    title: 'Events',
+                    subtitle: 'Upcoming programs',
+                    color: const Color(0xFF4CAF50),
+                    onTap: () => _navigate(context, 10, 'Events', '/events'),
+                  ),
+                  _ValuesCard(
+                    onTap: () =>
+                        _navigate(context, 11, AppConstants.ourValuesTitle, '/values'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.people,
+                    title: 'Volunteer',
+                    subtitle: 'Join our team',
+                    color: const Color(0xFF2196F3),
+                    onTap: () =>
+                        _navigate(context, 13, 'Volunteer', '/volunteer'),
+                  ),
+                  _ExploreCard(
+                    icon: Icons.play_circle_filled,
+                    title: 'Media',
+                    subtitle: 'Videos & content',
+                    color: const Color(0xFFFF5722),
+                    onTap: () => _navigate(context, 12, 'Media', '/media'),
+                  ),
+                  _ExploreCard(
                     icon: Icons.calendar_month,
                     title: 'Islamic Calendar',
                     subtitle: 'Important dates',
                     color: const Color(0xFF795548),
-                    onTap: () => _navigate(context, 16, 'Islamic Calendar', '/islamic-calendar'),
+                    onTap: () => _navigate(
+                      context,
+                      16,
+                      'Islamic Calendar',
+                      '/islamic-calendar',
+                    ),
                   ),
                 ],
               ),
@@ -143,7 +201,9 @@ class ExploreScreen extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+                    Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.8),
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -151,7 +211,9 @@ class ExploreScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -163,7 +225,10 @@ class ExploreScreen extends StatelessWidget {
                   onTap: () => _launchUrl(AppConstants.donateUrl),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 16,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -271,10 +336,7 @@ class _ExploreCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: Colors.grey[500], fontSize: 11),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -352,8 +414,7 @@ class _DuaExploreIconPainter extends CustomPainter {
 
     canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
     canvas.drawCircle(moonCenter, moonRadius, moonPaint);
-    final erasePaint = Paint()
-      ..blendMode = BlendMode.clear;
+    final erasePaint = Paint()..blendMode = BlendMode.clear;
     canvas.drawCircle(
       Offset(moonCenter.dx + moonRadius * 0.4, moonCenter.dy),
       moonRadius * 0.75,
@@ -368,23 +429,322 @@ class _DuaExploreIconPainter extends CustomPainter {
 
     // Left hand (simple oval)
     canvas.save();
-    canvas.translate(center.dx - size.width * 0.12, center.dy + size.height * 0.08);
+    canvas.translate(
+      center.dx - size.width * 0.12,
+      center.dy + size.height * 0.08,
+    );
     canvas.rotate(-0.3);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: size.width * 0.15, height: size.width * 0.22),
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: size.width * 0.15,
+        height: size.width * 0.22,
+      ),
       handPaint,
     );
     canvas.restore();
 
     // Right hand (simple oval)
     canvas.save();
-    canvas.translate(center.dx + size.width * 0.12, center.dy + size.height * 0.08);
+    canvas.translate(
+      center.dx + size.width * 0.12,
+      center.dy + size.height * 0.08,
+    );
     canvas.rotate(0.3);
     canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: size.width * 0.15, height: size.width * 0.22),
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: size.width * 0.15,
+        height: size.width * 0.22,
+      ),
       handPaint,
     );
     canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Quran icon - open book with Arabic text for Explore card
+class _QuranExploreIcon extends StatelessWidget {
+  final Color color;
+
+  const _QuranExploreIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: CustomPaint(
+        size: const Size(28, 28),
+        painter: _QuranExploreIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+/// Custom painter for Quran explore icon (open book with star)
+class _QuranExploreIconPainter extends CustomPainter {
+  final Color color;
+
+  _QuranExploreIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Draw open book shape
+    final bookPath = Path();
+
+    // Left page
+    bookPath.moveTo(size.width * 0.5, size.height * 0.2);
+    bookPath.quadraticBezierTo(
+      size.width * 0.25, size.height * 0.15,
+      size.width * 0.1, size.height * 0.25,
+    );
+    bookPath.lineTo(size.width * 0.1, size.height * 0.8);
+    bookPath.quadraticBezierTo(
+      size.width * 0.3, size.height * 0.75,
+      size.width * 0.5, size.height * 0.85,
+    );
+
+    // Right page
+    bookPath.quadraticBezierTo(
+      size.width * 0.7, size.height * 0.75,
+      size.width * 0.9, size.height * 0.8,
+    );
+    bookPath.lineTo(size.width * 0.9, size.height * 0.25);
+    bookPath.quadraticBezierTo(
+      size.width * 0.75, size.height * 0.15,
+      size.width * 0.5, size.height * 0.2,
+    );
+
+    canvas.drawPath(bookPath, paint);
+
+    // Draw spine line
+    canvas.drawLine(
+      Offset(size.width * 0.5, size.height * 0.2),
+      Offset(size.width * 0.5, size.height * 0.85),
+      paint,
+    );
+
+    // Draw small star/decorative element on the book
+    final starCenter = Offset(size.width * 0.5, size.height * 0.5);
+    final starRadius = size.width * 0.08;
+
+    // Simple 4-pointed star
+    final starPath = Path();
+    starPath.moveTo(starCenter.dx, starCenter.dy - starRadius);
+    starPath.lineTo(starCenter.dx + starRadius * 0.3, starCenter.dy - starRadius * 0.3);
+    starPath.lineTo(starCenter.dx + starRadius, starCenter.dy);
+    starPath.lineTo(starCenter.dx + starRadius * 0.3, starCenter.dy + starRadius * 0.3);
+    starPath.lineTo(starCenter.dx, starCenter.dy + starRadius);
+    starPath.lineTo(starCenter.dx - starRadius * 0.3, starCenter.dy + starRadius * 0.3);
+    starPath.lineTo(starCenter.dx - starRadius, starCenter.dy);
+    starPath.lineTo(starCenter.dx - starRadius * 0.3, starCenter.dy - starRadius * 0.3);
+    starPath.close();
+
+    canvas.drawPath(starPath, fillPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Tasbih icon - prayer beads for Explore card
+class _TasbihExploreIcon extends StatelessWidget {
+  final Color color;
+
+  const _TasbihExploreIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: CustomPaint(
+        size: const Size(28, 28),
+        painter: _TasbihExploreIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+/// Custom painter for Tasbih explore icon (prayer beads)
+class _TasbihExploreIconPainter extends CustomPainter {
+  final Color color;
+
+  _TasbihExploreIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final strokePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.04;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final beadRadius = size.width * 0.08;
+    final ringRadius = size.width * 0.32;
+
+    // Draw the string/ring
+    canvas.drawCircle(center, ringRadius, strokePaint);
+
+    // Draw beads around the circle
+    const beadCount = 8;
+    for (int i = 0; i < beadCount; i++) {
+      final angle = (i * 2 * math.pi / beadCount) - math.pi / 2;
+      final beadCenter = Offset(
+        center.dx + ringRadius * math.cos(angle),
+        center.dy + ringRadius * math.sin(angle),
+      );
+      canvas.drawCircle(beadCenter, beadRadius, paint);
+    }
+
+    // Draw the tassel/marker bead at top
+    final tasselY = center.dy - ringRadius - beadRadius * 2;
+    canvas.drawLine(
+      Offset(center.dx, center.dy - ringRadius - beadRadius),
+      Offset(center.dx, tasselY),
+      strokePaint,
+    );
+    canvas.drawCircle(
+      Offset(center.dx, tasselY - beadRadius),
+      beadRadius * 1.2,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Hadith icon - scroll/book with text for Explore card
+class _HadithExploreIcon extends StatelessWidget {
+  final Color color;
+
+  const _HadithExploreIcon({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 28,
+      child: CustomPaint(
+        size: const Size(28, 28),
+        painter: _HadithExploreIconPainter(color: color),
+      ),
+    );
+  }
+}
+
+/// Custom painter for Hadith explore icon (scroll with text lines)
+class _HadithExploreIconPainter extends CustomPainter {
+  final Color color;
+
+  _HadithExploreIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.06
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // Draw scroll shape
+    final scrollPath = Path();
+
+    // Main scroll body
+    final scrollLeft = size.width * 0.15;
+    final scrollRight = size.width * 0.85;
+    final scrollTop = size.height * 0.15;
+    final scrollBottom = size.height * 0.85;
+
+    // Left curl
+    scrollPath.moveTo(scrollLeft + size.width * 0.08, scrollTop);
+    scrollPath.quadraticBezierTo(
+      scrollLeft - size.width * 0.05, scrollTop,
+      scrollLeft, size.height * 0.3,
+    );
+    scrollPath.lineTo(scrollLeft, size.height * 0.7);
+    scrollPath.quadraticBezierTo(
+      scrollLeft - size.width * 0.05, scrollBottom,
+      scrollLeft + size.width * 0.08, scrollBottom,
+    );
+
+    // Bottom edge
+    scrollPath.lineTo(scrollRight - size.width * 0.08, scrollBottom);
+
+    // Right curl
+    scrollPath.quadraticBezierTo(
+      scrollRight + size.width * 0.05, scrollBottom,
+      scrollRight, size.height * 0.7,
+    );
+    scrollPath.lineTo(scrollRight, size.height * 0.3);
+    scrollPath.quadraticBezierTo(
+      scrollRight + size.width * 0.05, scrollTop,
+      scrollRight - size.width * 0.08, scrollTop,
+    );
+
+    // Top edge
+    scrollPath.close();
+
+    canvas.drawPath(scrollPath, paint);
+
+    // Draw text lines on the scroll
+    final lineY1 = size.height * 0.35;
+    final lineY2 = size.height * 0.5;
+    final lineY3 = size.height * 0.65;
+    final lineLeft = size.width * 0.3;
+    final lineRight = size.width * 0.7;
+
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.width * 0.04
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(
+      Offset(lineLeft, lineY1),
+      Offset(lineRight, lineY1),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(lineLeft + size.width * 0.05, lineY2),
+      Offset(lineRight - size.width * 0.05, lineY2),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(lineLeft, lineY3),
+      Offset(lineRight - size.width * 0.1, lineY3),
+      linePaint,
+    );
+
+    // Draw small decorative dot at top center
+    canvas.drawCircle(
+      Offset(size.width * 0.5, size.height * 0.22),
+      size.width * 0.04,
+      fillPaint,
+    );
   }
 
   @override
@@ -439,11 +799,8 @@ class _ValuesCard extends StatelessWidget {
                         child: Image.asset(
                           imagePath,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.favorite,
-                            color: color,
-                            size: 14,
-                          ),
+                          errorBuilder: (_, _, _) =>
+                              Icon(Icons.favorite, color: color, size: 14),
                         ),
                       ),
                     );
@@ -452,19 +809,13 @@ class _ValuesCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Our Values',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+                AppConstants.ourValuesTitle,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 2),
               Text(
                 'What we stand for',
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: Colors.grey[500], fontSize: 11),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -499,9 +850,7 @@ class _SocialButton extends StatelessWidget {
           color: color.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: Center(
-          child: FaIcon(icon, color: color, size: 20),
-        ),
+        child: Center(child: FaIcon(icon, color: color, size: 20)),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'config/constants.dart';
 import 'config/theme.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/explore/explore_screen.dart';
@@ -10,6 +11,10 @@ import 'screens/values/values_screen.dart';
 import 'screens/media/media_screen.dart';
 import 'screens/islamic_calendar/islamic_calendar_screen.dart';
 import 'screens/duaa/duaa_screen.dart';
+import 'screens/quran/quran_screen.dart';
+import 'screens/tasbih/tasbih_screen.dart';
+import 'screens/names_of_allah/names_screen.dart';
+import 'screens/hadith/hadith_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/contact/contact_screen.dart';
@@ -33,6 +38,10 @@ class QiamApp extends StatelessWidget {
         '/qibla': (context) => const QiblaScreen(),
         '/islamic-calendar': (context) => const IslamicCalendarScreen(),
         '/duaa': (context) => const DuaaScreen(),
+        '/quran': (context) => const QuranScreen(),
+        '/tasbih': (context) => const TasbihScreen(),
+        '/names-of-allah': (context) => const NamesOfAllahScreen(),
+        '/hadith': (context) => const HadithScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/about': (context) => const AboutScreen(),
         '/contact': (context) => const ContactScreen(),
@@ -52,6 +61,7 @@ class _MainNavigationState extends State<MainNavigation> {
   // Main tabs: 0 = Home, 1 = Explore, 2 = Prayers, 3 = More (bottom sheet)
   // Secondary screens (keep bottom nav visible):
   // 10 = Events, 11 = Values, 12 = Media, 13 = Volunteer, 14 = Qibla, 15 = Duaa, 16 = Islamic Calendar
+  // 17 = Quran, 18 = Tasbih, 19 = Names of Allah, 23 = Hadith
   // 20 = About, 21 = Contact, 22 = Settings
   int _selectedIndex = 0;
   String? _currentScreenTitle;
@@ -168,6 +178,14 @@ class _MainNavigationState extends State<MainNavigation> {
         );
       case 16:
         return const IslamicCalendarScreen();
+      case 17:
+        return const QuranScreen();
+      case 18:
+        return const TasbihScreen();
+      case 19:
+        return const NamesOfAllahScreen();
+      case 23:
+        return const HadithScreen();
       // More menu screens
       case 20:
         return const AboutScreen();
@@ -224,9 +242,9 @@ class _MainNavigationState extends State<MainNavigation> {
           child: GestureDetector(
             onTap: () => setState(() => _selectedIndex = 0),
             child: Image.asset(
-              'assets/images/logo.png',
+              AppConstants.logoPath,
               height: 32,
-              errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 24),
+              errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 24),
             ),
           ),
         ),
@@ -254,9 +272,9 @@ class _MainNavigationState extends State<MainNavigation> {
       title: GestureDetector(
         onTap: () => setState(() => _selectedIndex = 0),
         child: Image.asset(
-          'assets/images/logo.png',
+          AppConstants.logoPath,
           height: 40,
-          errorBuilder: (_, __, ___) => const Icon(Icons.mosque, color: Colors.white, size: 32),
+          errorBuilder: (_, _, _) => const Icon(Icons.mosque, color: Colors.white, size: 32),
         ),
       ),
       actions: [
@@ -297,15 +315,15 @@ class _MainNavigationState extends State<MainNavigation> {
             icon: Opacity(
               opacity: 0.6,
               child: Image.asset(
-                'assets/images/logo.png',
+                AppConstants.logoPath,
                 height: 24,
-                errorBuilder: (_, __, ___) => Icon(Icons.home_outlined, color: Colors.grey[600]),
+                errorBuilder: (_, _, _) => Icon(Icons.home_outlined, color: Colors.grey[600]),
               ),
             ),
             selectedIcon: Image.asset(
-              'assets/images/logo.png',
+              AppConstants.logoPath,
               height: 24,
-              errorBuilder: (_, __, ___) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
+              errorBuilder: (_, _, _) => Icon(Icons.home, color: Theme.of(context).colorScheme.primary),
             ),
             label: 'Home',
           ),

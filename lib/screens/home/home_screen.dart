@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/events/events_service.dart';
@@ -16,12 +15,14 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+// Navigation constants
+const _kOurValuesIndex = 11;
+
 class _HomeScreenState extends State<HomeScreen> {
   final PrayerService _prayerService = PrayerService();
   final EventsService _eventsService = EventsService();
   NextPrayerInfo? _nextPrayer;
   Timer? _timer;
-  late YoutubePlayerController _youtubeController;
   bool _isLoading = true;
   List<Event> _events = [];
   bool _eventsLoading = true;
@@ -38,17 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _initServices();
     _loadEvents();
-
-    final videoId = YoutubePlayer.convertUrlToId(AppConstants.introVideoUrl) ?? '9qcNe2NSThE';
-    _youtubeController = YoutubePlayerController(
-      initialVideoId: videoId,
-      flags: const YoutubePlayerFlags(
-        autoPlay: true,
-        mute: false,
-        loop: false,
-        showLiveFullscreenButton: false,
-      ),
-    );
   }
 
   Future<void> _initServices() async {
@@ -87,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _youtubeController.dispose();
     super.dispose();
   }
 
@@ -156,10 +145,50 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          YoutubePlayer(
-            controller: _youtubeController,
-            showVideoProgressIndicator: true,
-            progressIndicatorColor: Theme.of(context).colorScheme.primary,
+          // Video thumbnail with play button overlay
+          GestureDetector(
+            onTap: () => _launchUrl(AppConstants.introVideoUrl),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    AppConstants.introVideoThumbnail,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: Colors.grey[200],
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, _, _) => Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: Icon(Icons.play_circle_outline, size: 48),
+                      ),
+                    ),
+                  ),
+                ),
+                // Play button overlay
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(12),
@@ -183,15 +212,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                GestureDetector(
-                  onTap: () {
-                    _youtubeController.seekTo(Duration.zero);
-                    _youtubeController.play();
-                  },
-                  child: Icon(
-                    Icons.replay_circle_filled,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 32,
+                TextButton.icon(
+                  onPressed: () => _launchUrl(AppConstants.introVideoUrl),
+                  icon: const Icon(Icons.play_arrow, size: 18),
+                  label: const Text('Watch'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
                 ),
               ],
@@ -218,12 +244,8 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          // Navigate to Prayer screen (index 2)
-          if (widget.onNavigate != null) {
-            widget.onNavigate!(2, 'Prayer Times');
-          }
-        },
+        // Navigate to Prayer screen (index 2)
+        onTap: () => widget.onNavigate?.call(2, 'Prayer Times'),
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -312,17 +334,13 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Our Values',
+              AppConstants.ourValuesTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             ),
             TextButton(
-              onPressed: () {
-                if (widget.onNavigate != null) {
-                  widget.onNavigate!(11, 'Our Values');
-                }
-              },
+              onPressed: () => widget.onNavigate?.call(_kOurValuesIndex, AppConstants.ourValuesTitle),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 minimumSize: const Size(0, 36),
@@ -350,11 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   name: value['name']!,
                   arabic: value['arabic']!,
                   imagePath: 'assets/images/values/${value['image']}',
-                  onTap: () {
-                    if (widget.onNavigate != null) {
-                      widget.onNavigate!(11, 'Our Values');
-                    }
-                  },
+                  onTap: () => widget.onNavigate?.call(_kOurValuesIndex, AppConstants.ourValuesTitle),
                 ),
               ),
             );
@@ -674,7 +688,7 @@ class _ValueMiniCard extends StatelessWidget {
               Image.asset(
                 imagePath,
                 height: 40,
-                errorBuilder: (_, __, ___) => Icon(
+                errorBuilder: (_, _, _) => Icon(
                   Icons.star,
                   size: 32,
                   color: Theme.of(context).colorScheme.primary,

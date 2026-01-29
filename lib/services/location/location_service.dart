@@ -15,14 +15,51 @@ class LocationService {
   static const String _latKey = 'cached_latitude';
   static const String _lngKey = 'cached_longitude';
   static const String _nameKey = 'cached_location_name';
+  static const String _lastFetchKey = 'last_location_fetch_timestamp';
+
+  /// Minimum time between GPS fetches (30 minutes)
+  static const Duration _refreshThreshold = Duration(minutes: 30);
 
   /// Initialize and load cached location
   Future<void> initialize() async {
     await _loadCachedLocation();
   }
 
+  /// Check if enough time has passed to refresh GPS location
+  Future<bool> _shouldRefreshLocation() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastFetch = prefs.getInt(_lastFetchKey);
+    if (lastFetch == null) return true;
+
+    final lastFetchTime = DateTime.fromMillisecondsSinceEpoch(lastFetch);
+    return DateTime.now().difference(lastFetchTime) >= _refreshThreshold;
+  }
+
+  /// Save the current timestamp as last fetch time
+  Future<void> _saveLastFetchTimestamp() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_lastFetchKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
   /// Get current location with permission handling
-  Future<LocationResult> getCurrentLocation() async {
+  /// Respects 30-minute throttle - returns cached location if fetched recently
+  Future<LocationResult> getCurrentLocation({bool forceRefresh = false}) async {
+    // Check if we should use cached location (throttling)
+    if (!forceRefresh) {
+      // Lazily load cached location from persistent storage on cold start
+      if (_cachedPosition == null) {
+        await _loadCachedLocation();
+      }
+
+      if (_cachedPosition != null) {
+        final shouldRefresh = await _shouldRefreshLocation();
+        if (!shouldRefresh) {
+          // Use cached location - not enough time has passed
+          return LocationResult.success(_cachedPosition!);
+        }
+      }
+    }
+
     // Check if location services are enabled
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -54,6 +91,7 @@ class LocationService {
 
       _cachedPosition = position;
       await _cacheLocation(position);
+      await _saveLastFetchTimestamp();
 
       // Reverse geocode to get location name
       await _reverseGeocodePosition(position);
@@ -94,13 +132,21 @@ class LocationService {
     );
   }
 
-  /// Ensure location is fetched (only fetches GPS if not already cached in memory)
-  /// This prevents multiple GPS calls when multiple services need location
+  /// Ensure location is fetched (respects 30-minute throttle)
+  /// Only fetches GPS if cached location is stale or unavailable
   Future<void> ensureLocationAvailable() async {
     if (_cachedPosition != null) {
-      return; // Already have location in memory
+      final shouldRefresh = await _shouldRefreshLocation();
+      if (!shouldRefresh) {
+        return; // Use cached location - not enough time has passed
+      }
     }
     await getCurrentLocation();
+  }
+
+  /// Force refresh location (bypasses 30-minute throttle)
+  Future<LocationResult> forceRefreshLocation() async {
+    return getCurrentLocation(forceRefresh: true);
   }
 
   /// Check if location is already available (no GPS call needed)

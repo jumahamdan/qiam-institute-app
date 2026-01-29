@@ -3,6 +3,7 @@ import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/prayer/prayer_settings.dart';
 import '../../services/location/location_service.dart';
+import '../../services/notification/notification_service.dart';
 import 'location_search_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final PrayerService _prayerService = PrayerService();
   final LocationService _locationService = LocationService();
+  final NotificationService _notificationService = NotificationService();
 
   late String _calculationMethod;
   late String _asrMethod;
@@ -28,6 +30,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool _isLoadingLocation = false;
   bool _showAllMethods = false;
+
+  // Notification settings
+  bool _notificationsEnabled = true;
+  bool _eventsEnabled = true;
+  bool _announcementsEnabled = true;
+  bool _liveEnabled = true;
 
   @override
   void initState() {
@@ -47,6 +55,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _daylightSaving = settings.daylightSaving;
       _imsakMinutes = settings.imsakMinutes;
       _corrections = Map.from(settings.allCorrections);
+    });
+    _loadNotificationSettings();
+  }
+
+  Future<void> _loadNotificationSettings() async {
+    final notificationsEnabled = await _notificationService.areNotificationsEnabled();
+    final eventsEnabled = await _notificationService.areEventsNotificationsEnabled();
+    final announcementsEnabled = await _notificationService.areAnnouncementsNotificationsEnabled();
+    final liveEnabled = await _notificationService.areLiveNotificationsEnabled();
+
+    if (!mounted) return;
+    setState(() {
+      _notificationsEnabled = notificationsEnabled;
+      _eventsEnabled = eventsEnabled;
+      _announcementsEnabled = announcementsEnabled;
+      _liveEnabled = liveEnabled;
     });
   }
 
@@ -255,6 +279,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
+          ],
+        ),
+
+        // ========== NOTIFICATIONS SECTION ==========
+        _buildSectionCard(
+          title: 'Notifications',
+          icon: Icons.notifications,
+          children: [
+            // Master Toggle
+            SwitchListTile(
+              secondary: Icon(
+                _notificationsEnabled ? Icons.notifications_active : Icons.notifications_off,
+                color: _notificationsEnabled ? primaryColor : Colors.grey[600],
+              ),
+              title: const Text('Push Notifications'),
+              subtitle: const Text('Receive notifications from Qiam Institute'),
+              value: _notificationsEnabled,
+              activeTrackColor: primaryColor.withValues(alpha: 0.5),
+              activeThumbColor: primaryColor,
+              onChanged: (value) async {
+                setState(() => _notificationsEnabled = value);
+                await _notificationService.setNotificationsEnabled(value);
+              },
+            ),
+
+            if (_notificationsEnabled) ...[
+              const Divider(height: 1),
+
+              // Events Notifications
+              SwitchListTile(
+                secondary: Icon(Icons.event, color: Colors.grey[600]),
+                title: const Text('Events'),
+                subtitle: const Text('New events and registration reminders'),
+                value: _eventsEnabled,
+                activeTrackColor: primaryColor.withValues(alpha: 0.5),
+                activeThumbColor: primaryColor,
+                onChanged: (value) async {
+                  setState(() => _eventsEnabled = value);
+                  await _notificationService.setEventsNotificationsEnabled(value);
+                },
+              ),
+
+              // Announcements Notifications
+              SwitchListTile(
+                secondary: Icon(Icons.campaign, color: Colors.grey[600]),
+                title: const Text('Announcements'),
+                subtitle: const Text('Important community announcements'),
+                value: _announcementsEnabled,
+                activeTrackColor: primaryColor.withValues(alpha: 0.5),
+                activeThumbColor: primaryColor,
+                onChanged: (value) async {
+                  setState(() => _announcementsEnabled = value);
+                  await _notificationService.setAnnouncementsNotificationsEnabled(value);
+                },
+              ),
+
+              // Live Notifications
+              SwitchListTile(
+                secondary: Icon(Icons.live_tv, color: Colors.grey[600]),
+                title: const Text('Live Sessions'),
+                subtitle: const Text('When live streams start'),
+                value: _liveEnabled,
+                activeTrackColor: primaryColor.withValues(alpha: 0.5),
+                activeThumbColor: primaryColor,
+                onChanged: (value) async {
+                  setState(() => _liveEnabled = value);
+                  await _notificationService.setLiveNotificationsEnabled(value);
+                },
+              ),
+            ],
           ],
         ),
 
@@ -507,10 +601,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildCorrectionTile(String prayer, int minutes) {
-    final isPositive = minutes > 0;
-    final isNegative = minutes < 0;
+  /// Returns background color for correction value display
+  Color _getCorrectionBackgroundColor(int minutes) {
+    if (minutes > 0) return Colors.green[50]!;
+    if (minutes < 0) return Colors.red[50]!;
+    return Colors.grey[100]!;
+  }
 
+  /// Returns text color for correction value display
+  Color _getCorrectionTextColor(int minutes) {
+    if (minutes > 0) return Colors.green[700]!;
+    if (minutes < 0) return Colors.red[700]!;
+    return Colors.grey[600]!;
+  }
+
+  Widget _buildCorrectionTile(String prayer, int minutes) {
     return ListTile(
       dense: true,
       title: Text(prayer),
@@ -525,11 +630,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 50,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isPositive
-                  ? Colors.green[50]
-                  : isNegative
-                      ? Colors.red[50]
-                      : Colors.grey[100],
+              color: _getCorrectionBackgroundColor(minutes),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -538,11 +639,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: isPositive
-                    ? Colors.green[700]
-                    : isNegative
-                        ? Colors.red[700]
-                        : Colors.grey[600],
+                color: _getCorrectionTextColor(minutes),
               ),
             ),
           ),

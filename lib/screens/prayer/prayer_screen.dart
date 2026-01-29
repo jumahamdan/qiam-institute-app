@@ -1,7 +1,10 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../config/constants.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/prayer/prayer_settings.dart';
 import '../../services/qibla/qibla_service.dart';
@@ -22,14 +25,14 @@ class _PrayerScreenState extends State<PrayerScreen> {
   NextPrayerInfo? _nextPrayer;
   Timer? _timer;
   double _qiblaDirection = 0;
-  double _compassHeading = 0;
   bool _isLoading = true;
-  bool _hasCompass = false;
 
   // Day navigation
   DateTime _selectedDate = DateTime.now();
   DateTime? _selectedSunrise;
-  DateTime? _selectedSunset;
+
+  // Qiam vs Location toggle (true = Qiam, false = Location)
+  bool _isQiamMode = true;
 
   @override
   void initState() {
@@ -50,21 +53,10 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
     // Initialize qibla
     await _qiblaService.initialize();
-    _qiblaService.startListening();
-    _qiblaService.compassStream.listen((data) {
-      if (mounted) {
-        setState(() {
-          _qiblaDirection = data.qiblaDirection;
-          _compassHeading = data.compassHeading;
-          _hasCompass = data.hasCompass;
-        });
-      }
-    });
 
     if (mounted) {
       setState(() {
         _qiblaDirection = _qiblaService.qiblaDirection;
-        _hasCompass = _qiblaService.hasCompass;
         _isLoading = false;
       });
     }
@@ -80,12 +72,10 @@ class _PrayerScreenState extends State<PrayerScreen> {
       _prayerTimes = _prayerService.getTodayPrayerList();
       _nextPrayer = _prayerService.getNextPrayer();
       _selectedSunrise = _prayerService.sunrise;
-      _selectedSunset = _prayerService.sunset;
     } else {
       _prayerTimes = _prayerService.getPrayerListForDate(_selectedDate);
       _nextPrayer = _prayerService.getNextPrayer(); // Still show countdown for today's next prayer
       _selectedSunrise = _prayerService.getSunriseForDate(_selectedDate);
-      _selectedSunset = _prayerService.getSunsetForDate(_selectedDate);
     }
   }
 
@@ -113,7 +103,6 @@ class _PrayerScreenState extends State<PrayerScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _qiblaService.stopListening();
     super.dispose();
   }
 
@@ -141,7 +130,11 @@ class _PrayerScreenState extends State<PrayerScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Date and location info (compact, no title since it's in app bar)
+              // Qiam / Location toggle at the very top
+              _buildModeToggle(),
+              const SizedBox(height: 12),
+
+              // Date row (and location only for Location mode)
               _buildDateLocationRow(dateFormat.format(_selectedDate)),
               const SizedBox(height: 16),
 
@@ -149,28 +142,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
               _buildNextPrayerCircle(),
               const SizedBox(height: 24),
 
-              // Prayer times list
+              // Prayer times list (with sunrise after Fajr and calendar link)
               _buildPrayerList(),
-              const SizedBox(height: 16),
-
-              // Sunrise and Sunset boxes
-              _buildSunriseSunsetRow(),
-              const SizedBox(height: 16),
-
-              // Prayer Calendar Card
-              _buildPrayerCalendarCard(),
-              const SizedBox(height: 16),
-
-              // Mini Qibla compass (tap to open full screen)
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const QiblaScreen()),
-                  );
-                },
-                child: _buildMiniQiblaCompass(),
-              ),
             ],
           ),
         ),
@@ -178,124 +151,209 @@ class _PrayerScreenState extends State<PrayerScreen> {
     );
   }
 
-  Widget _buildDateLocationRow(String dateString) {
-    return Column(
-      children: [
-        // Day navigation row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Previous day button
-            IconButton(
-              onPressed: () => _changeDate(-1),
-              icon: const Icon(Icons.chevron_left),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.grey[100],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              iconSize: 20,
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(),
-            ),
-            const SizedBox(width: 8),
+  Widget _buildModeToggle() {
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
-            // Date display with today button
-            Flexible(
-              child: GestureDetector(
-                onTap: _isToday ? null : _goToToday,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          // Qiam tab
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (!_isQiamMode) {
+                  HapticFeedback.lightImpact();
+                  setState(() => _isQiamMode = true);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _isToday
-                      ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-                      : Colors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _isToday
-                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)
-                        : Colors.orange.withValues(alpha: 0.3),
-                  ),
+                  color: _isQiamMode ? primaryColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
-                      color: _isToday
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.orange,
+                    Image.asset(
+                      _isQiamMode
+                          ? 'assets/images/logo_white.png'
+                          : AppConstants.logoPath,
+                      width: 20,
+                      height: 20,
                     ),
                     const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        dateString,
-                        style: TextStyle(
-                          color: _isToday
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.orange,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      'Qiam Location',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: _isQiamMode ? Colors.white : Colors.grey[600],
                       ),
                     ),
-                    if (!_isToday) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'TODAY',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),
             ),
-            ),
-            const SizedBox(width: 8),
-
-            // Next day button
-            IconButton(
-              onPressed: () => _changeDate(1),
-              icon: const Icon(Icons.chevron_right),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.grey[100],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          ),
+          // Location tab
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (_isQiamMode) {
+                  HapticFeedback.lightImpact();
+                  setState(() => _isQiamMode = false);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: !_isQiamMode ? primaryColor : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 18,
+                      color: !_isQiamMode ? Colors.white : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'My Location',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: !_isQiamMode ? Colors.white : Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              iconSize: 20,
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
+          ),
+        ],
+      ),
+    );
+  }
 
-        // Location row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
-            const SizedBox(width: 4),
-            Text(
-              _prayerService.locationName,
-              style: TextStyle(color: Colors.grey[500], fontSize: 13),
-            ),
-          ],
+  Widget _buildDateLocationRow(String dateString) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Column(
+      children: [
+        // Day navigation row - styled to match toggle
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              // Previous day button - circular
+              GestureDetector(
+                onTap: () => _changeDate(-1),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.chevron_left,
+                    color: Colors.grey[700],
+                    size: 24,
+                  ),
+                ),
+              ),
+
+              // Date display - expanded to fill space
+              Expanded(
+                child: GestureDetector(
+                  onTap: _isToday ? null : _goToToday,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: _isToday ? primaryColor : Colors.orange,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                dateString,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (!_isToday) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'TAP FOR TODAY',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Next day button - circular
+              GestureDetector(
+                onTap: () => _changeDate(1),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: Colors.grey[700],
+                    size: 24,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -303,118 +361,163 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
   Widget _buildNextPrayerCircle() {
     final nextPrayer = _nextPrayer!;
-    final progress = nextPrayer.progress;
     final timeUntil = nextPrayer.timeUntil;
     final hours = timeUntil.inHours;
     final minutes = timeUntil.inMinutes.remainder(60);
-    final seconds = timeUntil.inSeconds.remainder(60);
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF1a1a2e),
-            const Color(0xFF16213e),
+            Color(0xFF1a1a2e),
+            Color(0xFF16213e),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
       child: Row(
         children: [
-          // Left side: Prayer info
+          // Left: Prayer info
           Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'NEXT PRAYER',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 10,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 9,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   nextPrayer.name,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
                   'at ${nextPrayer.formattedTime}',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 13,
                   ),
                 ),
+                // Location - only in Location mode
+                if (!_isQiamMode) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        size: 11,
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          _prayerService.locationName,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
 
-          // Right side: Circular countdown
-          SizedBox(
-            width: 100,
-            height: 100,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Background circle
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: CircularProgressIndicator(
-                    value: 1.0,
-                    strokeWidth: 6,
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                ),
-                // Progress circle
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 6,
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Theme.of(context).colorScheme.primary,
-                    ),
-                    strokeCap: StrokeCap.round,
-                  ),
-                ),
-                // Time display
-                Column(
+          // Center: Qibla (tappable)
+          Expanded(
+            flex: 2,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const QiblaScreen()),
+                );
+              },
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: primaryColor.withValues(alpha: 0.4),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          '🕋',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Text(
-                      '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
+                      '${_qiblaDirection.toStringAsFixed(0)}° ${_qiblaService.qiblaCardinalDirection}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
-                      ':${seconds.toString().padLeft(2, '0')}',
+                      'Qibla',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                        fontFamily: 'monospace',
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 9,
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+          ),
+
+          // Right: Countdown
+          Expanded(
+            flex: 2,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                Text(
+                  'remaining',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
@@ -438,17 +541,133 @@ class _PrayerScreenState extends State<PrayerScreen> {
         ],
       ),
       child: Column(
-        children: _prayerTimes!.map((prayer) => _buildPrayerRow(prayer)).toList(),
+        children: [
+          for (int i = 0; i < _prayerTimes!.length; i++) ...[
+            _buildPrayerRow(_prayerTimes![i]),
+            // Add sunrise row after Fajr
+            if (_prayerTimes![i].name == 'Fajr' && _selectedSunrise != null)
+              _buildSunriseRow(),
+          ],
+          // Calendar link integrated at bottom
+          _buildCalendarLink(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarLink() {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const YearlyPrayerTimesScreen()),
+        );
+      },
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(16),
+        bottomRight: Radius.circular(16),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: primaryColor.withValues(alpha: 0.05),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.calendar_month,
+              color: primaryColor,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'View Monthly Calendar',
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: primaryColor,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSunriseRow() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.03),
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[200]!, width: 0.5),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          // Sunrise icon - smaller
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Icon(
+              Icons.wb_sunny_outlined,
+              color: Colors.orange,
+              size: 14,
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Sunrise label
+          Expanded(
+            child: Text(
+              'Sunrise',
+              style: TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+                color: Colors.grey[500],
+              ),
+            ),
+          ),
+
+          // Sunrise time
+          Text(
+            DateFormat('h:mm a').format(_selectedSunrise!),
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildPrayerRow(PrayerTimeInfo prayer) {
     final isNext = prayer.isNext;
-    final iqamahOffset = _getIqamahOffset(prayer.name);
+    // Only show Iqamah in Qiam mode
     String? iqamahTime;
-    if (iqamahOffset != null) {
-      iqamahTime = DateFormat('h:mm a').format(prayer.time.add(Duration(minutes: iqamahOffset)));
+    if (_isQiamMode) {
+      final iqamahOffset = _getIqamahOffset(prayer.name);
+      if (iqamahOffset != null) {
+        iqamahTime = DateFormat('h:mm a').format(prayer.time.add(Duration(minutes: iqamahOffset)));
+      }
     }
 
     return Container(
@@ -458,7 +677,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
           bottom: BorderSide(color: Colors.grey[200]!, width: 0.5),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
         children: [
           // Prayer icon - compact
@@ -562,352 +781,26 @@ class _PrayerScreenState extends State<PrayerScreen> {
     );
   }
 
-  Widget _buildSunriseSunsetRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSunTimeBox(
-            'Sunrise',
-            _selectedSunrise ?? _prayerService.sunrise,
-            Icons.wb_sunny_rounded,
-            const Color(0xFFFF9800),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSunTimeBox(
-            'Sunset',
-            _selectedSunset ?? _prayerService.sunset,
-            Icons.nights_stay_rounded,
-            const Color(0xFFE91E63),
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildPrayerCalendarCard() {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const YearlyPrayerTimesScreen()),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.calendar_month,
-                color: Theme.of(context).colorScheme.primary,
-                size: 28,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Prayer Times Calendar',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'View monthly prayer times table',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Theme.of(context).colorScheme.primary,
-              size: 18,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSunTimeBox(String label, DateTime time, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-              Text(
-                DateFormat('h:mm a').format(time),
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniQiblaCompass() {
-    final qiblaAngle = (_qiblaDirection - _compassHeading) * (math.pi / 180);
-    final primaryColor = Theme.of(context).colorScheme.primary;
-
-    // Check if pointing towards Qibla (within 10 degrees for mini compass)
-    final angleDiff = ((_qiblaDirection - _compassHeading) % 360).abs();
-    final isPointingToQibla = angleDiff < 10 || angleDiff > 350;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Mini compass - styled like the full Qibla screen
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: primaryColor.withValues(alpha: 0.05),
-              border: Border.all(
-                color: primaryColor.withValues(alpha: 0.3),
-                width: 2,
-              ),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Tick marks around the edge
-                CustomPaint(
-                  size: const Size(70, 70),
-                  painter: _MiniCompassPainter(
-                    compassHeading: _compassHeading,
-                    primaryColor: primaryColor,
-                  ),
-                ),
-                // N indicator
-                Transform.rotate(
-                  angle: -_compassHeading * (math.pi / 180),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        'N',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // Qibla arrow with mosque icon
-                Transform.rotate(
-                  angle: qiblaAngle,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: isPointingToQibla
-                              ? Colors.green.withValues(alpha: 0.2)
-                              : primaryColor.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isPointingToQibla ? Colors.green : primaryColor,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.mosque,
-                          color: isPointingToQibla ? Colors.green : primaryColor,
-                          size: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Qibla info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.mosque,
-                      color: primaryColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Qibla Direction',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_qiblaDirection.toStringAsFixed(1)}° ${_qiblaService.qiblaCardinalDirection}',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  _hasCompass
-                      ? 'Tap to open full compass'
-                      : 'Compass not available on this device',
-                  style: TextStyle(
-                    color: _hasCompass ? primaryColor : Colors.grey[500],
-                    fontSize: 12,
-                    fontWeight: _hasCompass ? FontWeight.w500 : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Kaaba icon with arrow
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '🕋',
-                  style: TextStyle(fontSize: 24),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: primaryColor,
-                  size: 16,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  /// Prayer display configuration - consolidates icons, colors, and iqamah offsets
+  static const _prayerConfig = {
+    'Fajr': (Icons.dark_mode_outlined, Color(0xFF5C6BC0), 20),
+    'Dhuhr': (Icons.wb_sunny_rounded, Color(0xFFFFB300), 15),
+    'Asr': (Icons.cloud_outlined, Color(0xFFFF7043), 15),
+    'Maghrib': (Icons.wb_twilight_rounded, Color(0xFFE91E63), 5),
+    'Isha': (Icons.nightlight_round, Color(0xFF3F51B5), 15),
+  };
 
   IconData _getPrayerIcon(String prayer) {
-    switch (prayer) {
-      case 'Fajr':
-        return Icons.dark_mode_outlined;
-      case 'Dhuhr':
-        return Icons.wb_sunny_rounded;
-      case 'Asr':
-        return Icons.cloud_outlined;
-      case 'Maghrib':
-        return Icons.wb_twilight_rounded;
-      case 'Isha':
-        return Icons.nightlight_round;
-      default:
-        return Icons.access_time;
-    }
+    return _prayerConfig[prayer]?.$1 ?? Icons.access_time;
   }
 
   Color _getPrayerColor(String prayer) {
-    switch (prayer) {
-      case 'Fajr':
-        return const Color(0xFF5C6BC0); // Indigo
-      case 'Dhuhr':
-        return const Color(0xFFFFB300); // Amber
-      case 'Asr':
-        return const Color(0xFFFF7043); // Deep Orange
-      case 'Maghrib':
-        return const Color(0xFFE91E63); // Pink
-      case 'Isha':
-        return const Color(0xFF3F51B5); // Indigo
-      default:
-        return Colors.grey;
-    }
+    return _prayerConfig[prayer]?.$2 ?? Colors.grey;
   }
 
   int? _getIqamahOffset(String prayer) {
-    const offsets = {
-      'Fajr': 20,
-      'Dhuhr': 15,
-      'Asr': 15,
-      'Maghrib': 5,
-      'Isha': 15,
-    };
-    return offsets[prayer];
+    return _prayerConfig[prayer]?.$3;
   }
 }
 
@@ -1164,54 +1057,5 @@ class _PrayerSettingsSheetState extends State<_PrayerSettingsSheet> {
         );
       },
     );
-  }
-}
-
-/// Mini compass painter for tick marks
-class _MiniCompassPainter extends CustomPainter {
-  final double compassHeading;
-  final Color primaryColor;
-
-  _MiniCompassPainter({
-    required this.compassHeading,
-    required this.primaryColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 4;
-
-    final paint = Paint()
-      ..strokeWidth = 1
-      ..strokeCap = StrokeCap.round;
-
-    // Draw tick marks (rotate with compass)
-    for (int i = 0; i < 12; i++) {
-      final angle = (i * 30 - compassHeading) * (math.pi / 180);
-      final isMajor = i % 3 == 0;
-      final tickLength = isMajor ? 6.0 : 3.0;
-
-      paint.color = isMajor
-          ? primaryColor.withValues(alpha: 0.6)
-          : primaryColor.withValues(alpha: 0.3);
-      paint.strokeWidth = isMajor ? 1.5 : 1.0;
-
-      final startPoint = Offset(
-        center.dx + (radius - tickLength) * math.sin(angle),
-        center.dy - (radius - tickLength) * math.cos(angle),
-      );
-      final endPoint = Offset(
-        center.dx + radius * math.sin(angle),
-        center.dy - radius * math.cos(angle),
-      );
-
-      canvas.drawLine(startPoint, endPoint, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _MiniCompassPainter oldDelegate) {
-    return oldDelegate.compassHeading != compassHeading;
   }
 }
