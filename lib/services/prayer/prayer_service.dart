@@ -1,6 +1,7 @@
 import 'package:adhan/adhan.dart';
 import 'package:intl/intl.dart';
 import '../../config/constants.dart';
+import '../adhan/adhan_notification_service.dart';
 import '../location/location_service.dart';
 import 'prayer_settings.dart';
 
@@ -129,6 +130,11 @@ class PrayerService {
 
     await _updateLocation();
     _updateCalculationParams();
+
+    // Reschedule adhan notifications with updated prayer times
+    if (AdhanNotificationService().isInitialized) {
+      await AdhanNotificationService().reschedule();
+    }
   }
 
   Future<void> updateCorrection(String prayer, int minutes) async {
