@@ -351,9 +351,19 @@ ${item.translation}
 
         // Dua content
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: _buildDuaCard(primaryColor, _items[_currentItemIndex]),
+          child: Builder(
+            builder: (context) {
+              final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+              return SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  bottom: 16 + bottomSafeArea,
+                ),
+                child: _buildDuaCard(primaryColor, _items[_currentItemIndex]),
+              );
+            },
           ),
         ),
       ],

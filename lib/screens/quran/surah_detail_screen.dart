@@ -30,6 +30,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   double _arabicFontSize = 28.0;
   double _translationFontSize = 14.0;
 
+  // GlobalKeys for verse cards to enable precise scrolling
+  late Map<int, GlobalKey> _verseKeys;
+
   // Audio state
   Reciter _currentReciter = QuranAudioService.reciters.first;
   bool _isPlaying = false;
@@ -53,6 +56,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     super.initState();
     _scrollController = ScrollController();
     _verses = _quranService.getSurahVerses(widget.surah.number);
+    // Initialize GlobalKeys for each verse to enable precise scrolling
+    _verseKeys = {for (var v in _verses) v.verseNumber: GlobalKey()};
     _loadSettings();
     _loadBookmarks();
     _loadAudioSettings();
@@ -132,13 +137,25 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   }
 
   void _scrollToVerse(int verseNumber) {
-    // Approximate scroll position (each verse is roughly 150px)
-    final position = (verseNumber - 1) * 150.0;
-    _scrollController.animateTo(
-      position,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
+    final key = _verseKeys[verseNumber];
+    if (key?.currentContext != null) {
+      // Use Scrollable.ensureVisible with alignment 0.3 to position verse
+      // 30% from top, preventing it from being hidden behind bottom nav/audio bar
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        alignment: 0.3, // Position verse 30% from top of viewport
+      );
+    } else {
+      // Fallback to approximate position if key not yet available
+      final position = (verseNumber - 1) * 150.0;
+      _scrollController.animateTo(
+        position,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   Future<void> _toggleBookmark(int verseNumber) async {
@@ -497,44 +514,57 @@ ${verse.translation}
                 }
                 return false;
               },
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: _verses.length + 1, // +1 for Basmala header
-                itemBuilder: (context, index) {
-                  // Basmala header (except for At-Tawbah)
-                  if (index == 0) {
-                    return _SurahHeader(
-                      surah: widget.surah,
-                      showBasmala: _quranService.surahHasBasmala(widget.surah.number),
-                      basmala: _quranService.getBasmala(),
-                      primaryColor: primaryColor,
-                      arabicFontSize: _arabicFontSize,
-                      onPlayFromStart: () => _playSurahFromVerse(1),
-                      isPlaying: _isPlaying && _currentPlayingVerse == 1,
-                      isLoading: _isLoading && _currentPlayingVerse == 1,
-                    );
-                  }
+              child: Builder(
+                builder: (context) {
+                  final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+                  // Add extra padding when audio player is visible (~180px) plus safe area
+                  final audioPlayerHeight = _currentPlayingVerse != null ? 180.0 : 0.0;
+                  return ListView.builder(
+                    controller: _scrollController,
+                    padding: EdgeInsets.only(
+                      top: 16,
+                      left: 16,
+                      right: 16,
+                      bottom: 16 + bottomSafeArea + audioPlayerHeight,
+                    ),
+                    itemCount: _verses.length + 1, // +1 for Basmala header
+                    itemBuilder: (context, index) {
+                      // Basmala header (except for At-Tawbah)
+                      if (index == 0) {
+                        return _SurahHeader(
+                          surah: widget.surah,
+                          showBasmala: _quranService.surahHasBasmala(widget.surah.number),
+                          basmala: _quranService.getBasmala(),
+                          primaryColor: primaryColor,
+                          arabicFontSize: _arabicFontSize,
+                          onPlayFromStart: () => _playSurahFromVerse(1),
+                          isPlaying: _isPlaying && _currentPlayingVerse == 1,
+                          isLoading: _isLoading && _currentPlayingVerse == 1,
+                        );
+                      }
 
-                  final verse = _verses[index - 1];
-                  final isBookmarked = _bookmarks.contains(
-                    '${widget.surah.number}:${verse.verseNumber}',
-                  );
-                  final isCurrentlyPlaying = _currentPlayingVerse == verse.verseNumber;
+                      final verse = _verses[index - 1];
+                      final isBookmarked = _bookmarks.contains(
+                        '${widget.surah.number}:${verse.verseNumber}',
+                      );
+                      final isCurrentlyPlaying = _currentPlayingVerse == verse.verseNumber;
 
-                  return _VerseCard(
-                    verse: verse,
-                    isBookmarked: isBookmarked,
-                    arabicFontSize: _arabicFontSize,
-                    translationFontSize: _translationFontSize,
-                    primaryColor: primaryColor,
-                    isPlaying: _isPlaying && isCurrentlyPlaying,
-                    isLoading: _isLoading && isCurrentlyPlaying,
-                    onBookmarkToggle: () => _toggleBookmark(verse.verseNumber),
-                    onShare: () => _shareVerse(verse),
-                    onCopy: () => _copyVerse(verse),
-                    onPlay: () => _playVerse(verse.verseNumber),
-                    onPlayFromHere: () => _playSurahFromVerse(verse.verseNumber),
+                      return _VerseCard(
+                        key: _verseKeys[verse.verseNumber],
+                        verse: verse,
+                        isBookmarked: isBookmarked,
+                        arabicFontSize: _arabicFontSize,
+                        translationFontSize: _translationFontSize,
+                        primaryColor: primaryColor,
+                        isPlaying: _isPlaying && isCurrentlyPlaying,
+                        isLoading: _isLoading && isCurrentlyPlaying,
+                        onBookmarkToggle: () => _toggleBookmark(verse.verseNumber),
+                        onShare: () => _shareVerse(verse),
+                        onCopy: () => _copyVerse(verse),
+                        onPlay: () => _playVerse(verse.verseNumber),
+                        onPlayFromHere: () => _playSurahFromVerse(verse.verseNumber),
+                      );
+                    },
                   );
                 },
               ),
@@ -703,6 +733,7 @@ class _VerseCard extends StatelessWidget {
   final VoidCallback onPlayFromHere;
 
   const _VerseCard({
+    super.key,
     required this.verse,
     required this.isBookmarked,
     required this.arabicFontSize,

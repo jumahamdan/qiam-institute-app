@@ -90,10 +90,16 @@ class _EventsScreenState extends State<EventsScreen> {
       return _buildEmptyState();
     }
 
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return RefreshIndicator(
       onRefresh: _loadEvents,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.only(
+          top: 16,
+          left: 16,
+          right: 16,
+          bottom: 16 + bottomSafeArea,
+        ),
         itemCount: _events.length,
         itemBuilder: (context, index) => _EventCard(
           event: _events[index],

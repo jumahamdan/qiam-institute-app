@@ -411,8 +411,14 @@ class _AllHadithsTab extends StatelessWidget {
       );
     }
 
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16 + bottomSafeArea,
+      ),
       itemCount: hadiths.length,
       itemBuilder: (context, index) {
         final hadith = hadiths[index];
@@ -465,8 +471,14 @@ class _CollectionTab extends StatelessWidget {
       );
     }
 
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16 + bottomSafeArea,
+      ),
       itemCount: collections.length,
       itemBuilder: (context, index) {
         final collection = collections[index];
@@ -555,8 +567,14 @@ class _TopicTab extends StatelessWidget {
       );
     }
 
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16 + bottomSafeArea,
+      ),
       itemCount: topics.length,
       itemBuilder: (context, index) {
         final topic = topics[index];
@@ -955,28 +973,38 @@ class _HadithBookmarksScreenState extends State<_HadithBookmarksScreen> {
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: bookmarked.length,
-              itemBuilder: (context, index) {
-                final hadith = bookmarked[index];
-                return _HadithListItem(
-                  hadith: hadith,
-                  isBookmarked: true,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HadithDetailScreen(
-                          hadith: hadith,
-                          onBookmarkChanged: () => setState(() {}),
-                        ),
-                      ),
-                    ).then((_) => setState(() {}));
-                  },
-                  onBookmarkToggle: () async {
-                    await widget.hadithService.toggleBookmark(hadith.id);
-                    setState(() {});
+          : Builder(
+              builder: (context) {
+                final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+                return ListView.builder(
+                  padding: EdgeInsets.only(
+                    top: 16,
+                    left: 16,
+                    right: 16,
+                    bottom: 16 + bottomSafeArea,
+                  ),
+                  itemCount: bookmarked.length,
+                  itemBuilder: (context, index) {
+                    final hadith = bookmarked[index];
+                    return _HadithListItem(
+                      hadith: hadith,
+                      isBookmarked: true,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HadithDetailScreen(
+                              hadith: hadith,
+                              onBookmarkChanged: () => setState(() {}),
+                            ),
+                          ),
+                        ).then((_) => setState(() {}));
+                      },
+                      onBookmarkToggle: () async {
+                        await widget.hadithService.toggleBookmark(hadith.id);
+                        setState(() {});
+                      },
+                    );
                   },
                 );
               },

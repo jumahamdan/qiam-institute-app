@@ -377,8 +377,14 @@ class _AllDuasTab extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16 + bottomSafeArea,
+      ),
       itemCount: chapters.length,
       itemBuilder: (context, index) {
         final chapter = chapters[index];
@@ -418,8 +424,14 @@ class _CategoryWiseTab extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16 + bottomSafeArea,
+      ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final category = categories[index];
