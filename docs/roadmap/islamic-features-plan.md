@@ -2,7 +2,7 @@
 
 > **Status:** In Progress
 > **Created:** January 28, 2026
-> **Last Updated:** January 29, 2026
+> **Last Updated:** January 30, 2026
 > **Priority:** High
 
 ---
@@ -15,7 +15,7 @@
 | 2. Tasbih Counter | Custom build | Full screen counter with 9 dhikr presets | ✅ Complete |
 | 3. 99 Names of Allah | Custom build | Grid/list view + detail sheet | ✅ Complete |
 | 4. Hadith Collection | Custom build | Full screen with tabs, search + bookmarks | ✅ Complete |
-| 5. Dua Collection | `muslim_data_flutter` | Hisnul Muslim with categories | 🔄 Content Revamp Planned |
+| 5. Dua Collection | `muslim_data_flutter` | Hisnul Muslim with categories | ✅ Complete |
 | 6. Adhan Notifications | `android_alarm_manager_plus` + `just_audio` | Settings integration + background service | ✅ Complete |
 
 ### Implementation Summary
@@ -26,9 +26,7 @@
 - **99 Names of Allah**: All 99 names with Arabic, transliteration, meaning & description, grid/list toggle, search
 - **Hadith Collection**: Tabs for collections (Bukhari, Muslim, Nawawi, Qudsi), search, bookmarks, share functionality
 - **Adhan Notifications**: Background audio playback, per-prayer settings, multiple adhan sounds (Makkah, Madinah, Mishary), pre-prayer reminders, volume control, separate Fajr sound option
-
-**In Progress:**
-- **Dua Collection**: Exists but needs content revamp using `muslim_data_flutter` (Hisnul Muslim)
+- **Dua Collection**: Hisnul Muslim content via `muslim_data_flutter`, categories, bookmarks, search, dua of the day
 
 ---
 
@@ -71,9 +69,9 @@
 │  │                                                      │   │
 │  │  ─────────────────────────────────────────────────  │   │
 │  │                                                      │   │
-│  │              الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ                │   │
-│  │                                                      │   │
-│  │  All praise is due to Allah, Lord of the worlds.   │   │
+│  │  2.  الرَّحِيمُ                                          │   │
+│  │      Ar-Raheem                                       │   │
+│  │      The Most Merciful                               │   │
 │  │                                                      │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
@@ -311,17 +309,17 @@ List<Dhikr> presets = [
 
 ---
 
-## Feature 5: Dua Collection 🔄 CONTENT REVAMP
+## Feature 5: Dua Collection ✅ COMPLETE
 
-### Current Status: Exists but needs content upgrade
+### Status: ✅ Fully Implemented
 
-### Planned Changes
+### Implementation
 
-**Replace hardcoded `duaa_data.dart` with `muslim_data_flutter` package**
+**Using `muslim_data_flutter` package v1.5.0 for Hisnul Muslim content**
 
 ```yaml
 dependencies:
-  muslim_data_flutter: ^x.x.x  # Hisnul Muslim content
+  muslim_data_flutter: ^1.5.0  # Hisnul Muslim content
 ```
 
 ### Benefits of `muslim_data_flutter`:
@@ -330,15 +328,17 @@ dependencies:
 - ✅ 5 languages: Arabic, English, Kurdish, Farsi, Russian
 - ✅ Maintained package with proper sourcing
 
-### Rename Tasks (Duaa → Dua)
-
-| Current | New |
-|---------|-----|
-| `duaa_model.dart` | `dua_model.dart` |
-| `services/duaa/` | `services/dua/` |
-| `screens/duaa/` | `screens/dua/` |
-| Class `Duaa` | Class `Dua` |
-| Class `DuaaCategory` | Class `DuaCategory` |
+### Implemented Features:
+- [x] Hisnul Muslim duas with categories
+- [x] Dua of the Day feature
+- [x] Bookmarks (by chapter ID)
+- [x] Search functionality
+- [x] Multi-item navigation (for chapters with multiple duas)
+- [x] Arabic text with adjustable font size
+- [x] Translation display
+- [x] Reference/source display
+- [x] Share and copy functionality
+- [x] Renamed codebase from `duaa` → `dua`
 
 ---
 
@@ -447,48 +447,67 @@ assets/
 
 ### Quran Audio Caching
 
-**Status:** ⏳ Planned
+**Status:** 🔄 Phase 1 In Progress
 
-Two approaches for offline Quran audio:
+### Phase 1: Basic Caching (Auto-cache on play) - HIGH PRIORITY
 
-#### Option 1: Using `just_audio` Cache (Recommended)
+| Task | Description | Status |
+|------|-------------|--------|
+| 1.1 | Add `flutter_cache_manager` package | ⏳ Todo |
+| 1.2 | Modify `quran_audio_service.dart` to use `LockCachingAudioSource` | ⏳ Todo |
+| 1.3 | Cache verses automatically as they're played | ⏳ Todo |
+| 1.4 | Add cache indicator icon on cached verses | ⏳ Todo |
 
-The `just_audio` package already supports caching via `LockCachingAudioSource`. Verses played once can be replayed offline.
+#### Implementation Details
 
 ```dart
-// Example implementation
+// Example implementation for quran_audio_service.dart
 import 'package:just_audio/just_audio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
-// Use LockCachingAudioSource for automatic caching
-final audioSource = LockCachingAudioSource(
-  Uri.parse(verseAudioUrl),
-  cacheFile: File('${cacheDir.path}/surah_${surahNumber}_ayah_${ayahNumber}.mp3'),
-);
-
-await audioPlayer.setAudioSource(audioSource);
+class QuranAudioService {
+  // Use LockCachingAudioSource for automatic caching
+  Future<AudioSource> _getCachedAudioSource(String url, int surahNumber, int ayahNumber) async {
+    final cacheDir = await getTemporaryDirectory();
+    final cacheFile = File('${cacheDir.path}/quran_audio/surah_${surahNumber}_ayah_${ayahNumber}.mp3');
+    
+    // Create directory if it doesn't exist
+    await cacheFile.parent.create(recursive: true);
+    
+    return LockCachingAudioSource(
+      Uri.parse(url),
+      cacheFile: cacheFile,
+    );
+  }
+}
 ```
 
-#### Option 2: Using `flutter_cache_manager`
+#### Dependencies to Add
 
-Download and cache audio files with expiry control.
-
-```dart
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-
-// Download and cache with custom expiry
-final file = await DefaultCacheManager().getSingleFile(
-  verseAudioUrl,
-  key: 'surah_${surahNumber}_ayah_${ayahNumber}',
-);
+```yaml
+dependencies:
+  flutter_cache_manager: ^3.3.1  # For cache management
+  path_provider: ^2.1.1          # Already have (for cache directory)
 ```
 
-#### Offline Features Roadmap
+### Phase 2: Download Surah (Manual download) - MEDIUM PRIORITY
 
-- [ ] Cache audio on first play
-- [ ] Download entire surah for offline
-- [ ] Download progress indicator
-- [ ] Manage cached audio (clear cache option)
-- [ ] Show offline indicator on cached surahs
+| Task | Description | Status |
+|------|-------------|--------|
+| 2.1 | Add "Download Surah" button in surah detail screen | ⏳ Planned |
+| 2.2 | Download all verses of a surah with progress indicator | ⏳ Planned |
+| 2.3 | Show download status (downloaded/partial/not downloaded) | ⏳ Planned |
+| 2.4 | Store download state in SharedPreferences | ⏳ Planned |
+
+### Phase 3: Cache Management - LOW PRIORITY
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.1 | Add "Manage Downloads" screen in settings | ⏳ Planned |
+| 3.2 | Show total cache size | ⏳ Planned |
+| 3.3 | Clear cache option (all or per surah) | ⏳ Planned |
+| 3.4 | Set max cache size limit | ⏳ Planned |
 
 ---
 
@@ -527,12 +546,15 @@ final file = await DefaultCacheManager().getSingleFile(
    - Will be stored in assets/audio/
 ```
 
-### Licensing Checklist
+### Licensing Status
 
-- [ ] Verify EveryAyah.com terms for app distribution
-- [ ] Source Creative Commons adhan recordings
-- [ ] Add attribution where required
-- [ ] Document all audio sources in app credits
+| Source | Verified | Notes |
+|--------|----------|-------|
+| EveryAyah.com | ✅ Yes | Free for apps, attribution recommended |
+| Adhan files (current) | ⚠️ Check | Need to document sources for each file |
+
+**Recommendation:** Add attribution in About/Credits section:
+> "Quran audio recitations provided by EveryAyah.com"
 
 ---
 
@@ -570,6 +592,152 @@ Qibla accuracy is slightly off. Current implementation detects when accuracy < 1
 - [ ] Accuracy percentage display bar
 - [ ] Calibration tutorial overlay
 - [ ] Visual feedback when calibration improves
+
+---
+
+## Prayer Times Calendar Redesign
+
+### Status: ⏳ Planned
+
+### Design Goals
+- Clean, scannable daily prayer time cards
+- Clear date hierarchy with Gregorian dates
+- Sunrise/Sunset times prominently displayed
+- Easy PDF export functionality
+- **Uses existing Qiam app theme** (colors, typography, spacing)
+
+### What's Changing vs Current
+| Element | Current | New |
+|---------|---------|-----|
+| Daily layout | Table/list rows | Card per day |
+| Date format | Various | "DD MMM, YYYY" |
+| Sunrise/Sunset | Hidden or separate | On each card |
+| Location display | Shown | ❌ Removed |
+
+### Proposed Screen Layout
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ← Prayer Times - 2026                                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  📄 Export PDF                                       │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Calculation Method: ISNA                            │   │
+│  │  Asr Calculation: Hanafi                             │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ─────────────────────────────────────────────────────────  │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  01 Jan, 2026           Sunrise: 7:19 AM             │   │
+│  │                         Sunset: 4:32 PM              │   │
+│  │  ───────────────────────────────────────────────────│   │
+│  │  Fajr      Dhuhr      Asr      Maghrib      Isha    │   │
+│  │  5:56 AM   11:57 AM   2:51 PM   4:32 PM    5:56 PM  │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  02 Jan, 2026           Sunrise: 7:19 AM             │   │
+│  │                         Sunset: 4:33 PM              │   │
+│  │  ───────────────────────────────────────────────────│   │
+│  │  Fajr      Dhuhr      Asr      Maghrib      Isha    │   │
+│  │  5:56 AM   11:57 AM   2:52 PM   4:33 PM    5:56 PM  │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ... (scrollable list for full year)                        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Daily Card Structure
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  [Date - Left]                    [Sunrise/Sunset - Right]│
+│  01 Jan, 2026                     Sunrise: 7:19 AM        │
+│                                   Sunset: 4:32 PM         │
+│  ─────────────────────────────────────────────────────────│
+│  Fajr      Dhuhr      Asr       Maghrib      Isha        │
+│  5:56 AM   11:57 AM   2:51 PM   4:32 PM      5:56 PM     │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Design Specifications
+
+#### Header Section
+| Element | Description |
+|---------|-------------|
+| Back arrow | Navigate to previous screen |
+| Title | "Prayer Times - [Year]" |
+| ❌ No location | Removed per requirements |
+
+#### Export Button
+| Element | Description |
+|---------|-------------|
+| Style | Full-width outlined button |
+| Icon | PDF document icon |
+| Text | "Export PDF" |
+
+#### Calculation Info Card
+| Element | Description |
+|---------|-------------|
+| Content | Calculation Method + Asr Method |
+| Style | Subtle card (follows app theme) |
+| ❌ Removed | Location line |
+
+#### Daily Prayer Card
+| Element | Description |
+|---------|-------------|
+| **Top Row Left** | Date in "DD MMM, YYYY" format |
+| **Top Row Right** | Sunrise + Sunset times |
+| **Divider** | Horizontal line |
+| **Bottom Row** | 5 prayer times, evenly spaced |
+| **Time Format** | 12-hour with AM/PM |
+
+### Typography (Using Qiam Theme)
+| Element | Style |
+|---------|-------|
+| Screen title | AppBar title style |
+| Date | Semi-bold, body text |
+| Sunrise/Sunset | Regular, caption size |
+| Prayer labels | Regular, caption, muted |
+| Prayer times | Medium, body text |
+
+### Interaction Behaviors
+| Action | Behavior |
+|--------|----------|
+| Scroll | Smooth vertical scroll through days |
+| Export PDF | Generate and share PDF |
+| Open screen | Auto-scroll to today's date |
+| Today's card | Optional: Highlight with accent border |
+
+### Implementation Tasks
+
+| Task | Description | Priority |
+|------|-------------|----------|
+| 8.1 | Create daily prayer card widget | High |
+| 8.2 | Update screen layout with new cards | High |
+| 8.3 | Remove location display | High |
+| 8.4 | Add Sunrise/Sunset to each card | High |
+| 8.5 | Update date format to "DD MMM, YYYY" | High |
+| 8.6 | Auto-scroll to today on open | Medium |
+| 8.7 | Update Export PDF button styling | Medium |
+| 8.8 | Optional: Add today highlight | Low |
+
+### Files to Modify
+
+```
+lib/
+  screens/
+    prayer_times/
+      prayer_times_calendar_screen.dart  🔄 Redesign
+  widgets/
+    prayer_time_day_card.dart            🆕 New widget (optional)
+```
 
 ---
 
@@ -616,13 +784,15 @@ Qibla accuracy is slightly off. Current implementation detects when accuracy < 1
 |-------|---------|--------|--------|
 | **1** | Quran Reader + Audio | ✅ Complete | `feature/islamic-features` |
 | **1b** | Quran Bookmarks & Last Read | ✅ Complete | `feature/islamic-features` |
-| **1c** | Audio Offline Caching | ⏳ Planned | TBD |
+| **1c** | Quran Audio Caching - Phase 1 | 🔄 In Progress | TBD |
 | **2** | Tasbih Counter | ✅ Complete | `feature/islamic-features` |
 | **3** | 99 Names of Allah | ✅ Complete | `pr-11` |
 | **4** | Hadith Collection | ✅ Complete | merged |
-| **5** | Dua Content Revamp | 🔄 In Progress | TBD |
+| **5** | Dua Collection (muslim_data_flutter) | ✅ Complete | `feature/dua-collection` |
 | **6** | Adhan Notifications | ✅ Complete | `feature/adhan-notifications` (PR #18) |
+| **6b** | Adhan Settings UI Improvement | ⏳ Planned | TBD |
 | **7** | Qibla Calibration | ⏳ Planned | TBD |
+| **8** | Prayer Times Calendar Redesign | ⏳ Planned | TBD |
 
 ---
 
@@ -640,6 +810,10 @@ lib/
       names_screen.dart           ✅ Grid/list view + detail sheet
     hadith/
       hadith_screen.dart          ✅ Tabs + search + bookmarks
+    dua/
+      dua_screen.dart             ✅ Categories + all duas + bookmarks
+      dua_detail_screen.dart      ✅ Dua content with multi-item navigation
+      dua_bookmarks_screen.dart   ✅ Saved duas list
     settings/
       adhan_settings_screen.dart  ✅ Advanced adhan settings UI
   services/
@@ -652,6 +826,8 @@ lib/
       names_service.dart          ✅ All 99 names with descriptions
     hadith/
       hadith_service.dart         ✅ Hadith data management
+    dua/
+      dua_service.dart            ✅ muslim_data_flutter wrapper + bookmarks
     adhan/
       adhan_notification_service.dart ✅ Main orchestrator
       adhan_scheduler.dart            ✅ AlarmManager scheduling
@@ -668,20 +844,6 @@ assets/
       fajr_makkah.mp3             ✅ Traditional Fajr melody (3.8 MB)
       fajr_madinah.mp3            ✅ Traditional Fajr melody (3.8 MB)
       beep.mp3                    ✅ Short notification (17 KB)
-```
-
-## Files to Create/Modify (for remaining features)
-
-```
-lib/
-  models/
-    dua_model.dart                🔄 Rename from duaa_model.dart
-  screens/
-    dua/                          🔄 Rename from duaa/
-      dua_screen.dart             🔄 Update with muslim_data_flutter
-  services/
-    dua/                          🔄 Rename from duaa/
-      dua_service.dart            🔄 Integrate muslim_data_flutter
 ```
 
 ---
@@ -702,24 +864,20 @@ dependencies:
   # Tasbih & 99 Names (no extra packages needed)
   # - shared_preferences (already have)
   # - HapticFeedback (built-in Flutter)
+
+  # Dua content (Hisnul Muslim)
+  muslim_data_flutter: ^1.5.0
 ```
 
 ## Future Dependencies (for remaining features)
 
 ```yaml
 dependencies:
-  # Dua content (to be added)
-  muslim_data_flutter: ^x.x.x     # Hisnul Muslim content
-
   # Tajweed (to be added)
   alfurqan: ^x.x.x                # Tajweed color rendering
 
   # Tasbih screen awake (to be added)
   wakelock_plus: ^x.x.x           # Keep screen on
-
-  # Adhan Notifications (to be added)
-  # flutter_local_notifications (already have)
-  android_alarm_manager_plus: ^x.x.x  # Background scheduling
 ```
 
 ---

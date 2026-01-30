@@ -1,26 +1,26 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../models/duaa.dart';
-import '../../services/duaa/duaa_service.dart';
-import 'duaa_detail_screen.dart';
-import 'duaa_bookmarks_screen.dart';
+import 'package:muslim_data_flutter/muslim_data_flutter.dart';
+import '../../services/dua/dua_service.dart';
+import 'dua_detail_screen.dart';
+import 'dua_bookmarks_screen.dart';
 
-class DuaaScreen extends StatefulWidget {
+class DuaScreen extends StatefulWidget {
   final bool isSearchActive;
   final VoidCallback? onSearchClose;
 
-  const DuaaScreen({
+  const DuaScreen({
     super.key,
     this.isSearchActive = false,
     this.onSearchClose,
   });
 
   @override
-  State<DuaaScreen> createState() => _DuaaScreenState();
+  State<DuaScreen> createState() => _DuaScreenState();
 }
 
-class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateMixin {
-  final DuaaService _duaaService = DuaaService();
+class _DuaScreenState extends State<DuaScreen> with SingleTickerProviderStateMixin {
+  final DuaService _duaService = DuaService();
   late TabController _tabController;
   bool _isLoading = true;
   String _searchQuery = '';
@@ -34,7 +34,7 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _initializeService() async {
-    await _duaaService.initialize();
+    await _duaService.initialize();
     if (mounted) {
       setState(() => _isLoading = false);
     }
@@ -47,12 +47,12 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  void _openDuaaDetail(Duaa duaa) {
+  void _openDuaDetail(AzkarChapter chapter) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DuaaDetailScreen(
-          duaa: duaa,
+        builder: (context) => DuaDetailScreen(
+          chapter: chapter,
           onBookmarkChanged: () => setState(() {}),
         ),
       ),
@@ -63,7 +63,7 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const DuaaBookmarksScreen(),
+        builder: (context) => const DuaBookmarksScreen(),
       ),
     ).then((_) => setState(() {}));
   }
@@ -74,14 +74,11 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
     widget.onSearchClose?.call();
   }
 
-  List<Duaa> _filterDuaas(List<Duaa> duaas) {
-    if (_searchQuery.isEmpty) return duaas;
+  List<AzkarChapter> _filterChapters(List<AzkarChapter> chapters) {
+    if (_searchQuery.isEmpty) return chapters;
     final query = _searchQuery.toLowerCase();
-    return duaas.where((duaa) {
-      return duaa.title.toLowerCase().contains(query) ||
-          duaa.arabic.contains(query) ||
-          duaa.transliteration.toLowerCase().contains(query) ||
-          duaa.translation.toLowerCase().contains(query);
+    return chapters.where((chapter) {
+      return chapter.name.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -123,13 +120,16 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
               children: [
                 // Dua of the Day Card
                 _DuaOfTheDayCard(
-                  duaa: _duaaService.getDuaOfTheDay(),
-                  onTap: () => _openDuaaDetail(_duaaService.getDuaOfTheDay()),
+                  chapter: _duaService.getDuaOfTheDay(),
+                  onTap: () {
+                    final chapter = _duaService.getDuaOfTheDay();
+                    if (chapter != null) _openDuaDetail(chapter);
+                  },
                 ),
                 const SizedBox(height: 12),
                 // Bookmarks Card
                 _BookmarksCard(
-                  count: _duaaService.bookmarkCount,
+                  count: _duaService.bookmarkCount,
                   onTap: _openBookmarks,
                 ),
               ],
@@ -156,7 +156,7 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
             dividerColor: Colors.transparent,
             tabs: const [
               Tab(text: 'All Dua'),
-              Tab(text: 'Subject wise'),
+              Tab(text: 'By Category'),
             ],
           ),
         ),
@@ -167,19 +167,17 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
           child: TabBarView(
             controller: _tabController,
             children: [
-              _AllDuaasTab(
-                duaas: _filterDuaas(_duaaService.allDuaas),
-                duaaService: _duaaService,
-                onDuaaTap: _openDuaaDetail,
+              _AllDuasTab(
+                chapters: _filterChapters(_duaService.allChapters),
+                duaService: _duaService,
+                onDuaTap: _openDuaDetail,
                 onBookmarkChanged: () => setState(() {}),
                 searchQuery: _searchQuery,
               ),
-              _SubjectWiseTab(
-                groupedDuaas: _searchQuery.isEmpty
-                    ? _duaaService.groupedByCategory
-                    : _getFilteredGroupedDuaas(),
-                duaaService: _duaaService,
-                onDuaaTap: _openDuaaDetail,
+              _CategoryWiseTab(
+                categories: _duaService.categories,
+                duaService: _duaService,
+                onDuaTap: _openDuaDetail,
                 onBookmarkChanged: () => setState(() {}),
                 searchQuery: _searchQuery,
               ),
@@ -189,30 +187,23 @@ class _DuaaScreenState extends State<DuaaScreen> with SingleTickerProviderStateM
       ],
     );
   }
-
-  Map<String, List<Duaa>> _getFilteredGroupedDuaas() {
-    final filtered = <String, List<Duaa>>{};
-    for (final entry in _duaaService.groupedByCategory.entries) {
-      final filteredList = _filterDuaas(entry.value);
-      if (filteredList.isNotEmpty) {
-        filtered[entry.key] = filteredList;
-      }
-    }
-    return filtered;
-  }
 }
 
 class _DuaOfTheDayCard extends StatelessWidget {
-  final Duaa duaa;
+  final AzkarChapter? chapter;
   final VoidCallback onTap;
 
   const _DuaOfTheDayCard({
-    required this.duaa,
+    required this.chapter,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (chapter == null) {
+      return const SizedBox.shrink();
+    }
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -249,23 +240,14 @@ class _DuaOfTheDayCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      duaa.title,
+                      chapter!.name,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      duaa.arabic,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.rtl,
                     ),
                   ],
                 ),
@@ -350,24 +332,24 @@ class _BookmarksCard extends StatelessWidget {
   }
 }
 
-class _AllDuaasTab extends StatelessWidget {
-  final List<Duaa> duaas;
-  final DuaaService duaaService;
-  final Function(Duaa) onDuaaTap;
+class _AllDuasTab extends StatelessWidget {
+  final List<AzkarChapter> chapters;
+  final DuaService duaService;
+  final Function(AzkarChapter) onDuaTap;
   final VoidCallback onBookmarkChanged;
   final String searchQuery;
 
-  const _AllDuaasTab({
-    required this.duaas,
-    required this.duaaService,
-    required this.onDuaaTap,
+  const _AllDuasTab({
+    required this.chapters,
+    required this.duaService,
+    required this.onDuaTap,
     required this.onBookmarkChanged,
     required this.searchQuery,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (duaas.isEmpty && searchQuery.isNotEmpty) {
+    if (chapters.isEmpty && searchQuery.isNotEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -383,18 +365,22 @@ class _AllDuaasTab extends StatelessWidget {
       );
     }
 
+    if (chapters.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: duaas.length,
+      itemCount: chapters.length,
       itemBuilder: (context, index) {
-        final duaa = duaas[index];
-        return _DuaaListItem(
-          index: duaa.id,
-          duaa: duaa,
-          isBookmarked: duaaService.isBookmarked(duaa.id),
-          onTap: () => onDuaaTap(duaa),
+        final chapter = chapters[index];
+        return _DuaListItem(
+          index: index + 1,
+          chapter: chapter,
+          isBookmarked: duaService.isBookmarked(chapter.id),
+          onTap: () => onDuaTap(chapter),
           onBookmarkToggle: () async {
-            await duaaService.toggleBookmark(duaa.id);
+            await duaService.toggleBookmark(chapter.id);
             onBookmarkChanged();
           },
         );
@@ -403,157 +389,242 @@ class _AllDuaasTab extends StatelessWidget {
   }
 }
 
-class _SubjectWiseTab extends StatelessWidget {
-  final Map<String, List<Duaa>> groupedDuaas;
-  final DuaaService duaaService;
-  final Function(Duaa) onDuaaTap;
+class _CategoryWiseTab extends StatelessWidget {
+  final List<AzkarCategory> categories;
+  final DuaService duaService;
+  final Function(AzkarChapter) onDuaTap;
   final VoidCallback onBookmarkChanged;
   final String searchQuery;
 
-  const _SubjectWiseTab({
-    required this.groupedDuaas,
-    required this.duaaService,
-    required this.onDuaaTap,
+  const _CategoryWiseTab({
+    required this.categories,
+    required this.duaService,
+    required this.onDuaTap,
     required this.onBookmarkChanged,
     required this.searchQuery,
   });
 
   @override
   Widget build(BuildContext context) {
-    final categories = groupedDuaas.keys.toList();
-
-    if (categories.isEmpty && searchQuery.isNotEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No duas found for "$searchQuery"',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ],
-        ),
-      );
+    if (categories.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: categories.length,
-      itemBuilder: (context, categoryIndex) {
-        final category = categories[categoryIndex];
-        final duaas = groupedDuaas[category]!;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (categoryIndex > 0) const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                DuaaCategory.getDisplayName(category),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...duaas.asMap().entries.map((entry) {
-              final duaa = entry.value;
-              return _DuaaListItem(
-                index: duaa.id,
-                duaa: duaa,
-                isBookmarked: duaaService.isBookmarked(duaa.id),
-                onTap: () => onDuaaTap(duaa),
-                onBookmarkToggle: () async {
-                  await duaaService.toggleBookmark(duaa.id);
-                  onBookmarkChanged();
-                },
-              );
-            }),
-          ],
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        return _CategoryCard(
+          category: category,
+          duaService: duaService,
+          onDuaTap: onDuaTap,
+          onBookmarkChanged: onBookmarkChanged,
+          searchQuery: searchQuery,
         );
       },
     );
   }
 }
 
-class _DuaaListItem extends StatelessWidget {
+class _CategoryCard extends StatefulWidget {
+  final AzkarCategory category;
+  final DuaService duaService;
+  final Function(AzkarChapter) onDuaTap;
+  final VoidCallback onBookmarkChanged;
+  final String searchQuery;
+
+  const _CategoryCard({
+    required this.category,
+    required this.duaService,
+    required this.onDuaTap,
+    required this.onBookmarkChanged,
+    required this.searchQuery,
+  });
+
+  @override
+  State<_CategoryCard> createState() => _CategoryCardState();
+}
+
+class _CategoryCardState extends State<_CategoryCard> {
+  bool _isExpanded = false;
+  List<AzkarChapter>? _chapters;
+  bool _isLoading = false;
+
+  Future<void> _loadChapters() async {
+    if (_chapters != null) return;
+
+    setState(() => _isLoading = true);
+
+    final chapters = await widget.duaService.getChaptersByCategory(widget.category.id);
+
+    if (mounted) {
+      setState(() {
+        _chapters = chapters;
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<AzkarChapter> _filterChapters() {
+    if (_chapters == null) return [];
+    if (widget.searchQuery.isEmpty) return _chapters!;
+
+    final query = widget.searchQuery.toLowerCase();
+    return _chapters!.where((c) => c.name.toLowerCase().contains(query)).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = DuaService.getCategoryIcon(widget.category.name);
+    final filteredChapters = _filterChapters();
+
+    // Hide category if search is active and no matching chapters
+    if (widget.searchQuery.isNotEmpty && _chapters != null && filteredChapters.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() => _isExpanded = !_isExpanded);
+              if (_isExpanded) _loadChapters();
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(icon, style: const TextStyle(fontSize: 20)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.category.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.grey[400],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_isExpanded)
+            _isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : Column(
+                    children: filteredChapters.asMap().entries.map((entry) {
+                      final chapter = entry.value;
+                      return _DuaListItem(
+                        index: entry.key + 1,
+                        chapter: chapter,
+                        isBookmarked: widget.duaService.isBookmarked(chapter.id),
+                        onTap: () => widget.onDuaTap(chapter),
+                        onBookmarkToggle: () async {
+                          await widget.duaService.toggleBookmark(chapter.id);
+                          widget.onBookmarkChanged();
+                          setState(() {});
+                        },
+                        compact: true,
+                      );
+                    }).toList(),
+                  ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DuaListItem extends StatelessWidget {
   final int index;
-  final Duaa duaa;
+  final AzkarChapter chapter;
   final bool isBookmarked;
   final VoidCallback onTap;
   final VoidCallback onBookmarkToggle;
+  final bool compact;
 
-  const _DuaaListItem({
+  const _DuaListItem({
     required this.index,
-    required this.duaa,
+    required this.chapter,
     required this.isBookmarked,
     required this.onTap,
     required this.onBookmarkToggle,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final content = Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 16 : 12,
+        vertical: compact ? 8 : 10,
+      ),
+      child: Row(
+        children: [
+          // 8-pointed star (Rub el Hizb) number badge
+          _RubElHizbBadge(
+            number: index,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              chapter.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              isBookmarked ? Icons.star : Icons.star_border,
+              color: isBookmarked ? Colors.amber : Colors.grey[400],
+              size: 22,
+            ),
+            onPressed: onBookmarkToggle,
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
+    );
+
+    if (compact) {
+      return InkWell(
+        onTap: onTap,
+        child: content,
+      );
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              // 8-pointed star (Rub el Hizb) number badge
-              _RubElHizbBadge(
-                number: index,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      duaa.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      duaa.arabic,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.rtl,
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  isBookmarked ? Icons.star : Icons.star_border,
-                  color: isBookmarked ? Colors.amber : Colors.grey[400],
-                  size: 22,
-                ),
-                onPressed: onBookmarkToggle,
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
-        ),
+        child: content,
       ),
     );
   }

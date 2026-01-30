@@ -1,37 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:muslim_data_flutter/muslim_data_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../models/duaa.dart';
-import '../../services/duaa/duaa_service.dart';
+import '../../services/dua/dua_service.dart';
 
-class DuaaDetailScreen extends StatefulWidget {
-  final Duaa duaa;
+class DuaDetailScreen extends StatefulWidget {
+  final AzkarChapter chapter;
   final VoidCallback? onBookmarkChanged;
-  final String? collectionName;
 
-  const DuaaDetailScreen({
+  const DuaDetailScreen({
     super.key,
-    required this.duaa,
+    required this.chapter,
     this.onBookmarkChanged,
-    this.collectionName,
   });
 
   @override
-  State<DuaaDetailScreen> createState() => _DuaaDetailScreenState();
+  State<DuaDetailScreen> createState() => _DuaDetailScreenState();
 }
 
-class _DuaaDetailScreenState extends State<DuaaDetailScreen> {
-  final DuaaService _duaaService = DuaaService();
+class _DuaDetailScreenState extends State<DuaDetailScreen> {
+  final DuaService _duaService = DuaService();
   late bool _isBookmarked;
   double _arabicFontSize = 28.0;
-  static const String _fontSizeKey = 'duaa_arabic_font_size';
+  static const String _fontSizeKey = 'dua_arabic_font_size';
+
+  List<AzkarItem> _items = [];
+  bool _isLoading = true;
+  int _currentItemIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _isBookmarked = _duaaService.isBookmarked(widget.duaa.id);
+    _isBookmarked = _duaService.isBookmarked(widget.chapter.id);
     _loadFontSize();
+    _loadItems();
   }
 
   Future<void> _loadFontSize() async {
@@ -47,14 +50,23 @@ class _DuaaDetailScreenState extends State<DuaaDetailScreen> {
     await prefs.setDouble(_fontSizeKey, size);
   }
 
+  Future<void> _loadItems() async {
+    final items = await _duaService.getChapterItems(widget.chapter.id);
+    if (mounted) {
+      setState(() {
+        _items = items;
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> _toggleBookmark() async {
-    await _duaaService.toggleBookmark(widget.duaa.id);
+    await _duaService.toggleBookmark(widget.chapter.id);
     setState(() {
       _isBookmarked = !_isBookmarked;
     });
     widget.onBookmarkChanged?.call();
 
-    // Show feedback
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -66,78 +78,23 @@ class _DuaaDetailScreenState extends State<DuaaDetailScreen> {
     }
   }
 
-  void _shareDuaa() {
+  void _shareDua() {
+    if (_items.isEmpty) return;
+
+    final item = _items[_currentItemIndex];
     final shareText = '''
-${widget.duaa.title}
+${widget.chapter.name}
 
-${widget.duaa.arabic}
+${item.item}
 
-Transliteration: ${widget.duaa.transliteration}
+${item.translation}
 
-Meaning: ${widget.duaa.translation}
-
-Source: ${widget.duaa.source}
+${item.reference}
 
 - Shared from Qiam Institute App
 ''';
 
-    Share.share(shareText, subject: widget.duaa.title);
-  }
-
-  void _showRemarks() {
-    if (widget.duaa.remarks == null || widget.duaa.remarks!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No additional remarks for this dua'),
-          duration: Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        final primaryColor = Theme.of(context).colorScheme.primary;
-        return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.auto_stories, color: primaryColor),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Remarks & Context',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                widget.duaa.remarks!,
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.6,
-                  color: Colors.grey[800],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
-    );
+    Share.share(shareText, subject: widget.chapter.name);
   }
 
   void _showFontSizeAdjuster() {
@@ -228,12 +185,13 @@ Source: ${widget.duaa.source}
   }
 
   void _copyToClipboard() {
+    if (_items.isEmpty) return;
+
+    final item = _items[_currentItemIndex];
     final text = '''
-${widget.duaa.arabic}
+${item.item}
 
-${widget.duaa.transliteration}
-
-${widget.duaa.translation}
+${item.translation}
 ''';
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -272,7 +230,7 @@ ${widget.duaa.translation}
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          widget.collectionName ?? DuaaCategory.getDisplayName(widget.duaa.category),
+          'Dua',
           style: TextStyle(
             color: primaryColor,
             fontWeight: FontWeight.w600,
@@ -302,14 +260,105 @@ ${widget.duaa.translation}
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: _buildDuaCard(primaryColor),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _items.isEmpty
+              ? _buildEmptyState()
+              : _buildContent(primaryColor),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.info_outline, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No dua content available',
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDuaCard(Color primaryColor) {
+  Widget _buildContent(Color primaryColor) {
+    return Column(
+      children: [
+        // Chapter title header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                primaryColor.withValues(alpha: 0.1),
+                primaryColor.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            widget.chapter.name,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Item navigation (if multiple items)
+        if (_items.length > 1)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: _currentItemIndex > 0
+                      ? () => setState(() => _currentItemIndex--)
+                      : null,
+                ),
+                Text(
+                  '${_currentItemIndex + 1} / ${_items.length}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: primaryColor,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: _currentItemIndex < _items.length - 1
+                      ? () => setState(() => _currentItemIndex++)
+                      : null,
+                ),
+              ],
+            ),
+          ),
+
+        // Dua content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: _buildDuaCard(primaryColor, _items[_currentItemIndex]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDuaCard(Color primaryColor, AzkarItem item) {
+    final hasArabic = item.item.isNotEmpty;
+    final hasTranslation = item.translation.isNotEmpty;
+    final hasReference = item.reference.isNotEmpty;
+
     return Card(
       elevation: 2,
       shadowColor: primaryColor.withValues(alpha: 0.1),
@@ -321,28 +370,22 @@ ${widget.duaa.translation}
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Row - Dua Number + Actions
+            // Header Row - Actions
             _buildHeaderRow(primaryColor),
-            const SizedBox(height: 16),
-
-            // Dua Title
-            _buildDuaTitleSection(primaryColor),
             const SizedBox(height: 20),
 
             // Arabic Text
-            _buildArabicSection(primaryColor),
-            const SizedBox(height: 20),
+            if (hasArabic) _buildArabicSection(primaryColor, item.item),
 
-            // Transliteration
-            _buildTransliterationSection(primaryColor),
-            const SizedBox(height: 20),
+            if (hasArabic) const SizedBox(height: 20),
 
-            // Meaning
-            _buildMeaningSection(primaryColor),
-            const SizedBox(height: 20),
+            // Translation/Meaning
+            if (hasTranslation) _buildMeaningSection(primaryColor, item.translation),
 
-            // Source
-            _buildSourceSection(primaryColor),
+            if (hasTranslation) const SizedBox(height: 20),
+
+            // Reference
+            if (hasReference) _buildSourceSection(primaryColor, item.reference),
           ],
         ),
       ),
@@ -351,85 +394,38 @@ ${widget.duaa.translation}
 
   Widget _buildHeaderRow(Color primaryColor) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        // Dua Number
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            widget.duaa.formattedDuaNumber,
-            style: TextStyle(
-              color: primaryColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
+        // Bookmark
+        _ActionIconButton(
+          icon: _isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+          color: _isBookmarked ? Colors.amber : Colors.grey[600]!,
+          onTap: _toggleBookmark,
+          tooltip: _isBookmarked ? 'Remove bookmark' : 'Add bookmark',
         ),
+        const SizedBox(width: 4),
 
-        // Action Icons
-        Row(
-          children: [
-            // Bookmark
-            _ActionIconButton(
-              icon: _isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
-              color: _isBookmarked ? Colors.amber : Colors.grey[600]!,
-              onTap: _toggleBookmark,
-              tooltip: _isBookmarked ? 'Remove bookmark' : 'Add bookmark',
-            ),
-            const SizedBox(width: 4),
+        // Copy
+        _ActionIconButton(
+          icon: Icons.copy_outlined,
+          color: Colors.grey[600]!,
+          onTap: _copyToClipboard,
+          tooltip: 'Copy to clipboard',
+        ),
+        const SizedBox(width: 4),
 
-            // Remarks/Read
-            _ActionIconButton(
-              icon: Icons.auto_stories_outlined,
-              color: Colors.grey[600]!,
-              onTap: _showRemarks,
-              tooltip: 'View remarks',
-            ),
-            const SizedBox(width: 4),
-
-            // Share
-            _ActionIconButton(
-              icon: Icons.share_outlined,
-              color: Colors.grey[600]!,
-              onTap: _shareDuaa,
-              tooltip: 'Share dua',
-            ),
-          ],
+        // Share
+        _ActionIconButton(
+          icon: Icons.share_outlined,
+          color: Colors.grey[600]!,
+          onTap: _shareDua,
+          tooltip: 'Share dua',
         ),
       ],
     );
   }
 
-  Widget _buildDuaTitleSection(Color primaryColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Dua Name:',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[500],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          widget.duaa.title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildArabicSection(Color primaryColor) {
+  Widget _buildArabicSection(Color primaryColor, String arabicText) {
     return GestureDetector(
       onLongPress: _copyToClipboard,
       child: Container(
@@ -450,7 +446,7 @@ ${widget.duaa.translation}
           ),
         ),
         child: Text(
-          widget.duaa.arabic,
+          arabicText,
           style: TextStyle(
             fontSize: _arabicFontSize,
             fontFamily: 'Amiri',
@@ -464,26 +460,11 @@ ${widget.duaa.translation}
     );
   }
 
-  Widget _buildTransliterationSection(Color primaryColor) {
-    return _DetailSection(
-      label: 'Transliteration:',
-      child: Text(
-        widget.duaa.transliteration,
-        style: TextStyle(
-          fontSize: 15,
-          fontStyle: FontStyle.italic,
-          color: Colors.grey[700],
-          height: 1.6,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMeaningSection(Color primaryColor) {
+  Widget _buildMeaningSection(Color primaryColor, String translation) {
     return _DetailSection(
       label: 'Meaning:',
       child: Text(
-        widget.duaa.translation,
+        translation,
         style: TextStyle(
           fontSize: 15,
           color: Colors.grey[800],
@@ -493,7 +474,7 @@ ${widget.duaa.translation}
     );
   }
 
-  Widget _buildSourceSection(Color primaryColor) {
+  Widget _buildSourceSection(Color primaryColor, String reference) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -511,7 +492,7 @@ ${widget.duaa.translation}
               Icon(Icons.menu_book, size: 16, color: Colors.amber[800]),
               const SizedBox(width: 6),
               Text(
-                'Source:',
+                'Reference:',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -522,7 +503,7 @@ ${widget.duaa.translation}
           ),
           const SizedBox(height: 8),
           Text(
-            widget.duaa.source,
+            reference,
             style: TextStyle(
               fontSize: 14,
               color: Colors.amber[900],
