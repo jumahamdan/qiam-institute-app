@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../config/constants.dart';
+import '../../services/adhan/adhan_notification_service.dart';
+import '../../services/adhan/adhan_settings.dart';
+import '../../services/adhan/adhan_sounds.dart';
 import '../../services/prayer/prayer_service.dart';
 import '../../services/prayer/prayer_settings.dart';
 import '../../services/location/location_service.dart';
 import '../../services/notification/notification_service.dart';
+import 'adhan_settings_screen.dart';
 import 'location_search_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -17,6 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final PrayerService _prayerService = PrayerService();
   final LocationService _locationService = LocationService();
   final NotificationService _notificationService = NotificationService();
+  final AdhanNotificationService _adhanService = AdhanNotificationService();
 
   late String _calculationMethod;
   late String _asrMethod;
@@ -36,6 +41,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _eventsEnabled = true;
   bool _announcementsEnabled = true;
   bool _liveEnabled = true;
+
+  // Adhan settings
+  bool _adhanEnabled = false;
+  Map<String, bool> _prayerAdhansEnabled = {};
+  String _selectedAdhanSound = 'makkah';
+  bool _preReminderEnabled = false;
+  int _preReminderMinutes = 10;
 
   @override
   void initState() {
@@ -57,6 +69,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _corrections = Map.from(settings.allCorrections);
     });
     _loadNotificationSettings();
+    _loadAdhanSettings();
+  }
+
+  void _loadAdhanSettings() {
+    setState(() {
+      _adhanEnabled = _adhanService.isGlobalEnabled;
+      _prayerAdhansEnabled = _adhanService.getAllPrayerStates();
+      _selectedAdhanSound = _adhanService.selectedSoundId;
+      _preReminderEnabled = _adhanService.preReminderEnabled;
+      _preReminderMinutes = _adhanService.preReminderMinutes;
+    });
   }
 
   Future<void> _loadNotificationSettings() async {
@@ -347,6 +370,125 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   setState(() => _liveEnabled = value);
                   await _notificationService.setLiveNotificationsEnabled(value);
                 },
+              ),
+            ],
+          ],
+        ),
+
+        // ========== ADHAN NOTIFICATIONS SECTION ==========
+        _buildSectionCard(
+          title: 'Adhan Notifications',
+          icon: Icons.volume_up,
+          children: [
+            // Master Toggle
+            SwitchListTile(
+              secondary: Icon(
+                _adhanEnabled ? Icons.notifications_active : Icons.notifications_off,
+                color: _adhanEnabled ? primaryColor : Colors.grey[600],
+              ),
+              title: const Text('Adhan Alerts'),
+              subtitle: const Text('Play adhan audio at prayer times'),
+              value: _adhanEnabled,
+              activeTrackColor: primaryColor.withValues(alpha: 0.5),
+              activeThumbColor: primaryColor,
+              onChanged: (value) async {
+                setState(() => _adhanEnabled = value);
+                await _adhanService.setGlobalEnabled(value);
+              },
+            ),
+
+            if (_adhanEnabled) ...[
+              const Divider(height: 1),
+
+              // Adhan Sound Selection
+              ListTile(
+                leading: Icon(Icons.music_note, color: Colors.grey[600]),
+                title: const Text('Adhan Sound'),
+                subtitle: Text(
+                  AdhanSoundCatalog.getById(_selectedAdhanSound)?.name ?? 'Makkah',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _showAdhanSoundPicker,
+              ),
+
+              const Divider(height: 1),
+
+              // Per-prayer toggles (expandable)
+              ExpansionTile(
+                leading: Icon(Icons.checklist, color: Colors.grey[600]),
+                title: const Text('Prayer Selection'),
+                subtitle: Text(_getEnabledPrayersText()),
+                children: [
+                  for (final prayer in ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'])
+                    SwitchListTile(
+                      title: Text(prayer),
+                      value: _prayerAdhansEnabled[prayer] ?? true,
+                      dense: true,
+                      activeTrackColor: primaryColor.withValues(alpha: 0.5),
+                      activeThumbColor: primaryColor,
+                      onChanged: (value) async {
+                        setState(() => _prayerAdhansEnabled[prayer] = value);
+                        await _adhanService.setPrayerEnabled(prayer, value);
+                      },
+                    ),
+                ],
+              ),
+
+              const Divider(height: 1),
+
+              // Pre-reminder toggle
+              SwitchListTile(
+                secondary: Icon(Icons.alarm, color: Colors.grey[600]),
+                title: const Text('Pre-Prayer Reminder'),
+                subtitle: Text(
+                  _preReminderEnabled
+                      ? '$_preReminderMinutes minutes before adhan'
+                      : 'Get reminded before prayer time',
+                ),
+                value: _preReminderEnabled,
+                activeTrackColor: primaryColor.withValues(alpha: 0.5),
+                activeThumbColor: primaryColor,
+                onChanged: (value) async {
+                  setState(() => _preReminderEnabled = value);
+                  await _adhanService.setPreReminder(value, _preReminderMinutes);
+                },
+              ),
+
+              if (_preReminderEnabled)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Text('Minutes before: '),
+                      const SizedBox(width: 8),
+                      DropdownButton<int>(
+                        value: _preReminderMinutes,
+                        items: AdhanSettings.preReminderOptions
+                            .map((m) => DropdownMenuItem(value: m, child: Text('$m')))
+                            .toList(),
+                        onChanged: (value) async {
+                          if (value != null) {
+                            setState(() => _preReminderMinutes = value);
+                            await _adhanService.setPreReminder(true, value);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+              const Divider(height: 1),
+
+              // Advanced settings link
+              ListTile(
+                leading: Icon(Icons.settings, color: Colors.grey[600]),
+                title: const Text('Advanced Adhan Settings'),
+                subtitle: const Text('Fajr sound, volume, and more'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdhanSettingsScreen()),
+                ).then((_) => _loadAdhanSettings()),
               ),
             ],
           ],
@@ -650,6 +792,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  String _getEnabledPrayersText() {
+    final enabled = _prayerAdhansEnabled.entries
+        .where((e) => e.value)
+        .map((e) => e.key)
+        .toList();
+    if (enabled.length == 5) return 'All 5 prayers enabled';
+    if (enabled.isEmpty) return 'No prayers enabled';
+    return '${enabled.length} prayers enabled';
+  }
+
+  void _showAdhanSoundPicker() {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+        return Container(
+          padding: EdgeInsets.only(bottom: bottomPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Select Adhan Sound',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              ...AdhanSoundCatalog.regularSounds.map((sound) {
+                final isSelected = _selectedAdhanSound == sound.id;
+                return ListTile(
+                  leading: isSelected
+                      ? Icon(Icons.check_circle, color: primaryColor)
+                      : Icon(Icons.circle_outlined, color: Colors.grey[400]),
+                  title: Text(
+                    sound.name,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected ? primaryColor : null,
+                    ),
+                  ),
+                  subtitle: Text(sound.nameArabic),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.play_circle_outline),
+                    onPressed: () => _adhanService.previewSound(sound),
+                  ),
+                  onTap: () async {
+                    setState(() => _selectedAdhanSound = sound.id);
+                    await _adhanService.setSelectedSound(sound.id);
+                    if (mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    ).then((_) => _adhanService.stopPreview());
   }
 
   void _showAsrMethodPicker() {

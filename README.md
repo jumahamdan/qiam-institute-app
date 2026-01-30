@@ -168,17 +168,20 @@ flutter build ios --release
 
 The project uses GitHub Actions for continuous integration and deployment.
 
-### Automated Builds
+### Workflow Triggers
 
-Every push to a branch triggers:
-1. **Test Suite** — Runs all Flutter tests
-2. **Release Build** — Builds signed APK and AAB (skipped for pull requests)
+| Event | Tests | SonarCloud | Build | Distribute |
+|-------|-------|------------|-------|------------|
+| Feature branch push | ✅ | ❌ | ❌ | ❌ |
+| Pull Request | ✅ | ✅ | ❌ | ❌ |
+| Merge to `develop` | ✅ | ✅ | ✅ | ✅ (developers) |
+| Merge to `master` | ✅ | ✅ | ✅ | ✅ (testers) |
 
 ### Firebase App Distribution
 
-Builds are automatically distributed to testers:
-- **`develop` branch** — Sent to `qiam-developers` group
-- **`master` branch** — Sent to `qiam-testers` group
+Builds are automatically distributed:
+- **`develop` branch** — Sent to `qiam-developers` group (internal testing)
+- **`master` branch** — Sent to `qiam-testers` group (release candidates)
 
 ### Required Secrets
 

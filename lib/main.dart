@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'app.dart';
+import 'services/adhan/adhan_notification_service.dart';
 import 'services/notification/notification_service.dart';
 import 'utils/orientation_helper.dart';
 
@@ -23,6 +24,9 @@ void main() async {
 
     // Initialize notification service
     await NotificationService().initialize();
+
+    // Initialize adhan notification service
+    await AdhanNotificationService().initialize();
   } catch (e) {
     // Log error but don't crash - app can still run without notifications
     debugPrint('Error initializing Firebase/notifications: $e');
@@ -42,5 +46,11 @@ Future<void> _requestPermissions() async {
   final notificationStatus = await Permission.notification.status;
   if (notificationStatus.isDenied) {
     await Permission.notification.request();
+  }
+
+  // Request exact alarm permission (Android 14+) for adhan scheduling
+  final exactAlarmStatus = await Permission.scheduleExactAlarm.status;
+  if (exactAlarmStatus.isDenied) {
+    await Permission.scheduleExactAlarm.request();
   }
 }
