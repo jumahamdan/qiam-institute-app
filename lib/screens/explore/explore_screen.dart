@@ -87,10 +87,10 @@ class ExploreScreen extends StatelessWidget {
                   ),
                   _ExploreCard(
                     customIcon: _DuaExploreIcon(color: const Color(0xFF9C27B0)),
-                    title: 'Daily Duaa',
+                    title: 'Daily Dua',
                     subtitle: 'Supplications',
                     color: const Color(0xFF9C27B0),
-                    onTap: () => _navigate(context, 15, 'Daily Duaa', '/duaa'),
+                    onTap: () => _navigate(context, 15, 'Daily Dua', '/dua'),
                   ),
                   _ExploreCard(
                     customIcon: _TasbihExploreIcon(color: const Color(0xFF00695C)),

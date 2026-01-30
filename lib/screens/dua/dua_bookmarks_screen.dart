@@ -1,25 +1,45 @@
 import 'package:flutter/material.dart';
-import '../../models/duaa.dart';
-import '../../services/duaa/duaa_service.dart';
-import 'duaa_detail_screen.dart';
+import 'package:muslim_data_flutter/muslim_data_flutter.dart';
+import '../../services/dua/dua_service.dart';
+import 'dua_detail_screen.dart';
 
-class DuaaBookmarksScreen extends StatefulWidget {
-  const DuaaBookmarksScreen({super.key});
+class DuaBookmarksScreen extends StatefulWidget {
+  const DuaBookmarksScreen({super.key});
 
   @override
-  State<DuaaBookmarksScreen> createState() => _DuaaBookmarksScreenState();
+  State<DuaBookmarksScreen> createState() => _DuaBookmarksScreenState();
 }
 
-class _DuaaBookmarksScreenState extends State<DuaaBookmarksScreen> {
-  final DuaaService _duaaService = DuaaService();
+class _DuaBookmarksScreenState extends State<DuaBookmarksScreen> {
+  final DuaService _duaService = DuaService();
+  List<AzkarChapter> _bookmarkedChapters = [];
+  bool _isLoading = true;
 
-  void _openDuaaDetail(Duaa duaa) {
+  @override
+  void initState() {
+    super.initState();
+    _loadBookmarks();
+  }
+
+  Future<void> _loadBookmarks() async {
+    final chapters = await _duaService.getBookmarkedChapters();
+    if (mounted) {
+      setState(() {
+        _bookmarkedChapters = chapters;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _openDuaDetail(AzkarChapter chapter) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DuaaDetailScreen(
-          duaa: duaa,
-          onBookmarkChanged: () => setState(() {}),
+        builder: (context) => DuaDetailScreen(
+          chapter: chapter,
+          onBookmarkChanged: () {
+            _loadBookmarks();
+          },
         ),
       ),
     );
@@ -27,29 +47,35 @@ class _DuaaBookmarksScreenState extends State<DuaaBookmarksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bookmarkedDuaas = _duaaService.getBookmarkedDuaas();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bookmarks'),
       ),
-      body: bookmarkedDuaas.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: bookmarkedDuaas.length,
-              itemBuilder: (context, index) {
-                final duaa = bookmarkedDuaas[index];
-                return _BookmarkDuaaCard(
-                  duaa: duaa,
-                  onTap: () => _openDuaaDetail(duaa),
-                  onRemove: () async {
-                    await _duaaService.toggleBookmark(duaa.id);
-                    setState(() {});
-                  },
-                );
-              },
-            ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_bookmarkedChapters.isEmpty) {
+      return _buildEmptyState();
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _bookmarkedChapters.length,
+      itemBuilder: (context, index) {
+        final chapter = _bookmarkedChapters[index];
+        return _BookmarkDuaCard(
+          chapter: chapter,
+          onTap: () => _openDuaDetail(chapter),
+          onRemove: () async {
+            await _duaService.toggleBookmark(chapter.id);
+            _loadBookmarks();
+          },
+        );
+      },
     );
   }
 
@@ -74,7 +100,7 @@ class _DuaaBookmarksScreenState extends State<DuaaBookmarksScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Tap the bookmark icon on any duaa to save it here for quick access.',
+              'Tap the bookmark icon on any dua to save it here for quick access.',
               style: TextStyle(color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
@@ -85,13 +111,13 @@ class _DuaaBookmarksScreenState extends State<DuaaBookmarksScreen> {
   }
 }
 
-class _BookmarkDuaaCard extends StatelessWidget {
-  final Duaa duaa;
+class _BookmarkDuaCard extends StatelessWidget {
+  final AzkarChapter chapter;
   final VoidCallback onTap;
   final VoidCallback onRemove;
 
-  const _BookmarkDuaaCard({
-    required this.duaa,
+  const _BookmarkDuaCard({
+    required this.chapter,
     required this.onTap,
     required this.onRemove,
   });
@@ -122,28 +148,14 @@ class _BookmarkDuaaCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      duaa.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      duaa.arabic,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.rtl,
-                    ),
-                  ],
+                child: Text(
+                  chapter.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(

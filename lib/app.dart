@@ -10,7 +10,7 @@ import 'screens/volunteer/volunteer_screen.dart';
 import 'screens/values/values_screen.dart';
 import 'screens/media/media_screen.dart';
 import 'screens/islamic_calendar/islamic_calendar_screen.dart';
-import 'screens/duaa/duaa_screen.dart';
+import 'screens/dua/dua_screen.dart';
 import 'screens/quran/quran_screen.dart';
 import 'screens/tasbih/tasbih_screen.dart';
 import 'screens/names_of_allah/names_screen.dart';
@@ -37,7 +37,7 @@ class QiamApp extends StatelessWidget {
         '/media': (context) => const MediaScreen(),
         '/qibla': (context) => const QiblaScreen(),
         '/islamic-calendar': (context) => const IslamicCalendarScreen(),
-        '/duaa': (context) => const DuaaScreen(),
+        '/dua': (context) => const DuaScreen(),
         '/quran': (context) => const QuranScreen(),
         '/tasbih': (context) => const TasbihScreen(),
         '/names-of-allah': (context) => const NamesOfAllahScreen(),
@@ -60,7 +60,7 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   // Main tabs: 0 = Home, 1 = Explore, 2 = Prayers, 3 = More (bottom sheet)
   // Secondary screens (keep bottom nav visible):
-  // 10 = Events, 11 = Values, 12 = Media, 13 = Volunteer, 14 = Qibla, 15 = Duaa, 16 = Islamic Calendar
+  // 10 = Events, 11 = Values, 12 = Media, 13 = Volunteer, 14 = Qibla, 15 = Dua, 16 = Islamic Calendar
   // 17 = Quran, 18 = Tasbih, 19 = Names of Allah, 23 = Hadith
   // 20 = About, 21 = Contact, 22 = Settings
   int _selectedIndex = 0;
@@ -172,7 +172,7 @@ class _MainNavigationState extends State<MainNavigation> {
       case 14:
         return const QiblaScreen();
       case 15:
-        return DuaaScreen(
+        return DuaScreen(
           isSearchActive: _duaSearchActive,
           onSearchClose: () => setState(() => _duaSearchActive = false),
         );

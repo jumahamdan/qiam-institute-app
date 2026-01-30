@@ -53,6 +53,9 @@ dependencies:
   android_alarm_manager_plus: ^4.0.3
   flutter_foreground_task: ^6.1.3
 
+  # Islamic content - Hisnul Muslim duas
+  muslim_data_flutter: ^1.5.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
