@@ -658,6 +658,28 @@ class _DuaIcon extends StatelessWidget {
   }
 }
 
+/// Creates an 8-pointed star (Rub el Hizb) path
+Path _createEightPointedStarPath(Offset center, double outerRadius, double innerRadius) {
+  final path = Path();
+  const int points = 8;
+  const double startAngle = -math.pi / 2;
+
+  for (int i = 0; i < points * 2; i++) {
+    final radius = i.isEven ? outerRadius : innerRadius;
+    final angle = startAngle + (i * math.pi / points);
+    final x = center.dx + radius * math.cos(angle);
+    final y = center.dy + radius * math.sin(angle);
+
+    if (i == 0) {
+      path.moveTo(x, y);
+    } else {
+      path.lineTo(x, y);
+    }
+  }
+  path.close();
+  return path;
+}
+
 /// Custom painter for Dua icon with star, crescent, and hands
 class _DuaIconPainter extends CustomPainter {
   final Color starColor;
@@ -678,23 +700,7 @@ class _DuaIconPainter extends CustomPainter {
     final outerRadius = size.width * 0.45;
     final innerRadius = outerRadius * 0.55;
 
-    final starPath = Path();
-    const int points = 8;
-    const double startAngle = -math.pi / 2;
-
-    for (int i = 0; i < points * 2; i++) {
-      final radius = i.isEven ? outerRadius : innerRadius;
-      final angle = startAngle + (i * math.pi / points);
-      final x = center.dx + radius * math.cos(angle);
-      final y = center.dy + radius * math.sin(angle);
-
-      if (i == 0) {
-        starPath.moveTo(x, y);
-      } else {
-        starPath.lineTo(x, y);
-      }
-    }
-    starPath.close();
+    final starPath = _createEightPointedStarPath(center, outerRadius, innerRadius);
     canvas.drawPath(starPath, starPaint);
 
     // Draw crescent moon
@@ -740,51 +746,28 @@ class _DuaIconPainter extends CustomPainter {
 
   void _drawOpenHand(Canvas canvas, Offset center, double size, Paint paint, bool isLeft) {
     final path = Path();
-
-    // Palm
     final palmWidth = size * 0.6;
     final palmHeight = size * 0.5;
 
-    if (isLeft) {
-      // Left hand palm
+    // Palm (same for both hands)
+    path.addRRect(RRect.fromRectAndRadius(
+      Rect.fromCenter(center: Offset(center.dx, center.dy + size * 0.1), width: palmWidth, height: palmHeight),
+      Radius.circular(palmWidth * 0.2),
+    ));
+
+    // Fingers - heights differ based on hand orientation
+    final fingerWidth = palmWidth * 0.18;
+    final fingerSpacing = palmWidth * 0.2;
+    final baseHeights = [size * 0.35, size * 0.45, size * 0.5, size * 0.42, size * 0.28];
+    final fingerHeights = isLeft ? baseHeights : baseHeights.reversed.toList();
+
+    for (int i = 0; i < 5; i++) {
+      final fingerX = center.dx - palmWidth * 0.4 + (i * fingerSpacing);
+      final fingerY = center.dy - palmHeight * 0.3 - fingerHeights[i] * 0.5;
       path.addRRect(RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx, center.dy + size * 0.1), width: palmWidth, height: palmHeight),
-        Radius.circular(palmWidth * 0.2),
+        Rect.fromCenter(center: Offset(fingerX, fingerY), width: fingerWidth, height: fingerHeights[i]),
+        Radius.circular(fingerWidth * 0.5),
       ));
-
-      // Fingers (5 rounded rectangles)
-      final fingerWidth = palmWidth * 0.18;
-      final fingerSpacing = palmWidth * 0.2;
-      final fingerHeights = [size * 0.35, size * 0.45, size * 0.5, size * 0.42, size * 0.28];
-
-      for (int i = 0; i < 5; i++) {
-        final fingerX = center.dx - palmWidth * 0.4 + (i * fingerSpacing);
-        final fingerY = center.dy - palmHeight * 0.3 - fingerHeights[i] * 0.5;
-        path.addRRect(RRect.fromRectAndRadius(
-          Rect.fromCenter(center: Offset(fingerX, fingerY), width: fingerWidth, height: fingerHeights[i]),
-          Radius.circular(fingerWidth * 0.5),
-        ));
-      }
-    } else {
-      // Right hand palm
-      path.addRRect(RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(center.dx, center.dy + size * 0.1), width: palmWidth, height: palmHeight),
-        Radius.circular(palmWidth * 0.2),
-      ));
-
-      // Fingers
-      final fingerWidth = palmWidth * 0.18;
-      final fingerSpacing = palmWidth * 0.2;
-      final fingerHeights = [size * 0.28, size * 0.42, size * 0.5, size * 0.45, size * 0.35];
-
-      for (int i = 0; i < 5; i++) {
-        final fingerX = center.dx - palmWidth * 0.4 + (i * fingerSpacing);
-        final fingerY = center.dy - palmHeight * 0.3 - fingerHeights[i] * 0.5;
-        path.addRRect(RRect.fromRectAndRadius(
-          Rect.fromCenter(center: Offset(fingerX, fingerY), width: fingerWidth, height: fingerHeights[i]),
-          Radius.circular(fingerWidth * 0.5),
-        ));
-      }
     }
 
     canvas.drawPath(path, paint);
@@ -843,25 +826,7 @@ class _RubElHizbPainter extends CustomPainter {
     final outerRadius = size.width / 2 * 0.92;
     final innerRadius = outerRadius * 0.55;
 
-    // Draw 8-pointed star with alternating outer and inner points
-    final path = Path();
-    const int points = 8;
-    const double startAngle = -math.pi / 2; // Start from top
-
-    for (int i = 0; i < points * 2; i++) {
-      final radius = i.isEven ? outerRadius : innerRadius;
-      final angle = startAngle + (i * math.pi / points);
-      final x = center.dx + radius * math.cos(angle);
-      final y = center.dy + radius * math.sin(angle);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-
+    final path = _createEightPointedStarPath(center, outerRadius, innerRadius);
     canvas.drawPath(path, paint);
   }
 
