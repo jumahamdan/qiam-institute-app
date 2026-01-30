@@ -62,8 +62,14 @@ class _DuaBookmarksScreenState extends State<DuaBookmarksScreen> {
     if (_bookmarkedChapters.isEmpty) {
       return _buildEmptyState();
     }
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16 + bottomSafeArea,
+      ),
       itemCount: _bookmarkedChapters.length,
       itemBuilder: (context, index) {
         final chapter = _bookmarkedChapters[index];

@@ -209,8 +209,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
 
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.only(top: 8, bottom: 8 + bottomSafeArea),
       children: [
         // ========== LOCATION SECTION ==========
         _buildSectionCard(

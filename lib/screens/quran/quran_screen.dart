@@ -128,20 +128,25 @@ class _QuranScreenState extends State<QuranScreen> {
                       ],
                     ),
                   )
-                : ListView.builder(
-                    padding: EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      top: _isSearching || _lastReadPosition == null ? 16 : 0,
-                      bottom: 16,
-                    ),
-                    itemCount: _filteredSurahs.length,
-                    itemBuilder: (context, index) {
-                      final surah = _filteredSurahs[index];
-                      return _SurahListItem(
-                        surah: surah,
-                        primaryColor: primaryColor,
-                        onTap: () => _openSurah(surah),
+                : Builder(
+                    builder: (context) {
+                      final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+                      return ListView.builder(
+                        padding: EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                          top: _isSearching || _lastReadPosition == null ? 16 : 0,
+                          bottom: 16 + bottomSafeArea,
+                        ),
+                        itemCount: _filteredSurahs.length,
+                        itemBuilder: (context, index) {
+                          final surah = _filteredSurahs[index];
+                          return _SurahListItem(
+                            surah: surah,
+                            primaryColor: primaryColor,
+                            onTap: () => _openSurah(surah),
+                          );
+                        },
                       );
                     },
                   ),
