@@ -114,26 +114,30 @@ class _DuaScreenState extends State<DuaScreen> with SingleTickerProviderStateMix
           )
         else
           // Top Cards Section
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Column(
-              children: [
-                // Dua of the Day Card
-                _DuaOfTheDayCard(
-                  chapter: _duaService.getDuaOfTheDay(),
-                  onTap: () {
-                    final chapter = _duaService.getDuaOfTheDay();
-                    if (chapter != null) _openDuaDetail(chapter);
-                  },
+          Builder(
+            builder: (context) {
+              final duaOfTheDay = _duaService.getDuaOfTheDay();
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Column(
+                  children: [
+                    // Dua of the Day Card
+                    _DuaOfTheDayCard(
+                      chapter: duaOfTheDay,
+                      onTap: () {
+                        if (duaOfTheDay != null) _openDuaDetail(duaOfTheDay);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    // Bookmarks Card
+                    _BookmarksCard(
+                      count: _duaService.bookmarkCount,
+                      onTap: _openBookmarks,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                // Bookmarks Card
-                _BookmarksCard(
-                  count: _duaService.bookmarkCount,
-                  onTap: _openBookmarks,
-                ),
-              ],
-            ),
+              );
+            },
           ),
         const SizedBox(height: 8),
 
