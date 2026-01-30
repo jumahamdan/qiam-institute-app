@@ -517,8 +517,8 @@ ${verse.translation}
               child: Builder(
                 builder: (context) {
                   final bottomSafeArea = MediaQuery.of(context).padding.bottom;
-                  // Add extra padding when audio player is visible (~140px) plus safe area
-                  final audioPlayerHeight = _currentPlayingVerse != null ? 140.0 : 0.0;
+                  // Add extra padding when audio player is visible (~180px) plus safe area
+                  final audioPlayerHeight = _currentPlayingVerse != null ? 180.0 : 0.0;
                   return ListView.builder(
                     controller: _scrollController,
                     padding: EdgeInsets.only(
