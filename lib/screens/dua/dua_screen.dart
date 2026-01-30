@@ -273,6 +273,12 @@ class _BookmarksCard extends StatelessWidget {
     required this.onTap,
   });
 
+  String _getSavedDuasText(int count) {
+    if (count == 0) return 'No saved duas';
+    if (count == 1) return '1 saved dua';
+    return '$count saved duas';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -309,9 +315,7 @@ class _BookmarksCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      count == 0
-                          ? 'No saved duas'
-                          : '$count saved dua${count == 1 ? '' : 's'}',
+                      _getSavedDuasText(count),
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 13,

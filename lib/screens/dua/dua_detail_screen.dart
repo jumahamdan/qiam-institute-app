@@ -260,12 +260,18 @@ ${item.translation}
           const SizedBox(width: 8),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _items.isEmpty
-              ? _buildEmptyState()
-              : _buildContent(primaryColor),
+      body: _buildBody(primaryColor),
     );
+  }
+
+  Widget _buildBody(Color primaryColor) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_items.isEmpty) {
+      return _buildEmptyState();
+    }
+    return _buildContent(primaryColor);
   }
 
   Widget _buildEmptyState() {

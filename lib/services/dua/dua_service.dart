@@ -172,30 +172,39 @@ class DuaService {
     }
   }
 
+  /// Keyword to icon mapping for category lookup
+  static const Map<String, String> _categoryIcons = {
+    'morning': '🌅', 'evening': '🌅',
+    'sleep': '🌙', 'waking': '🌙',
+    'prayer': '🕌', 'salah': '🕌',
+    'food': '🍽️', 'eating': '🍽️', 'drinking': '🍽️',
+    'home': '🏠', 'house': '🏠',
+    'travel': '✈️',
+    'bathroom': '🚿', 'toilet': '🚿',
+    'dress': '👔', 'cloth': '👔',
+    'sick': '🏥', 'ill': '🏥', 'pain': '🏥',
+    'death': '⚱️', 'funeral': '⚱️',
+    'rain': '🌧️', 'weather': '🌧️', 'wind': '🌧️',
+    'hajj': '🕋', 'umrah': '🕋',
+    'fear': '💚', 'anxiety': '💚', 'distress': '💚',
+    'forgive': '🤲', 'repent': '🤲',
+    'protect': '🛡️',
+    'quran': '📖',
+    'market': '🏪', 'trade': '🏪',
+    'debt': '💳',
+    'anger': '😤',
+    'mirror': '🪞', 'see': '🪞',
+    'good news': '🎉', 'happy': '🎉',
+  };
+
   /// Get icon for a category based on its name.
   static String getCategoryIcon(String categoryName) {
     final name = categoryName.toLowerCase();
-    if (name.contains('morning') || name.contains('evening')) return '🌅';
-    if (name.contains('sleep') || name.contains('waking')) return '🌙';
-    if (name.contains('prayer') || name.contains('salah')) return '🕌';
-    if (name.contains('food') || name.contains('eating') || name.contains('drinking')) return '🍽️';
-    if (name.contains('home') || name.contains('house')) return '🏠';
-    if (name.contains('travel')) return '✈️';
-    if (name.contains('bathroom') || name.contains('toilet')) return '🚿';
-    if (name.contains('dress') || name.contains('cloth')) return '👔';
-    if (name.contains('sick') || name.contains('ill') || name.contains('pain')) return '🏥';
-    if (name.contains('death') || name.contains('funeral')) return '⚱️';
-    if (name.contains('rain') || name.contains('weather') || name.contains('wind')) return '🌧️';
-    if (name.contains('hajj') || name.contains('umrah')) return '🕋';
-    if (name.contains('fear') || name.contains('anxiety') || name.contains('distress')) return '💚';
-    if (name.contains('forgive') || name.contains('repent')) return '🤲';
-    if (name.contains('protect')) return '🛡️';
-    if (name.contains('quran')) return '📖';
-    if (name.contains('market') || name.contains('trade')) return '🏪';
-    if (name.contains('debt')) return '💳';
-    if (name.contains('anger')) return '😤';
-    if (name.contains('mirror') || name.contains('see')) return '🪞';
-    if (name.contains('good news') || name.contains('happy')) return '🎉';
+    for (final entry in _categoryIcons.entries) {
+      if (name.contains(entry.key)) {
+        return entry.value;
+      }
+    }
     return '📿';
   }
 }

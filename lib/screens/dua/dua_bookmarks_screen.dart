@@ -51,25 +51,31 @@ class _DuaBookmarksScreenState extends State<DuaBookmarksScreen> {
       appBar: AppBar(
         title: const Text('Bookmarks'),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _bookmarkedChapters.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _bookmarkedChapters.length,
-                  itemBuilder: (context, index) {
-                    final chapter = _bookmarkedChapters[index];
-                    return _BookmarkDuaCard(
-                      chapter: chapter,
-                      onTap: () => _openDuaDetail(chapter),
-                      onRemove: () async {
-                        await _duaService.toggleBookmark(chapter.id);
-                        _loadBookmarks();
-                      },
-                    );
-                  },
-                ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_bookmarkedChapters.isEmpty) {
+      return _buildEmptyState();
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _bookmarkedChapters.length,
+      itemBuilder: (context, index) {
+        final chapter = _bookmarkedChapters[index];
+        return _BookmarkDuaCard(
+          chapter: chapter,
+          onTap: () => _openDuaDetail(chapter),
+          onRemove: () async {
+            await _duaService.toggleBookmark(chapter.id);
+            _loadBookmarks();
+          },
+        );
+      },
     );
   }
 
