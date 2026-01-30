@@ -18,23 +18,38 @@ class DuaService {
 
   Set<int> _bookmarkedChapterIds = {};
   bool _isInitialized = false;
+  bool _hadBookmarkMigration = false;
+  String? _initializationError;
 
   bool get isInitialized => _isInitialized;
+
+  /// Returns true if old bookmarks were cleared during migration.
+  /// UI can use this to show a one-time notification to users.
+  bool get hadBookmarkMigration => _hadBookmarkMigration;
+
+  /// Returns initialization error message if initialization failed.
+  String? get initializationError => _initializationError;
 
   /// Initialize the service and load data.
   Future<void> initialize() async {
     if (_isInitialized) return;
 
-    _prefs = await SharedPreferences.getInstance();
-    _muslimRepo = MuslimRepository();
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      _muslimRepo = MuslimRepository();
 
-    // Load bookmarks
-    _loadBookmarks();
+      // Load bookmarks
+      _loadBookmarks();
 
-    // Pre-load categories and chapters
-    await _loadCategories();
+      // Pre-load categories and chapters
+      await _loadCategories();
 
-    _isInitialized = true;
+      _isInitialized = true;
+    } catch (e) {
+      _initializationError = 'Failed to initialize dua service: $e';
+      // Mark as initialized to prevent retry loops, but data will be empty
+      _isInitialized = true;
+    }
   }
 
   void _loadBookmarks() {
@@ -49,8 +64,9 @@ class DuaService {
     // Migrate old bookmarks if present (one-time migration)
     final List<String>? oldBookmarks = _prefs?.getStringList(_bookmarksKey);
     if (oldBookmarks != null && oldBookmarks.isNotEmpty && _bookmarkedChapterIds.isEmpty) {
-      // Old format used sequential IDs, we'll skip migration since data structure changed
-      // Users will need to re-bookmark after upgrade
+      // Old format used sequential IDs, data structure changed so migration not possible
+      // Mark that migration happened so UI can notify user
+      _hadBookmarkMigration = true;
       _prefs?.remove(_bookmarksKey);
     }
   }
@@ -63,19 +79,25 @@ class DuaService {
   }
 
   Future<void> _loadCategories() async {
-    _categories = await _muslimRepo?.getAzkarCategories(language: Language.en);
-    _allChapters = [];
+    try {
+      _categories = await _muslimRepo?.getAzkarCategories(language: Language.en);
+      _allChapters = [];
 
-    if (_categories != null) {
-      for (final category in _categories!) {
-        final chapters = await _muslimRepo?.getAzkarChapters(
-          categoryId: category.id,
-          language: Language.en,
-        );
-        if (chapters != null) {
-          _allChapters!.addAll(chapters);
+      if (_categories != null) {
+        for (final category in _categories!) {
+          final chapters = await _muslimRepo?.getAzkarChapters(
+            categoryId: category.id,
+            language: Language.en,
+          );
+          if (chapters != null) {
+            _allChapters!.addAll(chapters);
+          }
         }
       }
+    } catch (e) {
+      // Log error but don't throw - service will work with empty data
+      _categories = [];
+      _allChapters = [];
     }
   }
 
