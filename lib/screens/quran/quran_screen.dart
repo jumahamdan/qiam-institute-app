@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../services/quran/quran_service.dart';
+import '../../services/quran/quran_audio_service.dart';
+import '../../services/quran/quran_download_service.dart';
 import 'surah_detail_screen.dart';
 
 class QuranScreen extends StatefulWidget {
@@ -12,17 +15,57 @@ class QuranScreen extends StatefulWidget {
 
 class _QuranScreenState extends State<QuranScreen> {
   final QuranService _quranService = QuranService();
+  final QuranAudioService _audioService = QuranAudioService();
+  final QuranDownloadService _downloadService = QuranDownloadService();
   late List<Surah> _surahs;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   Map<String, int>? _lastReadPosition;
 
+  // Download states for surahs
+  Map<int, DownloadStatus> _downloadStatuses = {};
+  String _currentReciterId = 'alafasy';
+  StreamSubscription<DownloadProgress>? _downloadProgressSubscription;
+
   @override
   void initState() {
     super.initState();
     _surahs = _quranService.getAllSurahs();
     _loadLastReadPosition();
+    _loadDownloadStatuses();
+    _setupDownloadListener();
+  }
+
+  void _setupDownloadListener() {
+    _downloadProgressSubscription = _downloadService.progressStream.listen((progress) {
+      if (mounted) {
+        setState(() {
+          _downloadStatuses[progress.surahNumber] = progress.status;
+        });
+      }
+    });
+  }
+
+  Future<void> _loadDownloadStatuses() async {
+    final reciter = await _audioService.getSelectedReciter();
+    _currentReciterId = reciter.id;
+
+    // Load all statuses in parallel using Future.wait
+    final statusFutures = _surahs.map((surah) async {
+      final status = await _downloadService.getSurahDownloadStatus(
+        surah.number,
+        _currentReciterId,
+      );
+      return MapEntry(surah.number, status);
+    });
+
+    final entries = await Future.wait(statusFutures);
+    final statuses = Map<int, DownloadStatus>.fromEntries(entries);
+
+    if (mounted) {
+      setState(() => _downloadStatuses = statuses);
+    }
   }
 
   Future<void> _loadLastReadPosition() async {
@@ -35,6 +78,7 @@ class _QuranScreenState extends State<QuranScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _downloadProgressSubscription?.cancel();
     super.dispose();
   }
 
@@ -58,7 +102,10 @@ class _QuranScreenState extends State<QuranScreen> {
           initialVerse: initialVerse,
         ),
       ),
-    ).then((_) => _loadLastReadPosition());
+    ).then((_) {
+      _loadLastReadPosition();
+      _loadDownloadStatuses(); // Refresh download statuses when returning
+    });
   }
 
   @override
@@ -141,9 +188,12 @@ class _QuranScreenState extends State<QuranScreen> {
                         itemCount: _filteredSurahs.length,
                         itemBuilder: (context, index) {
                           final surah = _filteredSurahs[index];
+                          final downloadStatus = _downloadStatuses[surah.number] ??
+                              DownloadStatus.notDownloaded;
                           return _SurahListItem(
                             surah: surah,
                             primaryColor: primaryColor,
+                            downloadStatus: downloadStatus,
                             onTap: () => _openSurah(surah),
                           );
                         },
@@ -248,11 +298,13 @@ class _LastReadCard extends StatelessWidget {
 class _SurahListItem extends StatelessWidget {
   final Surah surah;
   final Color primaryColor;
+  final DownloadStatus downloadStatus;
   final VoidCallback onTap;
 
   const _SurahListItem({
     required this.surah,
     required this.primaryColor,
+    required this.downloadStatus,
     required this.onTap,
   });
 
@@ -278,12 +330,35 @@ class _SurahListItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      surah.nameTransliteration,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          surah.nameTransliteration,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                        // Download indicator
+                        if (downloadStatus == DownloadStatus.downloaded) ...[
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.download_done,
+                            size: 14,
+                            color: Colors.green[600],
+                          ),
+                        ] else if (downloadStatus == DownloadStatus.downloading) ...[
+                          const SizedBox(width: 6),
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Row(

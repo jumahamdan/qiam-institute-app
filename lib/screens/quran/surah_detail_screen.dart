@@ -4,8 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../models/audio_playback_settings.dart';
 import '../../services/quran/quran_service.dart';
 import '../../services/quran/quran_audio_service.dart';
+import '../../services/quran/quran_download_service.dart';
+import 'reading_mode_view.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   final Surah surah;
@@ -24,6 +27,7 @@ class SurahDetailScreen extends StatefulWidget {
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   final QuranService _quranService = QuranService();
   final QuranAudioService _audioService = QuranAudioService();
+  final QuranDownloadService _downloadService = QuranDownloadService();
   late List<Verse> _verses;
   late ScrollController _scrollController;
   Set<String> _bookmarks = {};
@@ -33,20 +37,36 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   // GlobalKeys for verse cards to enable precise scrolling
   late Map<int, GlobalKey> _verseKeys;
 
+  // View mode
+  static const String _readingModeKey = 'quran_reading_mode';
+  bool _isReadingMode = false;
+
   // Audio state
   Reciter _currentReciter = QuranAudioService.reciters.first;
   bool _isPlaying = false;
   bool _isLoading = false;
   int? _currentPlayingVerse;
-  int? _playlistStartVerse; // Track where playlist started for correct verse calculation
+  int? _playlistStartVerse;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
 
-  // Stream subscriptions (to cancel in dispose)
+  // Repeat state
+  RepeatCount _verseRepeatCount = RepeatCount.off;
+  int _currentRepeatIteration = 0;
+  AudioPlaybackRange _range = AudioPlaybackRange.disabled;
+  bool _showRepeatControls = false;
+
+  // Download state
+  DownloadStatus _downloadStatus = DownloadStatus.notDownloaded;
+  DownloadProgress? _downloadProgress;
+
+  // Stream subscriptions
   StreamSubscription<PlayerState>? _playerStateSubscription;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<Duration?>? _durationSubscription;
   StreamSubscription<int?>? _currentIndexSubscription;
+  StreamSubscription<RepeatState>? _repeatStateSubscription;
+  StreamSubscription<DownloadProgress>? _downloadProgressSubscription;
 
   static const String _arabicFontSizeKey = 'quran_arabic_font_size';
   static const String _translationFontSizeKey = 'quran_translation_font_size';
@@ -56,14 +76,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     super.initState();
     _scrollController = ScrollController();
     _verses = _quranService.getSurahVerses(widget.surah.number);
-    // Initialize GlobalKeys for each verse to enable precise scrolling
     _verseKeys = {for (var v in _verses) v.verseNumber: GlobalKey()};
     _loadSettings();
     _loadBookmarks();
     _loadAudioSettings();
     _setupAudioListeners();
+    _checkDownloadStatus();
 
-    // Scroll to initial verse after build
     if (widget.initialVerse != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToVerse(widget.initialVerse!);
@@ -72,7 +91,6 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   }
 
   void _setupAudioListeners() {
-    // Listen to player state changes
     _playerStateSubscription = _audioService.playerStateStream.listen((state) {
       if (mounted) {
         setState(() {
@@ -80,40 +98,87 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           _isLoading = state.processingState == ProcessingState.loading ||
               state.processingState == ProcessingState.buffering;
         });
+
+        // Handle verse completion for single verse playback only
+        // Playlist playback is handled internally by the audio service
+        if (state.processingState == ProcessingState.completed &&
+            _currentPlayingVerse != null &&
+            _playlistStartVerse == null) {
+          _handleVerseComplete();
+        }
       }
     });
 
-    // Listen to position changes
     _positionSubscription = _audioService.positionStream.listen((position) {
       if (mounted) {
         setState(() => _position = position);
       }
     });
 
-    // Listen to duration changes
     _durationSubscription = _audioService.durationStream.listen((duration) {
       if (mounted && duration != null) {
         setState(() => _duration = duration);
       }
     });
 
-    // Listen to current index changes (for playlist)
     _currentIndexSubscription = _audioService.currentIndexStream.listen((index) {
       if (mounted && index != null && _playlistStartVerse != null) {
-        // Update current playing verse based on playlist index and start verse
         setState(() {
           _currentPlayingVerse = _playlistStartVerse! + index;
         });
-        // Auto-scroll to current verse
         _scrollToVerse(_currentPlayingVerse!);
+      }
+    });
+
+    _repeatStateSubscription = _audioService.repeatStateStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _verseRepeatCount = state.verseRepeatCount;
+          _currentRepeatIteration = state.currentVerseIteration;
+          _range = state.range;
+        });
+      }
+    });
+
+    _downloadProgressSubscription = _downloadService.progressStream.listen((progress) {
+      if (mounted && progress.surahNumber == widget.surah.number) {
+        setState(() {
+          _downloadProgress = progress;
+          _downloadStatus = progress.status;
+        });
       }
     });
   }
 
+  Future<void> _handleVerseComplete() async {
+    if (_currentPlayingVerse == null) return;
+
+    final shouldReplay = await _audioService.handleVerseComplete(_currentPlayingVerse!);
+    if (shouldReplay && mounted) {
+      await _audioService.replayCurrentVerse();
+    }
+  }
+
+  Future<void> _checkDownloadStatus() async {
+    final status = await _downloadService.getSurahDownloadStatus(
+      widget.surah.number,
+      _currentReciter.id,
+    );
+    if (mounted) {
+      setState(() => _downloadStatus = status);
+    }
+  }
+
   Future<void> _loadAudioSettings() async {
     final reciter = await _audioService.getSelectedReciter();
+    // Initialize repeat settings in the service (syncs in-memory state)
+    await _audioService.initializeRepeatSettings();
+    final repeatCount = _audioService.verseRepeatCount;
     if (mounted) {
-      setState(() => _currentReciter = reciter);
+      setState(() {
+        _currentReciter = reciter;
+        _verseRepeatCount = repeatCount;
+      });
     }
   }
 
@@ -122,6 +187,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     setState(() {
       _arabicFontSize = prefs.getDouble(_arabicFontSizeKey) ?? 28.0;
       _translationFontSize = prefs.getDouble(_translationFontSizeKey) ?? 14.0;
+      _isReadingMode = prefs.getBool(_readingModeKey) ?? false;
     });
   }
 
@@ -131,24 +197,29 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     await prefs.setDouble(_translationFontSizeKey, _translationFontSize);
   }
 
+  Future<void> _setReadingMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_readingModeKey, value);
+    setState(() => _isReadingMode = value);
+  }
+
   Future<void> _loadBookmarks() async {
     final bookmarks = await _quranService.getBookmarks();
     setState(() => _bookmarks = bookmarks.toSet());
   }
 
   void _scrollToVerse(int verseNumber) {
+    if (_isReadingMode) return; // Reading mode handles its own scrolling
+
     final key = _verseKeys[verseNumber];
     if (key?.currentContext != null) {
-      // Use Scrollable.ensureVisible with alignment 0.3 to position verse
-      // 30% from top, preventing it from being hidden behind bottom nav/audio bar
       Scrollable.ensureVisible(
         key!.currentContext!,
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
-        alignment: 0.3, // Position verse 30% from top of viewport
+        alignment: 0.3,
       );
     } else {
-      // Fallback to approximate position if key not yet available
       final position = (verseNumber - 1) * 150.0;
       _scrollController.animateTo(
         position,
@@ -221,7 +292,7 @@ ${verse.translation}
     try {
       setState(() {
         _currentPlayingVerse = startVerse;
-        _playlistStartVerse = startVerse; // Track where playlist started
+        _playlistStartVerse = startVerse;
         _isLoading = true;
       });
       await _audioService.playSurah(
@@ -341,9 +412,9 @@ ${verse.translation}
                       onTap: () async {
                         await _audioService.setSelectedReciter(reciter.id);
                         setState(() => _currentReciter = reciter);
+                        _checkDownloadStatus();
                         if (!context.mounted) return;
                         Navigator.pop(context);
-                        // If currently playing, restart with new reciter
                         if (_isPlaying && _currentPlayingVerse != null) {
                           await _playSurahFromVerse(_currentPlayingVerse!);
                         }
@@ -393,7 +464,6 @@ ${verse.translation}
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Arabic Font Size
                   Row(
                     children: [
                       const Text('Arabic'),
@@ -413,7 +483,6 @@ ${verse.translation}
                       Text('${_arabicFontSize.round()}'),
                     ],
                   ),
-                  // Translation Font Size
                   Row(
                     children: [
                       const Text('Translation'),
@@ -454,13 +523,130 @@ ${verse.translation}
     );
   }
 
+  void _showDownloadDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (dialogContext) {
+        return StreamBuilder<DownloadProgress>(
+          stream: _downloadService.progressStream,
+          builder: (context, snapshot) {
+            // Use snapshot data if available and matches this surah
+            final progress = snapshot.data?.surahNumber == widget.surah.number
+                ? snapshot.data
+                : _downloadProgress;
+            final status = progress?.status ?? _downloadStatus;
+
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Download ${widget.surah.nameTransliteration}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Reciter: ${_currentReciter.name}',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 24),
+                  if (status == DownloadStatus.downloading && progress != null) ...[
+                    LinearProgressIndicator(
+                      value: progress.progress,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      progress.progressText,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton(
+                      onPressed: () {
+                        _downloadService.cancelDownload(
+                          widget.surah.number,
+                          _currentReciter.id,
+                        );
+                        Navigator.pop(dialogContext);
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                  ] else if (status == DownloadStatus.downloaded) ...[
+                    Icon(Icons.check_circle, color: Colors.green[600], size: 48),
+                    const SizedBox(height: 8),
+                    const Text('Downloaded for offline playback'),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await _downloadService.deleteSurahDownload(
+                          widget.surah.number,
+                          _currentReciter.id,
+                        );
+                        _checkDownloadStatus();
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Delete Download'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
+                    ),
+                  ] else ...[
+                    Icon(Icons.download_outlined,
+                        color: Theme.of(context).colorScheme.primary, size: 48),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Download ${widget.surah.verseCount} verses for offline listening',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _downloadService.downloadSurah(
+                          widget.surah.number,
+                          widget.surah.verseCount,
+                          _currentReciter.id,
+                        );
+                        setState(() => _downloadStatus = DownloadStatus.downloading);
+                        // Don't close dialog - let StreamBuilder update UI
+                      },
+                      icon: const Icon(Icons.download),
+                      label: const Text('Download'),
+                    ),
+                  ],
+                  SizedBox(height: MediaQuery.of(context).viewPadding.bottom),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
-    // Cancel all stream subscriptions
     _playerStateSubscription?.cancel();
     _positionSubscription?.cancel();
     _durationSubscription?.cancel();
     _currentIndexSubscription?.cancel();
+    _repeatStateSubscription?.cancel();
+    _downloadProgressSubscription?.cancel();
     _scrollController.dispose();
     _audioService.stop();
     super.dispose();
@@ -487,6 +673,33 @@ ${verse.translation}
           ],
         ),
         actions: [
+          // Download button with status indicator
+          IconButton(
+            icon: Stack(
+              children: [
+                Icon(
+                  _downloadStatus == DownloadStatus.downloaded
+                      ? Icons.download_done
+                      : Icons.download_outlined,
+                ),
+                if (_downloadStatus == DownloadStatus.downloading)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        value: _downloadProgress?.progress,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: _showDownloadDialog,
+            tooltip: 'Download for offline',
+          ),
           IconButton(
             icon: const Icon(Icons.record_voice_over),
             onPressed: _showReciterSelector,
@@ -501,12 +714,34 @@ ${verse.translation}
       ),
       body: Column(
         children: [
+          // View mode toggle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment(
+                  value: false,
+                  label: Text('Verse by Verse'),
+                  icon: Icon(Icons.list),
+                ),
+                ButtonSegment(
+                  value: true,
+                  label: Text('Reading Mode'),
+                  icon: Icon(Icons.auto_stories),
+                ),
+              ],
+              selected: {_isReadingMode},
+              onSelectionChanged: (selected) {
+                _setReadingMode(selected.first);
+              },
+            ),
+          ),
+
           // Main content
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
-                // Save last read position on scroll
-                if (notification is ScrollEndNotification) {
+                if (notification is ScrollEndNotification && !_isReadingMode) {
                   final visibleVerse = (_scrollController.offset / 150).round() + 1;
                   if (visibleVerse > 0 && visibleVerse <= _verses.length) {
                     _saveLastRead(visibleVerse);
@@ -514,64 +749,20 @@ ${verse.translation}
                 }
                 return false;
               },
-              child: Builder(
-                builder: (context) {
-                  final bottomSafeArea = MediaQuery.of(context).padding.bottom;
-                  // Add extra padding when audio player is visible (~180px) plus safe area
-                  final audioPlayerHeight = _currentPlayingVerse != null ? 180.0 : 0.0;
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: EdgeInsets.only(
-                      top: 16,
-                      left: 16,
-                      right: 16,
-                      bottom: 16 + bottomSafeArea + audioPlayerHeight,
-                    ),
-                    itemCount: _verses.length + 1, // +1 for Basmala header
-                    itemBuilder: (context, index) {
-                      // Basmala header (except for At-Tawbah)
-                      if (index == 0) {
-                        return _SurahHeader(
-                          surah: widget.surah,
-                          showBasmala: _quranService.surahHasBasmala(widget.surah.number),
-                          basmala: _quranService.getBasmala(),
-                          primaryColor: primaryColor,
-                          arabicFontSize: _arabicFontSize,
-                          onPlayFromStart: () => _playSurahFromVerse(1),
-                          isPlaying: _isPlaying && _currentPlayingVerse == 1,
-                          isLoading: _isLoading && _currentPlayingVerse == 1,
-                        );
-                      }
-
-                      final verse = _verses[index - 1];
-                      final isBookmarked = _bookmarks.contains(
-                        '${widget.surah.number}:${verse.verseNumber}',
-                      );
-                      final isCurrentlyPlaying = _currentPlayingVerse == verse.verseNumber;
-
-                      return _VerseCard(
-                        key: _verseKeys[verse.verseNumber],
-                        verse: verse,
-                        isBookmarked: isBookmarked,
-                        arabicFontSize: _arabicFontSize,
-                        translationFontSize: _translationFontSize,
-                        primaryColor: primaryColor,
-                        isPlaying: _isPlaying && isCurrentlyPlaying,
-                        isLoading: _isLoading && isCurrentlyPlaying,
-                        onBookmarkToggle: () => _toggleBookmark(verse.verseNumber),
-                        onShare: () => _shareVerse(verse),
-                        onCopy: () => _copyVerse(verse),
-                        onPlay: () => _playVerse(verse.verseNumber),
-                        onPlayFromHere: () => _playSurahFromVerse(verse.verseNumber),
-                      );
-                    },
-                  );
-                },
-              ),
+              child: _isReadingMode
+                  ? ReadingModeView(
+                      verses: _verses,
+                      arabicFontSize: _arabicFontSize,
+                      currentPlayingVerse: _currentPlayingVerse,
+                      primaryColor: primaryColor,
+                      scrollController: _scrollController,
+                      onVerseTap: (verse) => _playVerse(verse),
+                    )
+                  : _buildVerseByVerseView(primaryColor),
             ),
           ),
 
-          // Audio player bar (show when audio is active)
+          // Audio player bar
           if (_currentPlayingVerse != null)
             _AudioPlayerBar(
               reciterName: _currentReciter.name,
@@ -582,6 +773,10 @@ ${verse.translation}
               position: _position,
               duration: _duration,
               primaryColor: primaryColor,
+              verseRepeatCount: _verseRepeatCount,
+              currentRepeatIteration: _currentRepeatIteration,
+              range: _range,
+              showRepeatControls: _showRepeatControls,
               onPlayPause: _togglePlayPause,
               onStop: _stopAudio,
               onPrevious: () async {
@@ -595,9 +790,71 @@ ${verse.translation}
                 }
               },
               onReciterTap: _showReciterSelector,
+              onToggleRepeatControls: () {
+                setState(() => _showRepeatControls = !_showRepeatControls);
+              },
+              onVerseRepeatChanged: (count) async {
+                await _audioService.setVerseRepeatCount(count);
+              },
+              onRangeChanged: (range) {
+                _audioService.setRange(range);
+              },
+              maxVerse: widget.surah.verseCount,
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVerseByVerseView(Color primaryColor) {
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+    final audioPlayerHeight = _currentPlayingVerse != null ? 180.0 : 0.0;
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: EdgeInsets.only(
+        top: 16,
+        left: 16,
+        right: 16,
+        bottom: 16 + bottomSafeArea + audioPlayerHeight,
+      ),
+      itemCount: _verses.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return _SurahHeader(
+            surah: widget.surah,
+            showBasmala: _quranService.surahHasBasmala(widget.surah.number),
+            basmala: _quranService.getBasmala(),
+            primaryColor: primaryColor,
+            arabicFontSize: _arabicFontSize,
+            onPlayFromStart: () => _playSurahFromVerse(1),
+            isPlaying: _isPlaying && _currentPlayingVerse == 1,
+            isLoading: _isLoading && _currentPlayingVerse == 1,
+          );
+        }
+
+        final verse = _verses[index - 1];
+        final isBookmarked = _bookmarks.contains(
+          '${widget.surah.number}:${verse.verseNumber}',
+        );
+        final isCurrentlyPlaying = _currentPlayingVerse == verse.verseNumber;
+
+        return _VerseCard(
+          key: _verseKeys[verse.verseNumber],
+          verse: verse,
+          isBookmarked: isBookmarked,
+          arabicFontSize: _arabicFontSize,
+          translationFontSize: _translationFontSize,
+          primaryColor: primaryColor,
+          isPlaying: _isPlaying && isCurrentlyPlaying,
+          isLoading: _isLoading && isCurrentlyPlaying,
+          onBookmarkToggle: () => _toggleBookmark(verse.verseNumber),
+          onShare: () => _shareVerse(verse),
+          onCopy: () => _copyVerse(verse),
+          onPlay: () => _playVerse(verse.verseNumber),
+          onPlayFromHere: () => _playSurahFromVerse(verse.verseNumber),
+        );
+      },
     );
   }
 }
@@ -641,7 +898,6 @@ class _SurahHeader extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Surah name in Arabic
           Text(
             surah.nameArabic,
             style: TextStyle(
@@ -652,7 +908,6 @@ class _SurahHeader extends StatelessWidget {
             textDirection: TextDirection.rtl,
           ),
           const SizedBox(height: 8),
-          // English name and meaning
           Text(
             '${surah.nameTransliteration} (${surah.nameEnglish})',
             style: const TextStyle(
@@ -662,7 +917,6 @@ class _SurahHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          // Revelation type and verse count
           Text(
             '${surah.revelationType} • ${surah.verseCount} Verses',
             style: const TextStyle(
@@ -670,7 +924,6 @@ class _SurahHeader extends StatelessWidget {
               fontSize: 13,
             ),
           ),
-          // Play button
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: onPlayFromStart,
@@ -691,7 +944,6 @@ class _SurahHeader extends StatelessWidget {
                 : Icon(isPlaying ? Icons.pause : Icons.play_arrow),
             label: Text(isPlaying ? 'Playing...' : 'Play Surah'),
           ),
-          // Basmala
           if (showBasmala) ...[
             const SizedBox(height: 20),
             Container(
@@ -764,10 +1016,8 @@ class _VerseCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Verse number and actions row
             Row(
               children: [
-                // Verse number badge
                 Container(
                   width: 32,
                   height: 32,
@@ -788,7 +1038,6 @@ class _VerseCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Juz indicator
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -804,7 +1053,6 @@ class _VerseCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Sajdah indicator
                 if (verse.isSajdah) ...[
                   const SizedBox(width: 8),
                   Container(
@@ -824,7 +1072,6 @@ class _VerseCard extends StatelessWidget {
                   ),
                 ],
                 const Spacer(),
-                // Play button
                 IconButton(
                   icon: isLoading
                       ? SizedBox(
@@ -844,7 +1091,6 @@ class _VerseCard extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   tooltip: 'Play verse',
                 ),
-                // Action buttons
                 IconButton(
                   icon: Icon(
                     isBookmarked ? Icons.bookmark : Icons.bookmark_border,
@@ -870,7 +1116,6 @@ class _VerseCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            // Arabic text
             Text(
               verse.textArabic,
               style: TextStyle(
@@ -882,10 +1127,8 @@ class _VerseCard extends StatelessWidget {
               textAlign: TextAlign.right,
             ),
             const SizedBox(height: 16),
-            // Divider
             Divider(color: Colors.grey[200]),
             const SizedBox(height: 12),
-            // Translation
             Text(
               verse.translation,
               style: TextStyle(
@@ -910,11 +1153,19 @@ class _AudioPlayerBar extends StatelessWidget {
   final Duration position;
   final Duration duration;
   final Color primaryColor;
+  final RepeatCount verseRepeatCount;
+  final int currentRepeatIteration;
+  final AudioPlaybackRange range;
+  final bool showRepeatControls;
   final VoidCallback onPlayPause;
   final VoidCallback onStop;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback onReciterTap;
+  final VoidCallback onToggleRepeatControls;
+  final Function(RepeatCount) onVerseRepeatChanged;
+  final Function(AudioPlaybackRange) onRangeChanged;
+  final int maxVerse;
 
   const _AudioPlayerBar({
     required this.reciterName,
@@ -925,11 +1176,19 @@ class _AudioPlayerBar extends StatelessWidget {
     required this.position,
     required this.duration,
     required this.primaryColor,
+    required this.verseRepeatCount,
+    required this.currentRepeatIteration,
+    required this.range,
+    required this.showRepeatControls,
     required this.onPlayPause,
     required this.onStop,
     required this.onPrevious,
     required this.onNext,
     required this.onReciterTap,
+    required this.onToggleRepeatControls,
+    required this.onVerseRepeatChanged,
+    required this.onRangeChanged,
+    required this.maxVerse,
   });
 
   String _formatDuration(Duration d) {
@@ -988,6 +1247,26 @@ class _AudioPlayerBar extends StatelessWidget {
                   ),
                 ),
               ),
+              // Repeat indicator
+              if (verseRepeatCount.isEnabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    verseRepeatCount.isInfinite
+                        ? '∞ ($currentRepeatIteration)'
+                        : '${currentRepeatIteration + 1}/${verseRepeatCount.value}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               Text(
                 'Verse $versePlaying of $totalVerses',
                 style: const TextStyle(
@@ -999,6 +1278,7 @@ class _AudioPlayerBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
+
           // Progress bar
           Row(
             children: [
@@ -1024,6 +1304,7 @@ class _AudioPlayerBar extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
+
           // Controls
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1068,10 +1349,190 @@ class _AudioPlayerBar extends StatelessWidget {
                 onPressed: versePlaying < totalVerses ? onNext : null,
                 tooltip: 'Next verse',
               ),
-              const SizedBox(width: 40), // Balance the stop button
+              IconButton(
+                icon: Icon(
+                  Icons.repeat,
+                  color: verseRepeatCount.isEnabled || showRepeatControls
+                      ? Colors.white
+                      : Colors.white70,
+                ),
+                onPressed: onToggleRepeatControls,
+                tooltip: 'Repeat options',
+              ),
             ],
           ),
+
+          // Repeat controls (expandable)
+          if (showRepeatControls) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Verse Repeat (for Hifz)',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: RepeatCount.values.map((count) {
+                        final isSelected = verseRepeatCount == count;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(count.label),
+                            selected: isSelected,
+                            onSelected: (_) => onVerseRepeatChanged(count),
+                            selectedColor: Colors.white,
+                            backgroundColor: Colors.white.withValues(alpha: 0.2),
+                            labelStyle: TextStyle(
+                              color: isSelected ? primaryColor : Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Range Repeat',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _VerseDropdown(
+                          label: 'From',
+                          value: range.startVerse > 0 ? range.startVerse : 1,
+                          maxVerse: maxVerse,
+                          primaryColor: primaryColor,
+                          onChanged: (verse) {
+                            onRangeChanged(range.copyWith(
+                              startVerse: verse,
+                              endVerse: verse > range.endVerse ? verse : null,
+                            ));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _VerseDropdown(
+                          label: 'To',
+                          value: range.endVerse > 0 ? range.endVerse : maxVerse,
+                          maxVerse: maxVerse,
+                          primaryColor: primaryColor,
+                          onChanged: (verse) {
+                            onRangeChanged(range.copyWith(
+                              endVerse: verse,
+                              startVerse: verse < range.startVerse ? verse : null,
+                            ));
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        RepeatCount.off,
+                        RepeatCount.one,
+                        RepeatCount.two,
+                        RepeatCount.three,
+                        RepeatCount.five,
+                        RepeatCount.infinite,
+                      ].map((count) {
+                        final isSelected = range.rangeRepeatCount == count;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(count.label),
+                            selected: isSelected,
+                            onSelected: (_) {
+                              onRangeChanged(range.copyWith(
+                                rangeRepeatCount: count,
+                                startVerse: range.startVerse > 0 ? null : 1,
+                                endVerse: range.endVerse > 0 ? null : maxVerse,
+                              ));
+                            },
+                            selectedColor: Colors.white,
+                            backgroundColor: Colors.white.withValues(alpha: 0.2),
+                            labelStyle: TextStyle(
+                              color: isSelected ? primaryColor : Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _VerseDropdown extends StatelessWidget {
+  final String label;
+  final int value;
+  final int maxVerse;
+  final Color primaryColor;
+  final Function(int) onChanged;
+
+  const _VerseDropdown({
+    required this.label,
+    required this.value,
+    required this.maxVerse,
+    required this.primaryColor,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: value.clamp(1, maxVerse),
+          isExpanded: true,
+          dropdownColor: primaryColor,
+          style: const TextStyle(color: Colors.white),
+          icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
+          items: List.generate(
+            maxVerse,
+            (index) => DropdownMenuItem(
+              value: index + 1,
+              child: Text('$label: ${index + 1}'),
+            ),
+          ),
+          onChanged: (v) => onChanged(v ?? 1),
+        ),
       ),
     );
   }
