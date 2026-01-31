@@ -129,8 +129,7 @@ class ExploreScreen extends StatelessWidget {
                     title: 'Volunteer',
                     subtitle: 'Join our team',
                     color: const Color(0xFF2196F3),
-                    onTap: () =>
-                        _navigate(context, 13, 'Volunteer', '/volunteer'),
+                    onTap: () => _launchUrl(AppConstants.volunteerFormUrl),
                   ),
                   _ExploreCard(
                     icon: Icons.play_circle_filled,

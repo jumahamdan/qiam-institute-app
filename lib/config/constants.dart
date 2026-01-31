@@ -17,6 +17,10 @@ class AppConstants {
   static const String introVideoUrl = 'https://www.youtube.com/watch?v=9qcNe2NSThE';
   static const String introVideoThumbnail = 'https://img.youtube.com/vi/9qcNe2NSThE/hqdefault.jpg';
 
+  // Form URLs (Microsoft Forms)
+  static const String feedbackFormUrl = 'https://forms.cloud.microsoft/r/Vy0Expj9Fe';
+  static const String volunteerFormUrl = 'https://forms.cloud.microsoft/r/Rvqxz5eHNL';
+
   // Directions
   static const String directionsUrl = 'https://www.google.com/maps/dir/?api=1&destination=900+S+Frontage+Rd+Suite+110+Woodridge+IL+60517';
   static const String mapsUrl = 'https://www.google.com/maps/place/900+S+Frontage+Rd+Suite+110,+Woodridge,+IL+60517';
