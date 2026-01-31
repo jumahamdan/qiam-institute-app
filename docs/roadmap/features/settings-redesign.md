@@ -59,6 +59,8 @@ Reorganize the Settings screen from a flat list to grouped categories with sub-s
 │  │  ⭐  Rate the App                                →   │   │
 │  ├─────────────────────────────────────────────────────┤   │
 │  │  📤  Share with Friends                          →   │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  💝  Donate                                      →   │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
 │  ℹ️ ABOUT                                                   │
@@ -211,6 +213,7 @@ Reorganize the Settings screen from a flat list to grouped categories with sub-s
 | Feedback | Link | ✅ Done | Opens MS Form |
 | Rate App | Link | ⏳ Pending | Needs App Store link after publishing |
 | Share | Action | ✅ Done | Share sheet (see TODO below) |
+| Donate | Link | ✅ Done | Opens Zeffy donation page |
 | About Qiam | Link | ✅ Done | Opens website |
 | Privacy Policy | Link | ✅ Done | Opens URL |
 | Terms of Service | Link | ✅ Done | Opens URL |

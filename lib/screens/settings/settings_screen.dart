@@ -87,7 +87,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () {
                     setState(() => _currentTheme = theme);
                     Navigator.pop(context);
-                    // TODO: Implement actual theme switching
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Theme switching coming soon!')),
+                    );
                   },
                 ),
               const SizedBox(height: 16),

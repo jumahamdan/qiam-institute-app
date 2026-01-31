@@ -292,12 +292,16 @@ class _AdhanSettingsScreenState extends State<AdhanSettingsScreen> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
         return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
           padding: EdgeInsets.only(bottom: bottomPadding),
           child: Column(
             mainAxisSize: MainAxisSize.min,
