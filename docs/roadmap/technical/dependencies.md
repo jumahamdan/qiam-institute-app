@@ -19,8 +19,8 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   
   # Already in app
-  shared_preferences: ^x.x.x
-  path_provider: ^x.x.x
+  shared_preferences: ^2.2.0
+  path_provider: ^2.1.1
 ```
 
 ---
