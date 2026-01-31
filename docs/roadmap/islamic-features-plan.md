@@ -15,7 +15,8 @@
 | New Features | 4 | 0 | 0 | 4 |
 | UI Improvements | 4 | 0 | 0 | 4 |
 | 🐛 Bug Fixes | 2 | 2 | 0 | 0 |
-| **Total** | **31** | **8** | **1** | **22** |
+| 🔧 Config Updates | 1 | 1 | 0 | 0 |
+| **Total** | **32** | **9** | **1** | **22** |
 
 ---
 
@@ -112,6 +113,14 @@
 - Add Qibla to Explore
 
 [View Full Details →](./reference/explore-layout.md)
+
+---
+
+## 🔧 Configuration Updates
+
+| ID | Update | File | Status |
+|----|--------|------|--------|
+| CFG-001 | Update Donation URL to Zeffy | `lib/config/constants.dart` | ✅ Complete |
 
 ---
 
