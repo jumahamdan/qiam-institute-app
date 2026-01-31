@@ -12,7 +12,7 @@ class AppConstants {
   // URLs
   static const String websiteUrl = 'https://qiaminstitute.org';
   static const String eventsUrl = 'https://qiaminstitute.org/events/';
-  static const String donateUrl = 'https://qiaminstitute.org/donate-now/';
+  static const String donateUrl = 'https://www.zeffy.com/en-US/donation-form/be-one-of-our-founders-donate-to-help-build-qiam-with-us';
   static const String valuesUrl = 'https://qiaminstitute.org/our-values/';
   static const String introVideoUrl = 'https://www.youtube.com/watch?v=9qcNe2NSThE';
   static const String introVideoThumbnail = 'https://img.youtube.com/vi/9qcNe2NSThE/hqdefault.jpg';
