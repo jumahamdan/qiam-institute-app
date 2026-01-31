@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../models/audio_playback_settings.dart';
 
 /// Model for a Quran reciter
 class Reciter {
@@ -18,7 +20,7 @@ class Reciter {
   });
 }
 
-/// Service for managing Quran audio playback
+/// Service for managing Quran audio playback with repeat and range support
 class QuranAudioService {
   static final QuranAudioService _instance = QuranAudioService._internal();
   factory QuranAudioService() => _instance;
@@ -26,6 +28,7 @@ class QuranAudioService {
 
   static const String _selectedReciterKey = 'selected_reciter';
   static const String _playbackSpeedKey = 'playback_speed';
+  static const String _verseRepeatKey = 'verse_repeat_count';
 
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -33,6 +36,18 @@ class QuranAudioService {
   int? _currentSurah;
   int? _currentVerse;
   bool _isPlaying = false;
+  int _totalVerses = 0;
+
+  // Verse repeat tracking
+  RepeatCount _verseRepeatCount = RepeatCount.off;
+  int _currentRepeatIteration = 0;
+
+  // Range repeat tracking
+  AudioPlaybackRange _range = AudioPlaybackRange.disabled;
+  int _currentRangeIteration = 0;
+
+  // Stream controllers for repeat state changes
+  final _repeatStateController = StreamController<RepeatState>.broadcast();
 
   /// Available reciters (using everyayah.com CDN)
   static const List<Reciter> reciters = [
@@ -106,6 +121,13 @@ class QuranAudioService {
   bool get isPlaying => _isPlaying;
   int? get currentSurah => _currentSurah;
   int? get currentVerse => _currentVerse;
+  RepeatCount get verseRepeatCount => _verseRepeatCount;
+  int get currentRepeatIteration => _currentRepeatIteration;
+  AudioPlaybackRange get range => _range;
+  int get currentRangeIteration => _currentRangeIteration;
+
+  /// Stream of repeat state changes
+  Stream<RepeatState> get repeatStateStream => _repeatStateController.stream;
 
   /// Get the audio URL for a specific verse
   String getVerseAudioUrl(Reciter reciter, int surahNumber, int verseNumber) {
@@ -144,7 +166,47 @@ class QuranAudioService {
     await _audioPlayer.setSpeed(speed);
   }
 
-  /// Play a specific verse
+  /// Get saved verse repeat count
+  Future<RepeatCount> getVerseRepeatCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getInt(_verseRepeatKey) ?? 0;
+    return RepeatCount.fromValue(value);
+  }
+
+  /// Save verse repeat count
+  Future<void> setVerseRepeatCount(RepeatCount count) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_verseRepeatKey, count.value);
+    _verseRepeatCount = count;
+    _currentRepeatIteration = 0;
+    _emitRepeatState();
+  }
+
+  /// Set range for range repeat
+  void setRange(AudioPlaybackRange newRange) {
+    _range = newRange;
+    _currentRangeIteration = 0;
+    _emitRepeatState();
+  }
+
+  /// Clear range repeat
+  void clearRange() {
+    _range = AudioPlaybackRange.disabled;
+    _currentRangeIteration = 0;
+    _emitRepeatState();
+  }
+
+  void _emitRepeatState() {
+    _repeatStateController.add(RepeatState(
+      verseRepeatCount: _verseRepeatCount,
+      currentVerseIteration: _currentRepeatIteration,
+      range: _range,
+      currentRangeIteration: _currentRangeIteration,
+      currentVerse: _currentVerse,
+    ));
+  }
+
+  /// Play a specific verse with repeat support
   Future<void> playVerse(int surahNumber, int verseNumber) async {
     final reciter = await getSelectedReciter();
     final url = getVerseAudioUrl(reciter, surahNumber, verseNumber);
@@ -158,20 +220,29 @@ class QuranAudioService {
       _currentSurah = surahNumber;
       _currentVerse = verseNumber;
       _isPlaying = true;
+      _currentRepeatIteration = 0;
+      _emitRepeatState();
     } catch (e) {
       _isPlaying = false;
       rethrow;
     }
   }
 
-  /// Play entire surah from a specific verse
+  /// Play entire surah from a specific verse with repeat support
   Future<void> playSurah(int surahNumber, int startVerse, int totalVerses) async {
     final reciter = await getSelectedReciter();
+    _totalVerses = totalVerses;
 
-    // Create a playlist of all verses from startVerse to end
+    // Determine end verse based on range settings
+    int endVerse = totalVerses;
+    if (_range.isActive && _range.enforceBounds) {
+      endVerse = _range.endVerse.clamp(startVerse, totalVerses);
+    }
+
+    // Create a playlist of verses
     final playlist = ConcatenatingAudioSource(
       children: List.generate(
-        totalVerses - startVerse + 1,
+        endVerse - startVerse + 1,
         (index) {
           final verseNumber = startVerse + index;
           return AudioSource.uri(
@@ -191,9 +262,57 @@ class QuranAudioService {
       _currentSurah = surahNumber;
       _currentVerse = startVerse;
       _isPlaying = true;
+      _currentRepeatIteration = 0;
+      _emitRepeatState();
     } catch (e) {
       _isPlaying = false;
       rethrow;
+    }
+  }
+
+  /// Handle verse completion - called when a verse finishes playing
+  /// Returns true if the verse should be replayed, false to continue to next
+  Future<bool> handleVerseComplete(int verseNumber) async {
+    // Check verse repeat first
+    if (_verseRepeatCount.isEnabled) {
+      _currentRepeatIteration++;
+
+      if (_verseRepeatCount.isInfinite ||
+          _currentRepeatIteration < _verseRepeatCount.value) {
+        _emitRepeatState();
+        return true; // Replay same verse
+      }
+
+      // Reset for next verse
+      _currentRepeatIteration = 0;
+    }
+
+    // Check if we've reached the end of range
+    if (_range.isActive && verseNumber >= _range.endVerse) {
+      _currentRangeIteration++;
+
+      if (_range.rangeRepeatCount.isInfinite ||
+          _currentRangeIteration < _range.rangeRepeatCount.value) {
+        // Restart from beginning of range
+        _emitRepeatState();
+        if (_currentSurah != null) {
+          await playSurah(_currentSurah!, _range.startVerse, _totalVerses);
+        }
+        return true;
+      }
+
+      // Range complete, reset
+      _currentRangeIteration = 0;
+    }
+
+    _emitRepeatState();
+    return false; // Continue to next verse
+  }
+
+  /// Replay current verse (for manual repeat trigger or verse repeat)
+  Future<void> replayCurrentVerse() async {
+    if (_currentSurah != null && _currentVerse != null) {
+      await playVerse(_currentSurah!, _currentVerse!);
     }
   }
 
@@ -215,6 +334,9 @@ class QuranAudioService {
     _isPlaying = false;
     _currentSurah = null;
     _currentVerse = null;
+    _currentRepeatIteration = 0;
+    _currentRangeIteration = 0;
+    _emitRepeatState();
   }
 
   /// Seek to next track in playlist
@@ -239,8 +361,47 @@ class QuranAudioService {
   /// Get current index stream (for playlist tracking)
   Stream<int?> get currentIndexStream => _audioPlayer.currentIndexStream;
 
+  /// Get sequence state stream (for detecting verse completion)
+  Stream<SequenceState?> get sequenceStateStream => _audioPlayer.sequenceStateStream;
+
   /// Dispose the audio player
   void dispose() {
+    _repeatStateController.close();
     _audioPlayer.dispose();
+  }
+}
+
+/// State model for repeat status updates
+class RepeatState {
+  final RepeatCount verseRepeatCount;
+  final int currentVerseIteration;
+  final AudioPlaybackRange range;
+  final int currentRangeIteration;
+  final int? currentVerse;
+
+  RepeatState({
+    required this.verseRepeatCount,
+    required this.currentVerseIteration,
+    required this.range,
+    required this.currentRangeIteration,
+    this.currentVerse,
+  });
+
+  /// Get display text for verse repeat status
+  String? get verseRepeatText {
+    if (!verseRepeatCount.isEnabled) return null;
+    if (verseRepeatCount.isInfinite) {
+      return 'Repeating ($currentVerseIteration)';
+    }
+    return 'Repeat ${currentVerseIteration + 1}/${verseRepeatCount.value}';
+  }
+
+  /// Get display text for range repeat status
+  String? get rangeRepeatText {
+    if (!range.isActive) return null;
+    if (range.rangeRepeatCount.isInfinite) {
+      return 'Range: ${range.startVerse}-${range.endVerse} (Loop $currentRangeIteration)';
+    }
+    return 'Range: ${range.startVerse}-${range.endVerse} (${currentRangeIteration + 1}/${range.rangeRepeatCount.value})';
   }
 }
