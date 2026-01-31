@@ -13,10 +13,10 @@
 | Core Features | 6 | 6 | 0 | 0 |
 | Feature Enhancements | 15 | 0 | 1 | 14 |
 | New Features | 4 | 2 | 0 | 2 |
-| UI Improvements | 4 | 0 | 0 | 4 |
+| UI Improvements | 5 | 1 | 0 | 4 |
 | 🐛 Bug Fixes | 2 | 2 | 0 | 0 |
 | 🔧 Config Updates | 1 | 1 | 0 | 0 |
-| **Total** | **32** | **11** | **1** | **20** |
+| **Total** | **33** | **12** | **1** | **20** |
 
 ---
 
@@ -102,6 +102,17 @@
 | U2 | Prayer Times Calendar Cards | Prayer Times | Medium | ⏳ Planned | [→](./features/prayer-calendar-redesign.md) |
 | U3 | Explore Page Redesign | Explore | Medium | ⏳ Planned | [→](./reference/explore-layout.md) |
 | U4 | Custom Islamic Icons | Explore | Medium | ⏳ Planned | [→](./reference/explore-layout.md#icon-strategy) |
+| U5 | Settings Screen Redesign | Settings | High | ✅ Complete | [→](./features/settings-redesign.md) |
+
+### U5: Settings Screen Redesign Summary
+
+**Key Changes:**
+- Grouped categories (Prayer & Worship, Appearance, Support, About)
+- Sub-screens for Prayer Times and Adhan settings
+- Reusable SettingsSection and SettingsTile widgets
+- Cleaner visual hierarchy with icons and descriptions
+
+[View Full Details →](./features/settings-redesign.md)
 
 ### U3 & U4: Explore Page Redesign Summary
 
@@ -177,6 +188,7 @@
 - [Qibla Calibration](./features/qibla-calibration.md)
 - [Prayer Calendar Redesign](./features/prayer-calendar-redesign.md)
 - [Feedback & Volunteer Forms](./features/feedback-volunteer-forms.md)
+- [Settings Redesign](./features/settings-redesign.md)
 
 ### Technical
 - [Audio Offline Mode](./technical/audio-offline-mode.md)
