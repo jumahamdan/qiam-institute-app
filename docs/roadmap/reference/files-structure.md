@@ -25,7 +25,7 @@ lib/
 ├── services/
 │   ├── quran/
 │   │   ├── quran_audio_service.dart    ✅
-│   │   └── quran_bookmark_service.dart ✅
+│   │   └── quran_service.dart          ✅
 │   ├── tasbih/
 │   │   └── tasbih_service.dart         ✅
 │   ├── names_of_allah/
