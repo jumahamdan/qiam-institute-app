@@ -209,12 +209,32 @@ Reorganize the Settings screen from a flat list to grouped categories with sub-s
 | Setting | Type | Works? | Notes |
 |---------|------|--------|-------|
 | Feedback | Link | ✅ Done | Opens MS Form |
-| Rate App | Link | ⏳ Verify | Opens App Store |
-| Share | Action | ⏳ Verify | Share sheet |
-| About Qiam | Link | ⏳ Verify | Opens About screen |
-| Privacy Policy | Link | ⏳ Verify | Opens URL |
-| Terms of Service | Link | ⏳ Verify | Opens URL |
-| Version | Static | ⏳ Verify | Display only |
+| Rate App | Link | ⏳ Pending | Needs App Store link after publishing |
+| Share | Action | ✅ Done | Share sheet (see TODO below) |
+| About Qiam | Link | ✅ Done | Opens website |
+| Privacy Policy | Link | ✅ Done | Opens URL |
+| Terms of Service | Link | ✅ Done | Opens URL |
+| Version | Static | ✅ Done | Display only |
+
+### Post-Publishing TODOs
+
+| Item | Description | Status |
+|------|-------------|--------|
+| Rate App Link | Add actual App Store / Play Store links after app is published | ⏳ Pending |
+| Share App Links | Update share message to include direct app store download links | ⏳ Pending |
+
+**Share Message Update (after publishing):**
+```dart
+void _shareApp() {
+  Share.share(
+    'Check out Qiam Institute app - Your companion for Islamic learning and practice!\n\n'
+    'Download on:\n'
+    'Android: https://play.google.com/store/apps/details?id=org.qiaminstitute.app\n'
+    'iOS: https://apps.apple.com/app/qiam-institute/id123456789',
+    subject: 'Qiam Institute App',
+  );
+}
+```
 
 ---
 
