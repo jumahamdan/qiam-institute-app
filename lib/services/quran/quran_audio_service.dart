@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/audio_playback_settings.dart';
+import 'quran_download_service.dart';
 
 /// Model for a Quran reciter
 class Reciter {
@@ -31,6 +32,7 @@ class QuranAudioService {
   static const String _verseRepeatKey = 'verse_repeat_count';
 
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final QuranDownloadService _downloadService = QuranDownloadService();
 
   // Current playback state
   int? _currentSurah;
@@ -134,12 +136,27 @@ class QuranAudioService {
   /// Stream of repeat state changes
   Stream<RepeatState> get repeatStateStream => _repeatStateController.stream;
 
-  /// Get the audio URL for a specific verse
+  /// Get the streaming audio URL for a specific verse (remote)
   String getVerseAudioUrl(Reciter reciter, int surahNumber, int verseNumber) {
     // Format: SSS + VVV (3 digits each, zero-padded)
     final surahStr = surahNumber.toString().padLeft(3, '0');
     final verseStr = verseNumber.toString().padLeft(3, '0');
     return '${reciter.baseUrl}/$surahStr$verseStr.mp3';
+  }
+
+  /// Get the audio URI for a verse - returns local file:// if downloaded, otherwise remote URL
+  Future<Uri> getVerseAudioUri(Reciter reciter, int surahNumber, int verseNumber) async {
+    // Check for local downloaded file first
+    final localPath = await _downloadService.getLocalVersePath(
+      surahNumber,
+      verseNumber,
+      reciter.id,
+    );
+    if (localPath != null) {
+      return Uri.file(localPath);
+    }
+    // Fall back to streaming URL
+    return Uri.parse(getVerseAudioUrl(reciter, surahNumber, verseNumber));
   }
 
   /// Get saved reciter preference
@@ -300,12 +317,13 @@ class QuranAudioService {
   }
 
   /// Play a specific verse with repeat support
+  /// Uses local file if downloaded, otherwise streams from network
   Future<void> playVerse(int surahNumber, int verseNumber) async {
     final reciter = await getSelectedReciter();
-    final url = getVerseAudioUrl(reciter, surahNumber, verseNumber);
+    final uri = await getVerseAudioUri(reciter, surahNumber, verseNumber);
 
     try {
-      await _audioPlayer.setUrl(url);
+      await _audioPlayer.setAudioSource(AudioSource.uri(uri));
       final speed = await getPlaybackSpeed();
       await _audioPlayer.setSpeed(speed);
       await _audioPlayer.play();
@@ -322,6 +340,7 @@ class QuranAudioService {
   }
 
   /// Play entire surah from a specific verse with repeat support
+  /// Uses local files if downloaded, otherwise streams from network
   Future<void> playSurah(int surahNumber, int startVerse, int totalVerses) async {
     final reciter = await getSelectedReciter();
     _totalVerses = totalVerses;
@@ -332,19 +351,18 @@ class QuranAudioService {
       endVerse = _range.endVerse.clamp(startVerse, totalVerses);
     }
 
-    // Create a playlist of verses
-    final playlist = ConcatenatingAudioSource(
-      children: List.generate(
-        endVerse - startVerse + 1,
-        (index) {
-          final verseNumber = startVerse + index;
-          return AudioSource.uri(
-            Uri.parse(getVerseAudioUrl(reciter, surahNumber, verseNumber)),
-            tag: {'surah': surahNumber, 'verse': verseNumber},
-          );
-        },
-      ),
-    );
+    // Build playlist with local files where available
+    final audioSources = <AudioSource>[];
+    for (int i = 0; i <= endVerse - startVerse; i++) {
+      final verseNumber = startVerse + i;
+      final uri = await getVerseAudioUri(reciter, surahNumber, verseNumber);
+      audioSources.add(AudioSource.uri(
+        uri,
+        tag: {'surah': surahNumber, 'verse': verseNumber},
+      ));
+    }
+
+    final playlist = ConcatenatingAudioSource(children: audioSources);
 
     try {
       // Reset tracking state before setting new source
