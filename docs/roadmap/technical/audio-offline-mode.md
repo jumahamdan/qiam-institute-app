@@ -52,7 +52,7 @@ class QuranAudioService {
 ```yaml
 dependencies:
   flutter_cache_manager: ^3.3.1
-  path_provider: ^2.1.1  # Already have
+  path_provider: ^2.1.1  # For file system paths
 ```
 
 ---
