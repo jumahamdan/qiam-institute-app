@@ -51,14 +51,17 @@ class _QuranScreenState extends State<QuranScreen> {
     final reciter = await _audioService.getSelectedReciter();
     _currentReciterId = reciter.id;
 
-    final statuses = <int, DownloadStatus>{};
-    for (final surah in _surahs) {
+    // Load all statuses in parallel using Future.wait
+    final statusFutures = _surahs.map((surah) async {
       final status = await _downloadService.getSurahDownloadStatus(
         surah.number,
         _currentReciterId,
       );
-      statuses[surah.number] = status;
-    }
+      return MapEntry(surah.number, status);
+    });
+
+    final entries = await Future.wait(statusFutures);
+    final statuses = Map<int, DownloadStatus>.fromEntries(entries);
 
     if (mounted) {
       setState(() => _downloadStatuses = statuses);

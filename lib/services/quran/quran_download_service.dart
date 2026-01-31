@@ -95,15 +95,26 @@ class QuranDownloadService {
     return DownloadStatus.notDownloaded;
   }
 
-  /// Check if all verse files exist for a surah
+  /// Check if surah files exist and validate they are not corrupted
+  /// Returns true if at least one valid mp3 file exists in the directory
   Future<bool> _verifySurahFiles(int surahNumber, String reciterId) async {
     final audioDir = await _audioDirectory;
     final surahDir = Directory('${audioDir.path}/$reciterId/$surahNumber');
     if (!await surahDir.exists()) return false;
 
-    // Just check if directory has files (quick check)
-    final files = await surahDir.list().toList();
-    return files.isNotEmpty;
+    // Check that directory has mp3 files with non-zero size
+    int validFileCount = 0;
+    await for (final entity in surahDir.list()) {
+      if (entity is File && entity.path.endsWith('.mp3')) {
+        final fileSize = await entity.length();
+        if (fileSize > 0) {
+          validFileCount++;
+        }
+      }
+    }
+
+    // Consider downloaded if we have at least one valid file
+    return validFileCount > 0;
   }
 
   /// Get local file path for a verse audio
@@ -171,7 +182,7 @@ class QuranDownloadService {
     }
 
     int downloadedCount = 0;
-    int totalSize = 0;
+    int newlyDownloadedSize = 0; // Only track size of newly downloaded files
 
     try {
       for (int verse = 1; verse <= totalVerses; verse++) {
@@ -193,11 +204,11 @@ class QuranDownloadService {
         final url = '${reciter.baseUrl}/$surahStr$verseStr.mp3';
         final filePath = '${surahDir.path}/${surahNumber}_$verse.mp3';
 
-        // Check if already downloaded
+        // Check if already downloaded - don't count existing file sizes
         final file = File(filePath);
         if (await file.exists()) {
           downloadedCount++;
-          totalSize += await file.length();
+          // Skip size counting for already-existing files (already tracked)
           continue;
         }
 
@@ -207,7 +218,7 @@ class QuranDownloadService {
           if (response.statusCode == 200) {
             await file.writeAsBytes(response.bodyBytes);
             downloadedCount++;
-            totalSize += response.bodyBytes.length;
+            newlyDownloadedSize += response.bodyBytes.length;
 
             _progressController.add(DownloadProgress(
               surahNumber: surahNumber,
@@ -227,7 +238,7 @@ class QuranDownloadService {
             if (response.statusCode == 200) {
               await file.writeAsBytes(response.bodyBytes);
               downloadedCount++;
-              totalSize += response.bodyBytes.length;
+              newlyDownloadedSize += response.bodyBytes.length;
 
               _progressController.add(DownloadProgress(
                 surahNumber: surahNumber,
@@ -262,9 +273,9 @@ class QuranDownloadService {
         await prefs.setStringList(_downloadedSurahsKey, downloaded);
       }
 
-      // Update total size
+      // Update total size (only add newly downloaded bytes)
       final currentSize = prefs.getInt(_downloadSizeKey) ?? 0;
-      await prefs.setInt(_downloadSizeKey, currentSize + totalSize);
+      await prefs.setInt(_downloadSizeKey, currentSize + newlyDownloadedSize);
 
       _progressController.add(DownloadProgress(
         surahNumber: surahNumber,

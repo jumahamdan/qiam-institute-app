@@ -49,6 +49,11 @@ class QuranAudioService {
   // Stream controllers for repeat state changes
   final _repeatStateController = StreamController<RepeatState>.broadcast();
 
+  // Stream subscriptions for internal playback tracking
+  StreamSubscription<int?>? _indexSubscription;
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+  int? _previousIndex;
+
   /// Available reciters (using everyayah.com CDN)
   static const List<Reciter> reciters = [
     Reciter(
@@ -166,12 +171,100 @@ class QuranAudioService {
     await _audioPlayer.setSpeed(speed);
   }
 
-  /// Get saved verse repeat count
+  /// Get saved verse repeat count and sync in-memory state
   Future<RepeatCount> getVerseRepeatCount() async {
     final prefs = await SharedPreferences.getInstance();
     final value = prefs.getInt(_verseRepeatKey) ?? 0;
-    return RepeatCount.fromValue(value);
+    final count = RepeatCount.fromValue(value);
+    // Sync in-memory state with persisted value
+    _verseRepeatCount = count;
+    return count;
   }
+
+  /// Initialize repeat settings from preferences (call on startup)
+  Future<void> initializeRepeatSettings() async {
+    await getVerseRepeatCount();
+    _currentRepeatIteration = 0;
+    _currentRangeIteration = 0;
+    _setupInternalListeners();
+    _emitRepeatState();
+  }
+
+  /// Set up internal listeners for tracking verse completion during playlist playback
+  void _setupInternalListeners() {
+    // Cancel existing subscriptions
+    _indexSubscription?.cancel();
+    _playerStateSubscription?.cancel();
+
+    // Track index changes to detect verse transitions
+    _indexSubscription = _audioPlayer.currentIndexStream.listen((index) {
+      if (index != null && _previousIndex != null && index != _previousIndex) {
+        // Verse changed - handle completion of previous verse
+        final previousVerse = _playlistStartVerse != null
+            ? _playlistStartVerse! + _previousIndex!
+            : _previousIndex! + 1;
+        _onVerseCompleted(previousVerse);
+      }
+      _previousIndex = index;
+      // Update current verse
+      if (index != null && _playlistStartVerse != null) {
+        _currentVerse = _playlistStartVerse! + index;
+        _emitRepeatState();
+      }
+    });
+
+    // Track player state for handling end of playlist
+    _playerStateSubscription = _audioPlayer.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        // End of playlist reached
+        if (_currentVerse != null) {
+          _onVerseCompleted(_currentVerse!);
+        }
+      }
+    });
+  }
+
+  /// Internal handler for verse completion during playlist playback
+  Future<void> _onVerseCompleted(int verseNumber) async {
+    // Check verse repeat first
+    if (_verseRepeatCount.isEnabled) {
+      _currentRepeatIteration++;
+
+      if (_verseRepeatCount.isInfinite ||
+          _currentRepeatIteration < _verseRepeatCount.value) {
+        _emitRepeatState();
+        // Seek to previous track and replay
+        await _audioPlayer.seekToPrevious();
+        return;
+      }
+
+      // Reset for next verse
+      _currentRepeatIteration = 0;
+    }
+
+    // Check if we've reached the end of range
+    if (_range.isActive && verseNumber >= _range.endVerse) {
+      _currentRangeIteration++;
+
+      if (_range.rangeRepeatCount.isInfinite ||
+          _currentRangeIteration < _range.rangeRepeatCount.value) {
+        // Restart from beginning of range
+        _emitRepeatState();
+        if (_currentSurah != null) {
+          await playSurah(_currentSurah!, _range.startVerse, _totalVerses);
+        }
+        return;
+      }
+
+      // Range complete, reset
+      _currentRangeIteration = 0;
+    }
+
+    _emitRepeatState();
+  }
+
+  // Playlist start verse for index calculations
+  int? _playlistStartVerse;
 
   /// Save verse repeat count
   Future<void> setVerseRepeatCount(RepeatCount count) async {
@@ -254,6 +347,10 @@ class QuranAudioService {
     );
 
     try {
+      // Reset tracking state before setting new source
+      _previousIndex = null;
+      _playlistStartVerse = startVerse;
+
       await _audioPlayer.setAudioSource(playlist);
       final speed = await getPlaybackSpeed();
       await _audioPlayer.setSpeed(speed);
@@ -263,6 +360,9 @@ class QuranAudioService {
       _currentVerse = startVerse;
       _isPlaying = true;
       _currentRepeatIteration = 0;
+
+      // Ensure listeners are set up
+      _setupInternalListeners();
       _emitRepeatState();
     } catch (e) {
       _isPlaying = false;
@@ -271,9 +371,11 @@ class QuranAudioService {
   }
 
   /// Handle verse completion - called when a verse finishes playing
+  /// @deprecated Use internal completion tracking via _onVerseCompleted instead.
+  /// This method is kept for backwards compatibility with single-verse playback.
   /// Returns true if the verse should be replayed, false to continue to next
   Future<bool> handleVerseComplete(int verseNumber) async {
-    // Check verse repeat first
+    // For single verse playback (not playlist), check repeat
     if (_verseRepeatCount.isEnabled) {
       _currentRepeatIteration++;
 
@@ -287,32 +389,19 @@ class QuranAudioService {
       _currentRepeatIteration = 0;
     }
 
-    // Check if we've reached the end of range
-    if (_range.isActive && verseNumber >= _range.endVerse) {
-      _currentRangeIteration++;
-
-      if (_range.rangeRepeatCount.isInfinite ||
-          _currentRangeIteration < _range.rangeRepeatCount.value) {
-        // Restart from beginning of range
-        _emitRepeatState();
-        if (_currentSurah != null) {
-          await playSurah(_currentSurah!, _range.startVerse, _totalVerses);
-        }
-        return true;
-      }
-
-      // Range complete, reset
-      _currentRangeIteration = 0;
-    }
-
     _emitRepeatState();
     return false; // Continue to next verse
   }
 
   /// Replay current verse (for manual repeat trigger or verse repeat)
+  /// Uses seek to restart without resetting repeat counters
   Future<void> replayCurrentVerse() async {
     if (_currentSurah != null && _currentVerse != null) {
-      await playVerse(_currentSurah!, _currentVerse!);
+      await _audioPlayer.seek(Duration.zero);
+      if (!_isPlaying) {
+        await _audioPlayer.play();
+        _isPlaying = true;
+      }
     }
   }
 
@@ -334,6 +423,8 @@ class QuranAudioService {
     _isPlaying = false;
     _currentSurah = null;
     _currentVerse = null;
+    _playlistStartVerse = null;
+    _previousIndex = null;
     _currentRepeatIteration = 0;
     _currentRangeIteration = 0;
     _emitRepeatState();
@@ -366,6 +457,8 @@ class QuranAudioService {
 
   /// Dispose the audio player
   void dispose() {
+    _indexSubscription?.cancel();
+    _playerStateSubscription?.cancel();
     _repeatStateController.close();
     _audioPlayer.dispose();
   }

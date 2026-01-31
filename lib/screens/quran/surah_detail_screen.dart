@@ -99,8 +99,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               state.processingState == ProcessingState.buffering;
         });
 
-        // Handle verse completion for repeat
-        if (state.processingState == ProcessingState.completed && _currentPlayingVerse != null) {
+        // Handle verse completion for single verse playback only
+        // Playlist playback is handled internally by the audio service
+        if (state.processingState == ProcessingState.completed &&
+            _currentPlayingVerse != null &&
+            _playlistStartVerse == null) {
           _handleVerseComplete();
         }
       }
@@ -168,7 +171,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
   Future<void> _loadAudioSettings() async {
     final reciter = await _audioService.getSelectedReciter();
-    final repeatCount = await _audioService.getVerseRepeatCount();
+    // Initialize repeat settings in the service (syncs in-memory state)
+    await _audioService.initializeRepeatSettings();
+    final repeatCount = _audioService.verseRepeatCount;
     if (mounted) {
       setState(() {
         _currentReciter = reciter;
@@ -524,9 +529,16 @@ ${verse.translation}
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
+      builder: (dialogContext) {
+        return StreamBuilder<DownloadProgress>(
+          stream: _downloadService.progressStream,
+          builder: (context, snapshot) {
+            // Use snapshot data if available and matches this surah
+            final progress = snapshot.data?.surahNumber == widget.surah.number
+                ? snapshot.data
+                : _downloadProgress;
+            final status = progress?.status ?? _downloadStatus;
+
             return Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -554,14 +566,13 @@ ${verse.translation}
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 24),
-                  if (_downloadStatus == DownloadStatus.downloading &&
-                      _downloadProgress != null) ...[
+                  if (status == DownloadStatus.downloading && progress != null) ...[
                     LinearProgressIndicator(
-                      value: _downloadProgress!.progress,
+                      value: progress.progress,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _downloadProgress!.progressText,
+                      progress.progressText,
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 16),
@@ -571,11 +582,11 @@ ${verse.translation}
                           widget.surah.number,
                           _currentReciter.id,
                         );
-                        Navigator.pop(context);
+                        Navigator.pop(dialogContext);
                       },
                       child: const Text('Cancel'),
                     ),
-                  ] else if (_downloadStatus == DownloadStatus.downloaded) ...[
+                  ] else if (status == DownloadStatus.downloaded) ...[
                     Icon(Icons.check_circle, color: Colors.green[600], size: 48),
                     const SizedBox(height: 8),
                     const Text('Downloaded for offline playback'),
@@ -587,7 +598,7 @@ ${verse.translation}
                           _currentReciter.id,
                         );
                         _checkDownloadStatus();
-                        if (context.mounted) Navigator.pop(context);
+                        if (dialogContext.mounted) Navigator.pop(dialogContext);
                       },
                       icon: const Icon(Icons.delete_outline),
                       label: const Text('Delete Download'),
@@ -612,7 +623,7 @@ ${verse.translation}
                           _currentReciter.id,
                         );
                         setState(() => _downloadStatus = DownloadStatus.downloading);
-                        Navigator.pop(context);
+                        // Don't close dialog - let StreamBuilder update UI
                       },
                       icon: const Icon(Icons.download),
                       label: const Text('Download'),
