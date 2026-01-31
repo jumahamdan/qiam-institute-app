@@ -12,11 +12,11 @@
 |----------|-------|-------------|----------------|------------|
 | Core Features | 6 | 6 | 0 | 0 |
 | Feature Enhancements | 15 | 0 | 1 | 14 |
-| New Features | 4 | 0 | 0 | 4 |
+| New Features | 4 | 2 | 0 | 2 |
 | UI Improvements | 4 | 0 | 0 | 4 |
 | 🐛 Bug Fixes | 2 | 2 | 0 | 0 |
 | 🔧 Config Updates | 1 | 1 | 0 | 0 |
-| **Total** | **32** | **9** | **1** | **22** |
+| **Total** | **32** | **11** | **1** | **20** |
 
 ---
 
@@ -89,8 +89,8 @@
 |---|---------|----------|----------|--------|---------|
 | 7 | Qibla Calibration Improvements | Prayer Screen | Medium | ⏳ Planned | [View Details](./features/qibla-calibration.md) |
 | 8 | Prayer Times Calendar Redesign | Prayer Screen | Medium | ⏳ Planned | [View Details](./features/prayer-calendar-redesign.md) |
-| 9 | Feedback Form | Settings | High | ⏳ Planned | [View Details](./features/feedback-volunteer-forms.md) |
-| 10 | Volunteer Form | Explore | High | ⏳ Planned | [View Details](./features/feedback-volunteer-forms.md) |
+| 9 | Feedback Form | Settings | High | ✅ Complete | [View Details](./features/feedback-volunteer-forms.md) |
+| 10 | Volunteer Form | Explore | High | ✅ Complete | [View Details](./features/feedback-volunteer-forms.md) |
 
 ---
 
@@ -132,8 +132,8 @@
 |---------|------|---------|--------|
 | 1.6 | Quran Audio Caching | Quran | 🔄 In Progress |
 | 2.1 | Tasbih Keep Screen Awake | Tasbih | ⏳ Planned |
-| 9 | Feedback Form | Forms | ⏳ Planned |
-| 10 | Volunteer Form | Forms | ⏳ Planned |
+| 9 | Feedback Form | Forms | ✅ Complete |
+| 10 | Volunteer Form | Forms | ✅ Complete |
 
 ### 🟡 Phase 2: Medium Priority
 
