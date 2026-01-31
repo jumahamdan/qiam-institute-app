@@ -1,0 +1,38 @@
+# Dependencies
+
+---
+
+## Current Dependencies
+
+```yaml
+dependencies:
+  # Quran
+  quran: ^1.4.1
+  just_audio: ^0.9.40
+  audio_session: ^0.1.21
+  
+  # Dua
+  muslim_data_flutter: ^1.5.0
+  
+  # Adhan
+  android_alarm_manager_plus: ^x.x.x
+  flutter_local_notifications: ^x.x.x
+  
+  # Already in app
+  shared_preferences: ^x.x.x
+  path_provider: ^x.x.x
+```
+
+---
+
+## To Add
+
+| Package | Purpose | For Feature |
+|---------|---------|-------------|
+| `flutter_cache_manager: ^3.3.1` | Audio caching | Quran Offline |
+| `wakelock_plus: ^x.x.x` | Keep screen on | Tasbih |
+| `alfurqan: ^x.x.x` | Tajweed colors | Quran (future) |
+
+---
+
+[← Back to Plan](../islamic-features-plan.md)
