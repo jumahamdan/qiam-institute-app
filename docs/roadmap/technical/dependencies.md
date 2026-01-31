@@ -30,8 +30,8 @@ dependencies:
 | Package | Purpose | For Feature |
 |---------|---------|-------------|
 | `flutter_cache_manager: ^3.3.1` | Audio caching | Quran Offline |
-| `wakelock_plus: ^x.x.x` | Keep screen on | Tasbih |
-| `alfurqan: ^x.x.x` | Tajweed colors | Quran (future) |
+| `wakelock_plus: ^1.1.6` | Keep screen on | Tasbih |
+| `alfurqan: ^0.0.1` | Tajweed colors | Quran (future) |
 
 ---
 
