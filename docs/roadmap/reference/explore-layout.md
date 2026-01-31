@@ -157,7 +157,7 @@ For authentic Islamic look, use custom SVG icons from free sources.
 ### Icon Implementation
 
 ```dart
-// Using flutter_svg package (already in project)
+// Using flutter_svg package (add `flutter_svg` to pubspec.yaml dependencies)
 import 'package:flutter_svg/flutter_svg.dart';
 
 // Custom Islamic icon
