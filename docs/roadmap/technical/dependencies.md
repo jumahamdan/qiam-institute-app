@@ -15,8 +15,8 @@ dependencies:
   muslim_data_flutter: ^1.5.0
   
   # Adhan
-  android_alarm_manager_plus: ^x.x.x
-  flutter_local_notifications: ^x.x.x
+  android_alarm_manager_plus: ^4.0.3
+  flutter_local_notifications: ^18.0.1
   
   # Already in app
   shared_preferences: ^x.x.x
