@@ -68,7 +68,7 @@ Alafasy, Abdul Basit, Husary, Sudais, Shuraim, Ghamdi, Ajamy, Maher, Minshawi, a
 │  │  the Most Merciful.                                 │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
-│  Audio: [▶️ advancement advancement advancement]           │
+│  Audio: [▶️ 00:00 ─────●──── 02:45]                       │
 │  Reciter: Mishary Rashid Alafasy              [⚙️]         │
 └─────────────────────────────────────────────────────────────┘
 ```
